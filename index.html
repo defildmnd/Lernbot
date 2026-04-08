@@ -1,1 +1,1617 @@
+<!DOCTYPE html>
+
+
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Med TTS + Active Recall Interface</title>
+  <style>
+    :root{
+      --bg:#eef2f7;
+      --card:#ffffff;
+      --card-2:#f8fafc;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --accent:#111827;
+      --accent-2:#2563eb;
+      --good-bg:#dcfce7;
+      --good-text:#166534;
+      --bad-bg:#fee2e2;
+      --bad-text:#991b1b;
+      --info-bg:#e0f2fe;
+      --info-text:#075985;
+      --shadow:0 14px 40px rgba(15, 23, 42, 0.10);
+      --radius:18px;
+    }
+
+
+[data-theme="dark"] {
+  --bg:#0f172a;
+  --card:#1e293b;
+  --card-2:#334155;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --line:#334155;
+  --accent:#3b82f6;
+  --accent-2:#60a5fa;
+  --good-bg:#064e3b;
+  --good-text:#6ee7b7;
+  --bad-bg:#7f1d1d;
+  --bad-text:#fca5a5;
+  --info-bg:#0c4a6e;
+  --info-text:#7dd3fc;
+  --shadow:0 14px 40px rgba(0, 0, 0, 0.3);
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: Inter, Arial, sans-serif;
+  overflow-x:hidden;
+}
+
+body{
+  min-width:100%;
+}
+
+.app{
+  width:100%;
+  max-width:1500px;
+  margin:0 auto;
+  padding:10px 10px 20px;
+}
+
+.row{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  align-items:stretch;
+}
+
+.col{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  width:100%;
+}
+
+.col-left{ width:100%; }
+.col-right{ width:100%; }
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:14px;
+}
+
+.top{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+h1{
+  margin:0 0 6px 0;
+  font-size:22px;
+  letter-spacing:-0.02em;
+}
+
+h2{
+  margin:0 0 10px 0;
+  font-size:16px;
+  letter-spacing:-0.01em;
+}
+
+.subtitle{
+  margin:0;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid var(--line);
+  background:var(--card-2);
+  color:var(--text);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px;
+  white-space:normal;
+  text-align:center;
+}
+
+.group{ margin-bottom:12px; }
+
+.grid-2, .grid-3, .grid-4{
+  display:grid;
+  gap:10px;
+}
+
+.grid-2{ grid-template-columns:1fr; }
+.grid-3{ grid-template-columns:1fr; }
+.grid-4{ grid-template-columns:1fr; }
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea,
+select,
+button{
+  width:100%;
+  font-size:14px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:var(--card);
+  padding:10px 12px;
+  color:var(--text);
+}
+
+textarea{
+  min-height:180px;
+  resize:vertical;
+  line-height:1.6;
+}
+
+.small-textarea{
+  min-height:100px;
+}
+
+button{
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .08s ease, opacity .15s ease, background .15s ease;
+}
+
+button:hover{ opacity:.95; }
+button:active{ transform:translateY(1px); }
+button:disabled{ opacity:.55; cursor:not-allowed; }
+
+.secondary{
+  background:var(--muted);
+  color:var(--card);
+}
+
+.blue{
+  background:var(--accent-2);
+  color:#fff;
+}
+
+.danger{
+  background:#b91c1c;
+  color:#fff;
+}
+
+.success{
+  background:#166534;
+  color:#fff;
+}
+
+.ghost{
+  background:var(--card-2);
+  color:var(--text);
+  border:1px solid var(--line);
+}
+
+.toggle-btn{
+  background:var(--card-2);
+  color:var(--text);
+  border:1px solid var(--line);
+}
+
+.btn-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.btn-row button,
+.btn-row label.file-btn{
+  width:auto;
+  min-width:80px;
+  flex:1 1 auto;
+  max-width:150px;
+}
+
+.file-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 12px;
+  border-radius:14px;
+  background:var(--muted);
+  color:var(--card);
+  font-weight:700;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.hidden{ display:none !important; }
+.collapsed{ display:none !important; }
+
+.status{
+  margin-top:12px;
+  min-height:40px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:var(--card-2);
+  color:var(--text);
+  font-size:13px;
+  white-space:pre-wrap;
+  line-height:1.5;
+  border:1px solid transparent;
+}
+
+.status.ok{
+  background:var(--good-bg);
+  color:var(--good-text);
+}
+
+.status.error{
+  background:var(--bad-bg);
+  color:var(--bad-text);
+}
+
+.status.info{
+  background:var(--info-bg);
+  color:var(--info-text);
+}
+
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.inline-checks{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  font-size:13px;
+  margin-top:8px;
+}
+
+.inline-checks label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  font-weight:500;
+}
+
+audio{
+  width:100%;
+  margin-top:12px;
+}
+
+.download-link{
+  display:inline-block;
+  margin-top:10px;
+  text-decoration:none;
+  font-weight:700;
+  color:var(--text);
+  font-size:13px;
+}
+
+.note{
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.question-list{
+  display:grid;
+  gap:12px;
+  margin-top:8px;
+}
+
+.question-card{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 6px 20px rgba(15,23,42,.05);
+}
+
+[data-theme="dark"] .question-card{
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+
+.question-head{
+  padding:12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  background:var(--card-2);
+  border-bottom:1px solid var(--line);
+}
+
+.question-index{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+
+.question-text{
+  font-weight:700;
+  line-height:1.5;
+  color:var(--text);
+  font-size:14px;
+}
+
+.question-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.question-actions button{
+  min-width:auto;
+  padding:8px 10px;
+  font-size:12px;
+  border-radius:12px;
+  flex:1 1 auto;
+}
+
+.question-body{
+  padding:12px 14px;
+  display:grid;
+  gap:10px;
+  background:var(--card);
+}
+
+.score-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-weight:800;
+  font-size:11px;
+  border-radius:999px;
+  padding:6px 10px;
+  background:var(--info-bg);
+  color:var(--info-text);
+  border:1px solid var(--line);
+}
+
+.feedback{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:var(--card-2);
+}
+
+.feedback-title{
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.feedback ul{
+  margin:0;
+  padding-left:16px;
+  line-height:1.5;
+  font-size:13px;
+}
+
+.feedback-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+
+.empty{
+  border:1px dashed var(--line);
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
+  color:var(--muted);
+  background:var(--card-2);
+  font-size:13px;
+}
+
+.toolbar{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.toolbar-right{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.toolbar-right button{
+  flex:1 1 auto;
+  min-width:100px;
+}
+
+.panel-slim{
+  padding:12px;
+  border:1px solid var(--line);
+  background:var(--card-2);
+  border-radius:16px;
+}
+
+.theme-switch {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+@media (min-width: 768px) {
+  .app{
+    padding:15px 12px 30px;
+  }
+
+  .card{
+    padding:16px;
+  }
+
+  .grid-2{ grid-template-columns:1fr 1fr; }
+  .grid-3{ grid-template-columns:1fr 1fr; }
+  .grid-4{ grid-template-columns:1fr 1fr; }
+
+  .btn-row button,
+  .btn-row label.file-btn{
+    max-width:none;
+  }
+
+  .top{
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:flex-start;
+  }
+
+  .question-head{
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:flex-start;
+  }
+
+  .toolbar{
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .inline-checks{
+    flex-direction:row;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app{
+    padding:20px 14px 36px;
+  }
+
+  .card{
+    padding:18px;
+  }
+
+  .row{
+    flex-direction:row;
+  }
+
+  .col-left{ width:780px; flex:0 0 780px; }
+  .col-right{ width:680px; flex:0 0 680px; }
+
+  .grid-3{ grid-template-columns:1fr 1fr 1fr; }
+  .grid-4{ grid-template-columns:1fr 1fr 1fr 1fr; }
+
+  .btn-row button,
+  .btn-row label.file-btn{
+    min-width:120px;
+  }
+
+  .feedback-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  h1{ font-size:26px; }
+  h2{ font-size:18px; }
+  .subtitle{ font-size:13px; }
+  .badge{ font-size:12px; padding:8px 12px; }
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select,
+  button{ padding:12px 14px; }
+  textarea{ min-height:240px; }
+  .small-textarea{ min-height:110px; }
+  .status{ min-height:48px; padding:12px 14px; font-size:14px; }
+  .meta{ font-size:13px; gap:14px; }
+  .inline-checks{ font-size:14px; }
+  .download-link{ font-size:14px; }
+  .note{ font-size:12px; }
+  .question-list{ gap:14px; }
+  .question-head{ padding:14px 16px; }
+  .question-index{ font-size:12px; margin-bottom:6px; }
+  .question-text{ font-size:16px; }
+  .question-actions{ gap:8px; }
+  .question-actions button{ padding:10px 12px; font-size:13px; }
+  .question-body{ padding:14px 16px 16px; gap:12px; }
+  .score-pill{ font-size:12px; padding:7px 11px; gap:6px; }
+  .feedback{ padding:12px 14px; }
+  .feedback-title{ font-size:13px; margin-bottom:8px; }
+  .feedback ul{ font-size:14px; padding-left:18px; }
+  .empty{ padding:22px; font-size:14px; }
+  .toolbar-right{ gap:10px; }
+  .toolbar-right button{ min-width:auto; }
+  .panel-slim{ padding:14px; }
+}
+
+  </style>
+</head>
+<body>
+  <button class="theme-switch" id="themeSwitch">🌙 Dark</button>
+
+
+  <div class="app">
+
+
+<div class="card" id="startupCard">
+  <div class="top">
+    <div>
+      <h1>Med TTS + Active Recall</h1>
+      <p class="subtitle">API-Keys für TTS und Chat. Alles bleibt gleichzeitig nutzbar.</p>
+    </div>
+    <div class="badge" id="apiStateBadge">Keys noch nicht vollständig gesetzt</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="group">
+      <label for="startupApiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
+      <input id="startupApiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
+    </div>
+
+    <div class="group">
+      <label for="startupApiKeyChat">API Key · openai/gpt-4o-mini</label>
+      <input id="startupApiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="group">
+      <label for="startupBaseUrl">Base URL</label>
+      <input id="startupBaseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+    </div>
+
+    <div class="group">
+      <label for="startupVoice">Standardstimme</label>
+      <select id="startupVoice">
+        <option value="alloy">alloy</option>
+        <option value="ash">ash</option>
+        <option value="ballad">ballad</option>
+        <option value="coral">coral</option>
+        <option value="echo">echo</option>
+        <option value="fable">fable</option>
+        <option value="nova">nova</option>
+        <option value="onyx">onyx</option>
+        <option value="sage">sage</option>
+        <option value="shimmer">shimmer</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <label for="startupQuestionCount">Anzahl Fragen</label>
+      <input id="startupQuestionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button id="saveStartupBtn" class="success" type="button">Lokal speichern</button>
+    <button id="hideStartupBtn" class="secondary" type="button">Startfeld einklappen</button>
+    <button id="clearApiBtn" class="danger" type="button">Alle Keys löschen</button>
+  </div>
+
+  <div class="note" style="margin-top:10px;">
+    Die API-Keys werden lokal gespeichert. TTS und Chat können parallel benutzt werden.
+  </div>
+</div>
+
+<div class="row">
+  <div class="col col-left">
+    <div class="card">
+      <div class="top">
+        <div>
+          <h2>Text und Vorlesen</h2>
+          <p class="subtitle">Originaltext eingeben, vorlesen lassen und Fragen generieren.</p>
+        </div>
+        <div class="badge" id="modelBadge">TTS: openai/gpt-4o-mini-tts-2025-12-15 · Chat: openai/gpt-4o-mini</div>
+      </div>
+
+      <div class="group">
+        <button id="toggleAdvancedBtn" class="toggle-btn" type="button">Erweiterte Einstellungen anzeigen</button>
+      </div>
+
+      <div id="advancedPanel" class="collapsed">
+        <div class="grid-2">
+          <div class="group">
+            <label for="apiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
+            <input id="apiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
+          </div>
+
+          <div class="group">
+            <label for="apiKeyChat">API Key · openai/gpt-4o-mini</label>
+            <input id="apiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="group">
+            <label for="baseUrl">Base URL</label>
+            <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+          </div>
+
+          <div class="group">
+            <label for="voice">Stimme</label>
+            <select id="voice">
+              <option value="alloy">alloy</option>
+              <option value="ash">ash</option>
+              <option value="ballad">ballad</option>
+              <option value="coral">coral</option>
+              <option value="echo">echo</option>
+              <option value="fable">fable</option>
+              <option value="nova">nova</option>
+              <option value="onyx">onyx</option>
+              <option value="sage">sage</option>
+              <option value="shimmer">shimmer</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label for="questionCount">Anzahl Fragen</label>
+            <input id="questionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
+          </div>
+
+          <div class="group">
+            <label for="format">Format</label>
+            <select id="format">
+              <option value="mp3">mp3</option>
+              <option value="opus">opus</option>
+              <option value="aac">aac</option>
+              <option value="flac">flac</option>
+              <option value="wav">wav</option>
+              <option value="pcm">pcm</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="group">
+            <label for="speed">Geschwindigkeit</label>
+            <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
+          </div>
+        </div>
+
+        <div class="inline-checks">
+          <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
+          <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
+          <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
+        </div>
+      </div>
+
+      <div class="group" style="margin-top:14px;">
+        <label for="text">Originaltext</label>
+        <textarea id="text" placeholder="Hier medizinischen Text einfügen..."></textarea>
+        <div class="meta">
+          <span id="charCount">0 Zeichen</span>
+          <span id="wordCount">0 Wörter</span>
+          <span id="lineCount">0 Zeilen</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="speakBtn" type="button">Vorlesen</button>
+        <button id="pauseBtn" class="secondary" type="button">Pause</button>
+        <button id="resumeBtn" class="secondary" type="button">Weiter</button>
+        <button id="stopBtn" class="secondary" type="button">Stop</button>
+        <button id="generateQuestionsBtn" class="blue" type="button">Fragen generieren</button>
+        <button id="clearAllBtn" class="danger" type="button">Clear</button>
+        <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
+        <label class="file-btn" for="fileInput">.txt laden</label>
+        <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
+      </div>
+
+      <div id="status" class="status">Bereit.</div>
+      <audio id="audioPlayer" controls class="hidden"></audio>
+      <a id="downloadLink" class="download-link hidden">Audio herunterladen</a>
+    </div>
+  </div>
+
+  <div class="col col-right">
+    <div class="card">
+      <div class="toolbar">
+        <div>
+          <h2>Fragen & Antworten</h2>
+          <p class="subtitle">Fragen bleiben lokal gespeichert. Antworten können beliebig oft überschrieben und neu bewertet werden.</p>
+        </div>
+        <div class="toolbar-right">
+          <button id="exportBtn" class="secondary" type="button">Export</button>
+          <button id="clearQuestionsBtn" class="ghost" type="button">Nur Fragen löschen</button>
+        </div>
+      </div>
+
+      <div id="questionsContainer" class="question-list"></div>
+      <div id="emptyQuestions" class="empty">
+        Noch keine Fragen vorhanden.
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+
+  <script>
+    const STORAGE_KEY = "med_tts_active_recall_v2";
+    const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
+    const CHAT_MODEL = "openai/gpt-4o-mini";
+
+    const themeSwitch = document.getElementById("themeSwitch");
+    const startupCard = document.getElementById("startupCard");
+    const startupBaseUrl = document.getElementById("startupBaseUrl");
+    const startupApiKeyTts = document.getElementById("startupApiKeyTts");
+    const startupApiKeyChat = document.getElementById("startupApiKeyChat");
+    const startupVoice = document.getElementById("startupVoice");
+    const startupQuestionCount = document.getElementById("startupQuestionCount");
+    const saveStartupBtn = document.getElementById("saveStartupBtn");
+    const hideStartupBtn = document.getElementById("hideStartupBtn");
+    const clearApiBtn = document.getElementById("clearApiBtn");
+    const apiStateBadge = document.getElementById("apiStateBadge");
+
+    const baseUrlInput = document.getElementById("baseUrl");
+    const apiKeyTtsInput = document.getElementById("apiKeyTts");
+    const apiKeyChatInput = document.getElementById("apiKeyChat");
+    const voiceInput = document.getElementById("voice");
+    const formatInput = document.getElementById("format");
+    const speedInput = document.getElementById("speed");
+    const questionCountInput = document.getElementById("questionCount");
+    const textInput = document.getElementById("text");
+
+    const saveSettingsCheckbox = document.getElementById("saveSettings");
+    const autoPlayCheckbox = document.getElementById("autoPlay");
+    const autoDownloadCheckbox = document.getElementById("autoDownload");
+
+    const toggleAdvancedBtn = document.getElementById("toggleAdvancedBtn");
+    const advancedPanel = document.getElementById("advancedPanel");
+    const modelBadge = document.getElementById("modelBadge");
+
+    const speakBtn = document.getElementById("speakBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resumeBtn = document.getElementById("resumeBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const generateQuestionsBtn = document.getElementById("generateQuestionsBtn");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const fileInput = document.getElementById("fileInput");
+
+    const exportBtn = document.getElementById("exportBtn");
+    const clearQuestionsBtn = document.getElementById("clearQuestionsBtn");
+
+    const statusEl = document.getElementById("status");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const downloadLink = document.getElementById("downloadLink");
+
+    const questionsContainer = document.getElementById("questionsContainer");
+    const emptyQuestions = document.getElementById("emptyQuestions");
+
+    const charCount = document.getElementById("charCount");
+    const wordCount = document.getElementById("wordCount");
+    const lineCount = document.getElementById("lineCount");
+
+    let currentAudioUrl = null;
+    let appState = {
+      questions: []
+    };
+
+    function setStatus(message, type = "info") {
+      statusEl.textContent = message;
+      statusEl.className = "status " + type;
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function updateStats() {
+      const text = textInput.value || "";
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const lines = text ? text.split(/\n/).length : 0;
+      charCount.textContent = `${text.length} Zeichen`;
+      wordCount.textContent = `${words} Wörter`;
+      lineCount.textContent = `${lines} Zeilen`;
+    }
+
+    function updateApiBadge() {
+      const hasTts = !!apiKeyTtsInput.value.trim();
+      const hasChat = !!apiKeyChatInput.value.trim();
+
+      if (hasTts && hasChat) {
+        apiStateBadge.textContent = "Alle Keys gesetzt";
+      } else {
+        apiStateBadge.textContent = `Keys gesetzt: ${[hasTts, hasChat].filter(Boolean).length}/2`;
+      }
+    }
+
+    function updateModelBadge() {
+      modelBadge.textContent = `TTS: ${TTS_MODEL} · Chat: ${CHAT_MODEL}`;
+    }
+
+    function syncStartupToMain() {
+      baseUrlInput.value = startupBaseUrl.value;
+      apiKeyTtsInput.value = startupApiKeyTts.value;
+      apiKeyChatInput.value = startupApiKeyChat.value;
+      voiceInput.value = startupVoice.value;
+      questionCountInput.value = startupQuestionCount.value;
+      updateApiBadge();
+      updateModelBadge();
+    }
+
+    function syncMainToStartup() {
+      startupBaseUrl.value = baseUrlInput.value;
+      startupApiKeyTts.value = apiKeyTtsInput.value;
+      startupApiKeyChat.value = apiKeyChatInput.value;
+      startupVoice.value = voiceInput.value;
+      startupQuestionCount.value = questionCountInput.value;
+      updateApiBadge();
+      updateModelBadge();
+    }
+
+    function saveState() {
+      if (!saveSettingsCheckbox.checked) return;
+
+      const data = {
+        baseUrl: baseUrlInput.value,
+        apiKeyTts: apiKeyTtsInput.value,
+        apiKeyChat: apiKeyChatInput.value,
+        voice: voiceInput.value,
+        format: formatInput.value,
+        speed: speedInput.value,
+        questionCount: questionCountInput.value,
+        text: textInput.value,
+        autoPlay: autoPlayCheckbox.checked,
+        autoDownload: autoDownloadCheckbox.checked,
+        saveSettings: saveSettingsCheckbox.checked,
+        advancedOpen: !advancedPanel.classList.contains("collapsed"),
+        startupCollapsed: startupCard.classList.contains("collapsed"),
+        questions: appState.questions,
+        theme: document.documentElement.getAttribute('data-theme') || 'light'
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      updateApiBadge();
+      updateModelBadge();
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          updateApiBadge();
+          updateModelBadge();
+          return;
+        }
+
+        const data = JSON.parse(raw);
+
+        baseUrlInput.value = data.baseUrl || "https://api.hrz.uni-giessen.de";
+        apiKeyTtsInput.value = data.apiKeyTts || "";
+        apiKeyChatInput.value = data.apiKeyChat || "";
+        voiceInput.value = data.voice || "alloy";
+        formatInput.value = data.format || "mp3";
+        speedInput.value = data.speed || "1.0";
+        questionCountInput.value = data.questionCount || "";
+        textInput.value = data.text || "";
+
+        autoPlayCheckbox.checked = data.autoPlay !== false;
+        autoDownloadCheckbox.checked = data.autoDownload === true;
+        saveSettingsCheckbox.checked = data.saveSettings !== false;
+
+        appState.questions = Array.isArray(data.questions) ? data.questions : [];
+
+        if (data.advancedOpen) {
+          advancedPanel.classList.remove("collapsed");
+          toggleAdvancedBtn.textContent = "Erweiterte Einstellungen verbergen";
+        } else {
+          advancedPanel.classList.add("collapsed");
+          toggleAdvancedBtn.textContent = "Erweiterte Einstellungen anzeigen";
+        }
+
+        if (data.startupCollapsed) {
+          startupCard.classList.add("collapsed");
+        }
+
+        if (data.theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          themeSwitch.textContent = '☀️ Light';
+        }
+
+        syncMainToStartup();
+        updateStats();
+        renderQuestions();
+        updateApiBadge();
+        updateModelBadge();
+      } catch (e) {
+        console.error("Fehler beim Laden des Zustands:", e);
+      }
+    }
+
+    function resetAudio() {
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+      }
+      audioPlayer.pause();
+      audioPlayer.removeAttribute("src");
+      audioPlayer.load();
+      audioPlayer.classList.add("hidden");
+      downloadLink.classList.add("hidden");
+      downloadLink.removeAttribute("href");
+    }
+
+    function triggerDownload(url, filename) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function fetchJsonChat({systemPrompt, userPrompt}) {
+      const apiKey = apiKeyChatInput.value.trim();
+      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const model = CHAT_MODEL;
+
+      if (!apiKey) {
+        throw new Error(`Kein API-Key für ${CHAT_MODEL} gesetzt.`);
+      }
+
+      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const err = await response.json();
+          errorMessage = JSON.stringify(err, null, 2);
+        } catch {
+          errorMessage = await response.text();
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      return data?.choices?.[0]?.message?.content ?? "";
+    }
+
+    function tryParseJSON(text) {
+      try {
+        return JSON.parse(text);
+      } catch (_) {
+        const match = text.match(/\{[\s\S]*\}|$begin:math:display$\[\\s\\S\]\*$end:math:display$/);
+        if (match) {
+          try {
+            return JSON.parse(match[0]);
+          } catch {}
+        }
+      }
+      return null;
+    }
+
+    async function generateSpeech() {
+      const apiKey = apiKeyTtsInput.value.trim();
+      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const model = TTS_MODEL;
+      const text = textInput.value.trim();
+      const voice = voiceInput.value;
+      const format = formatInput.value;
+      const speed = parseFloat(speedInput.value);
+
+      if (!apiKey) {
+        setStatus(`Bitte den API-Key für das TTS-Modell setzen.`, "error");
+        return;
+      }
+      if (!text) {
+        setStatus("Bitte Text eingeben.", "error");
+        return;
+      }
+      if (Number.isNaN(speed) || speed < 0.25 || speed > 4) {
+        setStatus("Geschwindigkeit muss zwischen 0.25 und 4 liegen.", "error");
+        return;
+      }
+
+      speakBtn.disabled = true;
+      setStatus(`Audio wird erzeugt ...\nTTS-Modell: ${model}\nStimme: ${voice}`, "info");
+
+      try {
+        resetAudio();
+        saveState();
+
+        const response = await fetch(`${baseUrl}/v1/audio/speech`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model,
+            input: text,
+            voice,
+            response_format: format,
+            speed
+          })
+        });
+
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const data = await response.json();
+            errorMessage = JSON.stringify(data, null, 2);
+          } catch {
+            errorMessage = await response.text();
+          }
+          throw new Error(errorMessage);
+        }
+
+        const blob = await response.blob();
+        currentAudioUrl = URL.createObjectURL(blob);
+
+        audioPlayer.src = currentAudioUrl;
+        audioPlayer.classList.remove("hidden");
+
+        const ext = format === "pcm" ? "raw" : format;
+        const fileName = `speech_${model.replaceAll("/", "_")}.${ext}`;
+        downloadLink.href = currentAudioUrl;
+        downloadLink.download = fileName;
+        downloadLink.textContent = `Audio herunterladen (${fileName})`;
+        downloadLink.classList.remove("hidden");
+
+        if (autoPlayCheckbox.checked) {
+          try {
+            await audioPlayer.play();
+          } catch (_) {}
+        }
+
+        if (autoDownloadCheckbox.checked) {
+          triggerDownload(currentAudioUrl, fileName);
+        }
+
+        setStatus(`Audio erfolgreich erzeugt.\nTTS-Modell: ${model}`, "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus("Fehler: " + err.message, "error");
+      } finally {
+        speakBtn.disabled = false;
+      }
+    }
+
+    async function generateQuestions() {
+      const text = textInput.value.trim();
+
+      if (!apiKeyChatInput.value.trim()) {
+        setStatus(`Bitte den API-Key für ${CHAT_MODEL} setzen.`, "error");
+        return;
+      }
+      if (!text) {
+        setStatus("Bitte zuerst einen Originaltext eingeben.", "error");
+        return;
+      }
+
+      generateQuestionsBtn.disabled = true;
+      setStatus(`Fragen werden generiert ...\nChat-Modell: ${CHAT_MODEL}`, "info");
+
+      const countRaw = questionCountInput.value.trim();
+      const count = countRaw ? Number(countRaw) : null;
+
+      const systemPrompt = `
+Du bist ein extrem zeiteffizienter medizinischer Prüfungs-Coach.
+Erzeuge aus medizinischem Text kurze, präzise Active-Recall-Fragen.
+Regeln:
+- Maximal 1–2 Sätze pro Frage.
+- Keine langen Erklärungen.
+- Kein Lehrbuchstil.
+- Keine Wiederholung des Originaltexts.
+- Wenn Anzahl vorgegeben ist, halte dich daran.
+- Wenn keine Anzahl vorgegeben ist, entscheide sinnvoll selbst.
+- Wenn der Text lang ist, fokussiere die wichtigsten Kernpunkte.
+Gib ausschließlich valides JSON zurück in exakt diesem Format:
+{
+  "questions": [
+    "Frage 1",
+    "Frage 2"
+  ]
+}
+Keine zusätzlichen Sätze.
+      `.trim();
+
+      const userPrompt = `
+Originaltext:
+"""${text}"""
+
+Gewünschte Anzahl Fragen: ${count ? count : "nicht definiert, entscheide selbst"}
+
+Erzeuge nur die Fragen als JSON.
+      `.trim();
+
+      try {
+        const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+        const parsed = tryParseJSON(raw);
+
+        if (!parsed || !Array.isArray(parsed.questions)) {
+          throw new Error("Die Fragen konnten nicht als JSON gelesen werden.");
+        }
+
+        const newQuestions = parsed.questions
+          .map(q => String(q).trim())
+          .filter(Boolean)
+          .map((q, idx) => ({
+            id: uid(),
+            question: q,
+            answer: "",
+            result: null,
+            open: idx === 0
+          }));
+
+        appState.questions = newQuestions;
+        saveState();
+        renderQuestions();
+
+        setStatus(`Fragen erfolgreich generiert: ${newQuestions.length}`, "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus("Fehler bei der Fragengenerierung: " + err.message, "error");
+      } finally {
+        generateQuestionsBtn.disabled = false;
+      }
+    }
+
+    async function evaluateQuestion(questionId) {
+      const question = appState.questions.find(q => q.id === questionId);
+      const originalText = textInput.value.trim();
+
+      if (!apiKeyChatInput.value.trim()) {
+        setStatus(`Bitte den API-Key für ${CHAT_MODEL} setzen.`, "error");
+        return;
+      }
+      if (!originalText) {
+        setStatus("Es fehlt der Originaltext zum Abgleich.", "error");
+        return;
+      }
+      if (!question) return;
+      if (!question.answer.trim()) {
+        setStatus("Bitte zuerst eine Antwort eingeben.", "error");
+        return;
+      }
+
+      const sendBtn = document.querySelector(`[data-eval-id="${questionId}"]`);
+      if (sendBtn) sendBtn.disabled = true;
+
+      setStatus(`Antwort wird bewertet ...\nFrage: ${question.question}`, "info");
+
+      const systemPrompt = `
+Du bist ein "Active-Recall Medizin Agent" und bewertest Antworten streng, kurz und objektiv.
+
+SCORING-REGEL:
+- 90–100: alle Kernpunkte korrekt, keine groben Fehler
+- 70–89: Kern korrekt, 1–2 relevante Lücken/Unschärfen
+- 40–69: Teilverständnis, mehrere Lücken oder 1 grober Fehler
+- 0–39: überwiegend falsch/ausweichend
+
+AUSGABE:
+Gib ausschließlich valides JSON zurück in genau diesem Format:
+{
+  "score": 0,
+  "richtig": ["Punkt 1", "Punkt 2"],
+  "falsch_fehlt": ["Punkt 1", "Punkt 2"]
+}
+
+Regeln:
+- "score" ist eine ganze Zahl von 0 bis 100.
+- "richtig": maximal 3 Bulletpoints.
+- "falsch_fehlt": maximal 3 Bulletpoints.
+- Kurz, stichpunktartig.
+- Keine Zusatztexte außerhalb des JSON.
+      `.trim();
+
+      const userPrompt = `
+Originaltext:
+"""${originalText}"""
+
+Frage:
+"""${question.question}"""
+
+Nutzerantwort:
+"""${question.answer}"""
+
+Bewerte die Antwort ausschließlich anhand des Originaltexts.
+      `.trim();
+
+      try {
+        const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+        const parsed = tryParseJSON(raw);
+
+        if (!parsed || typeof parsed.score === "undefined") {
+          throw new Error("Bewertung konnte nicht als JSON gelesen werden.");
+        }
+
+        question.result = {
+          score: Math.max(0, Math.min(100, Number(parsed.score) || 0)),
+          richtig: Array.isArray(parsed.richtig) ? parsed.richtig.slice(0, 3).map(String) : [],
+          falsch_fehlt: Array.isArray(parsed.falsch_fehlt) ? parsed.falsch_fehlt.slice(0, 3).map(String) : []
+        };
+
+        saveState();
+        renderQuestions();
+        setStatus(`Antwort bewertet.\nScore: ${question.result.score}%`, "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus("Fehler bei der Bewertung: " + err.message, "error");
+      } finally {
+        if (sendBtn) sendBtn.disabled = false;
+      }
+    }
+
+    function deleteQuestion(questionId) {
+      appState.questions = appState.questions.filter(q => q.id !== questionId);
+      saveState();
+      renderQuestions();
+      setStatus("Frage gelöscht.", "ok");
+    }
+
+    function toggleQuestion(questionId) {
+      const question = appState.questions.find(q => q.id === questionId);
+      if (!question) return;
+      question.open = !question.open;
+      saveState();
+      renderQuestions();
+    }
+
+    function updateQuestionAnswer(questionId, value) {
+      const question = appState.questions.find(q => q.id === questionId);
+      if (!question) return;
+      question.answer = value;
+      saveState();
+    }
+
+    function renderQuestions() {
+      questionsContainer.innerHTML = "";
+
+      if (!appState.questions.length) {
+        emptyQuestions.classList.remove("hidden");
+        return;
+      }
+
+      emptyQuestions.classList.add("hidden");
+
+      appState.questions.forEach((q, idx) => {
+        const result = q.result || null;
+        const card = document.createElement("div");
+        card.className = "question-card";
+
+        card.innerHTML = `
+          <div class="question-head">
+            <div style="flex:1 1 auto;">
+              <div class="question-index">Frage ${idx + 1}</div>
+              <div class="question-text">${escapeHtml(q.question)}</div>
+            </div>
+            <div class="question-actions">
+              ${result ? `<div class="score-pill">Score: ${result.score}%</div>` : ""}
+              <button class="ghost" type="button" data-toggle-id="${q.id}">
+                ${q.open ? "Einklappen" : "Öffnen"}
+              </button>
+              <button class="danger" type="button" data-delete-id="${q.id}">Löschen</button>
+            </div>
+          </div>
+
+          <div class="question-body ${q.open ? "" : "hidden"}" id="body-${q.id}">
+            <div>
+              <label for="answer-${q.id}">Deine Antwort</label>
+              <textarea id="answer-${q.id}" class="small-textarea" placeholder="Hier deine Antwort eingeben...">${escapeHtml(q.answer || "")}</textarea>
+
+
+        </div>
+
+        <div class="btn-row">
+          <button class="blue" type="button" data-eval-id="${q.id}">Senden / Bewerten</button>
+        </div>
+
+        ${result ? `
+          <div class="feedback-grid">
+            <div class="feedback">
+              <div class="feedback-title">Richtig</div>
+              <ul>
+                ${result.richtig.length ? result.richtig.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
+              </ul>
+            </div>
+            <div class="feedback">
+              <div class="feedback-title">Falsch/Fehlt</div>
+              <ul>
+                ${result.falsch_fehlt.length ? result.falsch_fehlt.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
+              </ul>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+
+    questionsContainer.appendChild(card);
+  });
+
+  questionsContainer.querySelectorAll("[data-toggle-id]").forEach(btn => {
+    btn.addEventListener("click", () => toggleQuestion(btn.dataset.toggleId));
+  });
+
+  questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
+    btn.addEventListener("click", () => deleteQuestion(btn.dataset.deleteId));
+  });
+
+  questionsContainer.querySelectorAll("textarea[id^='answer-']").forEach(textarea => {
+    const questionId = textarea.id.replace("answer-", "");
+    textarea.addEventListener("input", (e) => updateQuestionAnswer(questionId, e.target.value));
+  });
+
+  questionsContainer.querySelectorAll("[data-eval-id]").forEach(btn => {
+    btn.addEventListener("click", () => evaluateQuestion(btn.dataset.evalId));
+  });
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function exportQuestions() {
+  if (!appState.questions.length) {
+    setStatus("Es gibt keine Fragen zum Exportieren.", "error");
+    return;
+  }
+
+  const lines = [];
+  lines.push("MED ACTIVE RECALL EXPORT");
+  lines.push("========================");
+  lines.push("");
+  lines.push("Originaltext:");
+  lines.push(textInput.value.trim() || "—");
+  lines.push("");
+  lines.push("Fragen:");
+  lines.push("");
+
+  appState.questions.forEach((q, i) => {
+    lines.push(`Frage ${i + 1}: ${q.question}`);
+    lines.push(`Antwort: ${q.answer?.trim() || "—"}`);
+    if (q.result) {
+      lines.push(`Score: ${q.result.score}%`);
+      lines.push("Richtig:");
+      if (q.result.richtig.length) q.result.richtig.forEach(item => lines.push(`- ${item}`));
+      else lines.push("- —");
+      lines.push("Falsch/Fehlt:");
+      if (q.result.falsch_fehlt.length) q.result.falsch_fehlt.forEach(item => lines.push(`- ${item}`));
+      else lines.push("- —");
+    } else {
+      lines.push("Score: —");
+      lines.push("Richtig:");
+      lines.push("- —");
+      lines.push("Falsch/Fehlt:");
+      lines.push("- —");
+    }
+    lines.push("");
+  });
+
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  triggerDownload(url, "active_recall_export.txt");
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+  setStatus("Export erstellt.", "ok");
+}
+
+function clearQuestionsOnly() {
+  appState.questions = [];
+  saveState();
+  renderQuestions();
+  setStatus("Alle Fragen wurden gelöscht.", "ok");
+}
+
+function clearAll() {
+  textInput.value = "";
+  questionCountInput.value = "";
+  appState.questions = [];
+  resetAudio();
+  updateStats();
+  saveState();
+  renderQuestions();
+  setStatus("Text, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
+}
+
+themeSwitch.addEventListener("click", () => {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  if (currentTheme === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+    themeSwitch.textContent = '🌙 Dark';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeSwitch.textContent = '☀️ Light';
+  }
+  saveState();
+});
+
+saveStartupBtn.addEventListener("click", () => {
+  syncStartupToMain();
+  saveState();
+  setStatus("API-Keys und Einstellungen lokal gespeichert.", "ok");
+});
+
+hideStartupBtn.addEventListener("click", () => {
+  startupCard.classList.add("collapsed");
+  saveState();
+  setStatus("Startfeld eingeklappt.", "ok");
+});
+
+clearApiBtn.addEventListener("click", () => {
+  startupApiKeyTts.value = "";
+  startupApiKeyChat.value = "";
+  apiKeyTtsInput.value = "";
+  apiKeyChatInput.value = "";
+  saveState();
+  updateApiBadge();
+  setStatus("Alle API-Keys lokal gelöscht.", "ok");
+});
+
+toggleAdvancedBtn.addEventListener("click", () => {
+  if (advancedPanel.classList.contains("collapsed")) {
+    advancedPanel.classList.remove("collapsed");
+    toggleAdvancedBtn.textContent = "Erweiterte Einstellungen verbergen";
+  } else {
+    advancedPanel.classList.add("collapsed");
+    toggleAdvancedBtn.textContent = "Erweiterte Einstellungen anzeigen";
+  }
+  saveState();
+});
+
+[startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupVoice, startupQuestionCount].forEach(el => {
+  el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
+  el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
+});
+
+[baseUrlInput, apiKeyTtsInput, apiKeyChatInput, voiceInput, formatInput, speedInput, questionCountInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox].forEach(el => {
+  el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
+  el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
+});
+
+textInput.addEventListener("input", () => {
+  updateStats();
+  saveState();
+});
+
+speakBtn.addEventListener("click", generateSpeech);
+generateQuestionsBtn.addEventListener("click", generateQuestions);
+
+pauseBtn.addEventListener("click", () => {
+  if (!audioPlayer.paused) {
+    audioPlayer.pause();
+    setStatus("Wiedergabe pausiert.", "info");
+  }
+});
+
+resumeBtn.addEventListener("click", async () => {
+  if (audioPlayer.src) {
+    try {
+      await audioPlayer.play();
+      setStatus("Wiedergabe fortgesetzt.", "ok");
+    } catch {
+      setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
+    }
+  }
+});
+
+stopBtn.addEventListener("click", () => {
+  if (audioPlayer.src) {
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    setStatus("Wiedergabe gestoppt.", "info");
+  }
+});
+
+copyBtn.addEventListener("click", async () => {
+  const text = textInput.value;
+  if (!text) {
+    setStatus("Kein Text zum Kopieren vorhanden.", "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("Text kopiert.", "ok");
+  } catch {
+    setStatus("Kopieren fehlgeschlagen.", "error");
+  }
+});
+
+clearAllBtn.addEventListener("click", clearAll);
+clearQuestionsBtn.addEventListener("click", clearQuestionsOnly);
+exportBtn.addEventListener("click", exportQuestions);
+
+fileInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const content = await file.text();
+    textInput.value = content;
+    updateStats();
+    saveState();
+    setStatus(`Datei geladen: ${file.name}`, "ok");
+  } catch {
+    setStatus("Datei konnte nicht gelesen werden.", "error");
+  } finally {
+    fileInput.value = "";
+  }
+});
+
+loadState();
+updateStats();
+renderQuestions();
+updateApiBadge();
+updateModelBadge();
+
+  </script>
+</body>
+</html>
 
