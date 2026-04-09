@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-
-
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
@@ -24,764 +22,833 @@
       --info-text:#075985;
       --shadow:0 14px 40px rgba(15, 23, 42, 0.10);
       --radius:18px;
+      --timer-paused:#9ca3af;
+      --timer-running:#16a34a;
+      --timer-overtime-a:#f59e0b;
+      --timer-overtime-b:#22c55e;
     }
 
-
-[data-theme="dark"] {
-  --bg:#0f172a;
-  --card:#1e293b;
-  --card-2:#334155;
-  --text:#f1f5f9;
-  --muted:#94a3b8;
-  --line:#334155;
-  --accent:#3b82f6;
-  --accent-2:#60a5fa;
-  --good-bg:#064e3b;
-  --good-text:#6ee7b7;
-  --bad-bg:#7f1d1d;
-  --bad-text:#fca5a5;
-  --info-bg:#0c4a6e;
-  --info-text:#7dd3fc;
-  --shadow:0 14px 40px rgba(0, 0, 0, 0.3);
-}
-
-*{ box-sizing:border-box; }
-
-html,body{
-  margin:0;
-  padding:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family: Inter, Arial, sans-serif;
-  overflow-x:hidden;
-}
-
-body{
-  min-width:100%;
-}
-
-.app{
-  width:100%;
-  max-width:1500px;
-  margin:0 auto;
-  padding:10px 10px 20px;
-}
-
-.row{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  align-items:stretch;
-}
-
-.col{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  width:100%;
-}
-
-.col-left{ width:100%; }
-.col-right{ width:100%; }
-
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:14px;
-}
-
-.top{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-bottom:12px;
-}
-
-h1{
-  margin:0 0 6px 0;
-  font-size:22px;
-  letter-spacing:-0.02em;
-}
-
-h2{
-  margin:0 0 10px 0;
-  font-size:16px;
-  letter-spacing:-0.01em;
-}
-
-.subtitle{
-  margin:0;
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.5;
-}
-
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  border:1px solid var(--line);
-  background:var(--card-2);
-  color:var(--text);
-  border-radius:999px;
-  padding:6px 10px;
-  font-size:11px;
-  white-space:normal;
-  text-align:center;
-}
-
-.group{ margin-bottom:12px; }
-
-.grid-2, .grid-3, .grid-4{
-  display:grid;
-  gap:10px;
-}
-
-.grid-2{ grid-template-columns:1fr; }
-.grid-3{ grid-template-columns:1fr; }
-.grid-4{ grid-template-columns:1fr; }
-
-label{
-  display:block;
-  margin-bottom:6px;
-  font-size:12px;
-  font-weight:700;
-  color:var(--text);
-}
-
-input[type="text"],
-input[type="password"],
-input[type="number"],
-textarea,
-select,
-button{
-  width:100%;
-  font-size:14px;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:var(--card);
-  padding:10px 12px;
-  color:var(--text);
-}
-
-textarea{
-  min-height:180px;
-  resize:vertical;
-  line-height:1.6;
-}
-
-.small-textarea{
-  min-height:100px;
-}
-
-button{
-  border:none;
-  background:var(--accent);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-  transition:transform .08s ease, opacity .15s ease, background .15s ease;
-}
-
-button:hover{ opacity:.95; }
-button:active{ transform:translateY(1px); }
-button:disabled{ opacity:.55; cursor:not-allowed; }
-
-.secondary{
-  background:var(--muted);
-  color:var(--card);
-}
-
-.blue{
-  background:var(--accent-2);
-  color:#fff;
-}
-
-.danger{
-  background:#b91c1c;
-  color:#fff;
-}
-
-.success{
-  background:#166534;
-  color:#fff;
-}
-
-.ghost{
-  background:var(--card-2);
-  color:var(--text);
-  border:1px solid var(--line);
-}
-
-.toggle-btn{
-  background:var(--card-2);
-  color:var(--text);
-  border:1px solid var(--line);
-}
-
-.btn-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-
-.btn-row button,
-.btn-row label.file-btn{
-  width:auto;
-  min-width:80px;
-  flex:1 1 auto;
-  max-width:150px;
-}
-
-.file-btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:10px 12px;
-  border-radius:14px;
-  background:var(--muted);
-  color:var(--card);
-  font-weight:700;
-  cursor:pointer;
-  font-size:14px;
-}
-
-.hidden{ display:none !important; }
-.collapsed{ display:none !important; }
-
-.status{
-  margin-top:12px;
-  min-height:40px;
-  padding:10px 12px;
-  border-radius:14px;
-  background:var(--card-2);
-  color:var(--text);
-  font-size:13px;
-  white-space:pre-wrap;
-  line-height:1.5;
-  border:1px solid transparent;
-}
-
-.status.ok{
-  background:var(--good-bg);
-  color:var(--good-text);
-}
-
-.status.error{
-  background:var(--bad-bg);
-  color:var(--bad-text);
-}
-
-.status.info{
-  background:var(--info-bg);
-  color:var(--info-text);
-}
-
-.meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:8px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.inline-checks{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  font-size:13px;
-  margin-top:8px;
-}
-
-.inline-checks label{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:0;
-  font-weight:500;
-}
-
-audio{
-  width:100%;
-  margin-top:12px;
-}
-
-.download-link{
-  display:inline-block;
-  margin-top:10px;
-  text-decoration:none;
-  font-weight:700;
-  color:var(--text);
-  font-size:13px;
-}
-
-.note{
-  font-size:11px;
-  color:var(--muted);
-  line-height:1.6;
-}
-
-.question-list{
-  display:grid;
-  gap:12px;
-  margin-top:8px;
-}
-
-.question-card{
-  border:1px solid var(--line);
-  background:var(--card);
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 6px 20px rgba(15,23,42,.05);
-}
-
-[data-theme="dark"] .question-card{
-  box-shadow:0 6px 20px rgba(0,0,0,.2);
-}
-
-.question-head{
-  padding:12px 14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  background:var(--card-2);
-  border-bottom:1px solid var(--line);
-}
-
-.question-index{
-  font-size:11px;
-  color:var(--muted);
-  margin-bottom:4px;
-}
-
-.question-text{
-  font-weight:700;
-  line-height:1.5;
-  color:var(--text);
-  font-size:14px;
-}
-
-.question-actions{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.question-actions button{
-  min-width:auto;
-  padding:8px 10px;
-  font-size:12px;
-  border-radius:12px;
-  flex:1 1 auto;
-}
-
-.question-body{
-  padding:12px 14px;
-  display:grid;
-  gap:10px;
-  background:var(--card);
-}
-
-.score-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  font-weight:800;
-  font-size:11px;
-  border-radius:999px;
-  padding:6px 10px;
-  background:var(--info-bg);
-  color:var(--info-text);
-  border:1px solid var(--line);
-}
-
-.feedback{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:var(--card-2);
-}
-
-.feedback-title{
-  font-size:12px;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-.feedback ul{
-  margin:0;
-  padding-left:16px;
-  line-height:1.5;
-  font-size:13px;
-}
-
-.feedback-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-}
-
-.empty{
-  border:1px dashed var(--line);
-  border-radius:16px;
-  padding:18px;
-  text-align:center;
-  color:var(--muted);
-  background:var(--card-2);
-  font-size:13px;
-}
-
-.toolbar{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-bottom:10px;
-}
-
-.toolbar-right{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.toolbar-right button{
-  flex:1 1 auto;
-  min-width:100px;
-}
-
-.panel-slim{
-  padding:12px;
-  border:1px solid var(--line);
-  background:var(--card-2);
-  border-radius:16px;
-}
-
-.theme-switch {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-
-@media (min-width: 768px) {
-  .app{
-    padding:15px 12px 30px;
-  }
-
-  .card{
-    padding:16px;
-  }
-
-  .grid-2{ grid-template-columns:1fr 1fr; }
-  .grid-3{ grid-template-columns:1fr 1fr; }
-  .grid-4{ grid-template-columns:1fr 1fr; }
-
-  .btn-row button,
-  .btn-row label.file-btn{
-    max-width:none;
-  }
-
-  .top{
-    flex-direction:row;
-    justify-content:space-between;
-    align-items:flex-start;
-  }
-
-  .question-head{
-    flex-direction:row;
-    justify-content:space-between;
-    align-items:flex-start;
-  }
-
-  .toolbar{
-    flex-direction:row;
-    justify-content:space-between;
-    align-items:center;
-  }
-
-  .inline-checks{
-    flex-direction:row;
-    flex-wrap:wrap;
-    gap:16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .app{
-    padding:20px 14px 36px;
-  }
-
-  .card{
-    padding:18px;
-  }
-
-  .row{
-    flex-direction:row;
-  }
-
-  .col-left{ width:780px; flex:0 0 780px; }
-  .col-right{ width:680px; flex:0 0 680px; }
-
-  .grid-3{ grid-template-columns:1fr 1fr 1fr; }
-  .grid-4{ grid-template-columns:1fr 1fr 1fr 1fr; }
-
-  .btn-row button,
-  .btn-row label.file-btn{
-    min-width:120px;
-  }
-
-  .feedback-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-  h1{ font-size:26px; }
-  h2{ font-size:18px; }
-  .subtitle{ font-size:13px; }
-  .badge{ font-size:12px; padding:8px 12px; }
-  input[type="text"],
-  input[type="password"],
-  input[type="number"],
-  textarea,
-  select,
-  button{ padding:12px 14px; }
-  textarea{ min-height:240px; }
-  .small-textarea{ min-height:110px; }
-  .status{ min-height:48px; padding:12px 14px; font-size:14px; }
-  .meta{ font-size:13px; gap:14px; }
-  .inline-checks{ font-size:14px; }
-  .download-link{ font-size:14px; }
-  .note{ font-size:12px; }
-  .question-list{ gap:14px; }
-  .question-head{ padding:14px 16px; }
-  .question-index{ font-size:12px; margin-bottom:6px; }
-  .question-text{ font-size:16px; }
-  .question-actions{ gap:8px; }
-  .question-actions button{ padding:10px 12px; font-size:13px; }
-  .question-body{ padding:14px 16px 16px; gap:12px; }
-  .score-pill{ font-size:12px; padding:7px 11px; gap:6px; }
-  .feedback{ padding:12px 14px; }
-  .feedback-title{ font-size:13px; margin-bottom:8px; }
-  .feedback ul{ font-size:14px; padding-left:18px; }
-  .empty{ padding:22px; font-size:14px; }
-  .toolbar-right{ gap:10px; }
-  .toolbar-right button{ min-width:auto; }
-  .panel-slim{ padding:14px; }
-}
-
+    [data-theme="dark"] {
+      --bg:#0f172a;
+      --card:#1e293b;
+      --card-2:#334155;
+      --text:#f1f5f9;
+      --muted:#94a3b8;
+      --line:#334155;
+      --accent:#3b82f6;
+      --accent-2:#60a5fa;
+      --good-bg:#064e3b;
+      --good-text:#6ee7b7;
+      --bad-bg:#7f1d1d;
+      --bad-text:#fca5a5;
+      --info-bg:#0c4a6e;
+      --info-text:#7dd3fc;
+      --shadow:0 14px 40px rgba(0, 0, 0, 0.3);
+      --timer-paused:#6b7280;
+      --timer-running:#16a34a;
+      --timer-overtime-a:#f59e0b;
+      --timer-overtime-b:#22c55e;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html,body{
+      margin:0;
+      padding:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: Inter, Arial, sans-serif;
+      overflow-x:hidden;
+    }
+
+    body{
+      min-width:100%;
+    }
+
+    .app{
+      width:100%;
+      max-width:1500px;
+      margin:0 auto;
+      padding:82px 10px 20px;
+    }
+
+    .row{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      align-items:stretch;
+    }
+
+    .col{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      width:100%;
+    }
+
+    .col-left{ width:100%; }
+    .col-right{ width:100%; }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    .top{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    h1{
+      margin:0 0 6px 0;
+      font-size:22px;
+      letter-spacing:-0.02em;
+    }
+
+    h2{
+      margin:0 0 10px 0;
+      font-size:16px;
+      letter-spacing:-0.01em;
+    }
+
+    .subtitle{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background:var(--card-2);
+      color:var(--text);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:11px;
+      white-space:normal;
+      text-align:center;
+    }
+
+    .group{ margin-bottom:12px; }
+
+    .grid-2, .grid-3, .grid-4{
+      display:grid;
+      gap:10px;
+    }
+
+    .grid-2{ grid-template-columns:1fr; }
+    .grid-3{ grid-template-columns:1fr; }
+    .grid-4{ grid-template-columns:1fr; }
+
+    label{
+      display:block;
+      margin-bottom:6px;
+      font-size:12px;
+      font-weight:700;
+      color:var(--text);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select,
+    button{
+      width:100%;
+      font-size:14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--card);
+      padding:10px 12px;
+      color:var(--text);
+    }
+
+    textarea{
+      min-height:180px;
+      resize:vertical;
+      line-height:1.6;
+    }
+
+    .small-textarea{
+      min-height:100px;
+    }
+
+    button{
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .08s ease, opacity .15s ease, background .15s ease, filter .15s ease;
+    }
+
+    button:hover{ opacity:.95; }
+    button:active{ transform:translateY(1px); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .secondary{
+      background:var(--muted);
+      color:var(--card);
+    }
+
+    .blue{
+      background:var(--accent-2);
+      color:#fff;
+    }
+
+    .danger{
+      background:#b91c1c;
+      color:#fff;
+    }
+
+    .success{
+      background:#166534;
+      color:#fff;
+    }
+
+    .ghost{
+      background:var(--card-2);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .toggle-btn{
+      background:var(--card-2);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .btn-row button,
+    .btn-row label.file-btn{
+      width:auto;
+      min-width:80px;
+      flex:1 1 auto;
+      max-width:150px;
+    }
+
+    .file-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 12px;
+      border-radius:14px;
+      background:var(--muted);
+      color:var(--card);
+      font-weight:700;
+      cursor:pointer;
+      font-size:14px;
+    }
+
+    .hidden{ display:none !important; }
+    .collapsed{ display:none !important; }
+
+    .status{
+      margin-top:12px;
+      min-height:40px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:var(--card-2);
+      color:var(--text);
+      font-size:13px;
+      white-space:pre-wrap;
+      line-height:1.5;
+      border:1px solid transparent;
+    }
+
+    .status.ok{
+      background:var(--good-bg);
+      color:var(--good-text);
+    }
+
+    .status.error{
+      background:var(--bad-bg);
+      color:var(--bad-text);
+    }
+
+    .status.info{
+      background:var(--info-bg);
+      color:var(--info-text);
+    }
+
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .inline-checks{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      font-size:13px;
+      margin-top:8px;
+    }
+
+    .inline-checks label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:0;
+      font-weight:500;
+    }
+
+    audio{
+      width:100%;
+      margin-top:12px;
+    }
+
+    .download-link{
+      display:inline-block;
+      margin-top:10px;
+      text-decoration:none;
+      font-weight:700;
+      color:var(--text);
+      font-size:13px;
+    }
+
+    .note{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .question-list{
+      display:grid;
+      gap:12px;
+      margin-top:8px;
+    }
+
+    .question-card{
+      border:1px solid var(--line);
+      background:var(--card);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 6px 20px rgba(15,23,42,.05);
+    }
+
+    [data-theme="dark"] .question-card{
+      box-shadow:0 6px 20px rgba(0,0,0,.2);
+    }
+
+    .question-head{
+      padding:12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      background:var(--card-2);
+      border-bottom:1px solid var(--line);
+    }
+
+    .question-index{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .question-text{
+      font-weight:700;
+      line-height:1.5;
+      color:var(--text);
+      font-size:14px;
+    }
+
+    .question-actions{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .question-actions button{
+      min-width:auto;
+      padding:8px 10px;
+      font-size:12px;
+      border-radius:12px;
+      flex:1 1 auto;
+    }
+
+    .question-body{
+      padding:12px 14px;
+      display:grid;
+      gap:10px;
+      background:var(--card);
+    }
+
+    .score-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-weight:800;
+      font-size:11px;
+      border-radius:999px;
+      padding:6px 10px;
+      background:var(--info-bg);
+      color:var(--info-text);
+      border:1px solid var(--line);
+    }
+
+    .feedback{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--card-2);
+    }
+
+    .feedback-title{
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:6px;
+    }
+
+    .feedback ul{
+      margin:0;
+      padding-left:16px;
+      line-height:1.5;
+      font-size:13px;
+    }
+
+    .feedback-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    .empty{
+      border:1px dashed var(--line);
+      border-radius:16px;
+      padding:18px;
+      text-align:center;
+      color:var(--muted);
+      background:var(--card-2);
+      font-size:13px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .toolbar-right{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .toolbar-right button{
+      flex:1 1 auto;
+      min-width:100px;
+    }
+
+    .panel-slim{
+      padding:12px;
+      border:1px solid var(--line);
+      background:var(--card-2);
+      border-radius:16px;
+    }
+
+    .floating-controls{
+      position:fixed;
+      top:10px;
+      left:10px;
+      z-index:1000;
+      width:min(270px, calc(100vw - 20px));
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .theme-switch{
+      flex:0 0 60%;
+      min-width:0;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+      color:var(--text);
+      box-shadow:var(--shadow);
+      white-space:nowrap;
+    }
+
+    .pomodoro-btn{
+      flex:0 0 30%;
+      min-width:0;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+      box-shadow:var(--shadow);
+      border:1px solid transparent;
+      user-select:none;
+      background:var(--timer-paused);
+      color:#fff;
+    }
+
+    .pomodoro-btn.paused{
+      background:var(--timer-paused);
+      color:#fff;
+    }
+
+    .pomodoro-btn.running{
+      background:var(--timer-running);
+      color:#fff;
+    }
+
+    .pomodoro-btn.overtime{
+      background:var(--timer-overtime-a);
+      color:#fff;
+      animation:pomodoroBlink 1s steps(1, end) infinite;
+    }
+
+    @keyframes pomodoroBlink{
+      0%, 49.999%{
+        background:var(--timer-overtime-a);
+        filter:brightness(1);
+      }
+      50%, 100%{
+        background:var(--timer-overtime-b);
+        filter:brightness(1.06);
+      }
+    }
+
+    @media (min-width: 768px) {
+      .app{
+        padding:88px 12px 30px;
+      }
+
+      .card{
+        padding:16px;
+      }
+
+      .grid-2{ grid-template-columns:1fr 1fr; }
+      .grid-3{ grid-template-columns:1fr 1fr; }
+      .grid-4{ grid-template-columns:1fr 1fr; }
+
+      .btn-row button,
+      .btn-row label.file-btn{
+        max-width:none;
+      }
+
+      .top{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:flex-start;
+      }
+
+      .question-head{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:flex-start;
+      }
+
+      .toolbar{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:center;
+      }
+
+      .inline-checks{
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:16px;
+      }
+
+      .floating-controls{
+        width:300px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .app{
+        padding:92px 14px 36px;
+      }
+
+      .card{
+        padding:18px;
+      }
+
+      .row{
+        flex-direction:row;
+      }
+
+      .col-left{ width:780px; flex:0 0 780px; }
+      .col-right{ width:680px; flex:0 0 680px; }
+
+      .grid-3{ grid-template-columns:1fr 1fr 1fr; }
+      .grid-4{ grid-template-columns:1fr 1fr 1fr 1fr; }
+
+      .btn-row button,
+      .btn-row label.file-btn{
+        min-width:120px;
+      }
+
+      .feedback-grid{
+        grid-template-columns:1fr 1fr;
+      }
+
+      h1{ font-size:26px; }
+      h2{ font-size:18px; }
+      .subtitle{ font-size:13px; }
+      .badge{ font-size:12px; padding:8px 12px; }
+      input[type="text"],
+      input[type="password"],
+      input[type="number"],
+      textarea,
+      select,
+      button{ padding:12px 14px; }
+      textarea{ min-height:240px; }
+      .small-textarea{ min-height:110px; }
+      .status{ min-height:48px; padding:12px 14px; font-size:14px; }
+      .meta{ font-size:13px; gap:14px; }
+      .inline-checks{ font-size:14px; }
+      .download-link{ font-size:14px; }
+      .note{ font-size:12px; }
+      .question-list{ gap:14px; }
+      .question-head{ padding:14px 16px; }
+      .question-index{ font-size:12px; margin-bottom:6px; }
+      .question-text{ font-size:16px; }
+      .question-actions{ gap:8px; }
+      .question-actions button{ padding:10px 12px; font-size:13px; }
+      .question-body{ padding:14px 16px 16px; gap:12px; }
+      .score-pill{ font-size:12px; padding:7px 11px; gap:6px; }
+      .feedback{ padding:12px 14px; }
+      .feedback-title{ font-size:13px; margin-bottom:8px; }
+      .feedback ul{ font-size:14px; padding-left:18px; }
+      .empty{ padding:22px; font-size:14px; }
+      .toolbar-right{ gap:10px; }
+      .toolbar-right button{ min-width:auto; }
+      .panel-slim{ padding:14px; }
+
+      .floating-controls{
+        width:320px;
+      }
+
+      .theme-switch,
+      .pomodoro-btn{
+        font-size:13px;
+      }
+    }
   </style>
 </head>
 <body>
-  <button class="theme-switch" id="themeSwitch">🌙 Dark</button>
-
+  <div class="floating-controls">
+    <button class="theme-switch" id="themeSwitch" type="button">🌙 Dark</button>
+    <button class="pomodoro-btn paused" id="pomodoroBtn" type="button">50</button>
+  </div>
 
   <div class="app">
-
-
-<div class="card" id="startupCard">
-  <div class="top">
-    <div>
-      <h1>Med TTS + Active Recall</h1>
-      <p class="subtitle">API-Keys für TTS und Chat. Alles bleibt gleichzeitig nutzbar.</p>
-    </div>
-    <div class="badge" id="apiStateBadge">Keys noch nicht vollständig gesetzt</div>
-  </div>
-
-  <div class="grid-2">
-    <div class="group">
-      <label for="startupApiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
-      <input id="startupApiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
-    </div>
-
-    <div class="group">
-      <label for="startupApiKeyChat">API Key · openai/gpt-4o-mini</label>
-      <input id="startupApiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
-    </div>
-  </div>
-
-  <div class="grid-3">
-    <div class="group">
-      <label for="startupBaseUrl">Base URL</label>
-      <input id="startupBaseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
-    </div>
-
-    <div class="group">
-      <label for="startupVoice">Standardstimme</label>
-      <select id="startupVoice">
-        <option value="alloy">alloy</option>
-        <option value="ash">ash</option>
-        <option value="ballad">ballad</option>
-        <option value="coral">coral</option>
-        <option value="echo">echo</option>
-        <option value="fable">fable</option>
-        <option value="nova">nova</option>
-        <option value="onyx">onyx</option>
-        <option value="sage">sage</option>
-        <option value="shimmer">shimmer</option>
-      </select>
-    </div>
-
-    <div class="group">
-      <label for="startupQuestionCount">Anzahl Fragen</label>
-      <input id="startupQuestionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
-    </div>
-  </div>
-
-  <div class="btn-row">
-    <button id="saveStartupBtn" class="success" type="button">Lokal speichern</button>
-    <button id="hideStartupBtn" class="secondary" type="button">Startfeld einklappen</button>
-    <button id="clearApiBtn" class="danger" type="button">Alle Keys löschen</button>
-  </div>
-
-  <div class="note" style="margin-top:10px;">
-    Die API-Keys werden lokal gespeichert. TTS und Chat können parallel benutzt werden.
-  </div>
-</div>
-
-<div class="row">
-  <div class="col col-left">
-    <div class="card">
+    <div class="card" id="startupCard">
       <div class="top">
         <div>
-          <h2>Text und Vorlesen</h2>
-          <p class="subtitle">Originaltext eingeben, vorlesen lassen und Fragen generieren.</p>
+          <h1>Med TTS + Active Recall</h1>
+          <p class="subtitle">API-Keys für TTS und Chat. Alles bleibt gleichzeitig nutzbar.</p>
         </div>
-        <div class="badge" id="modelBadge">TTS: openai/gpt-4o-mini-tts-2025-12-15 · Chat: openai/gpt-4o-mini</div>
+        <div class="badge" id="apiStateBadge">Keys noch nicht vollständig gesetzt</div>
       </div>
 
-      <div class="group">
-        <button id="toggleAdvancedBtn" class="toggle-btn" type="button">Erweiterte Einstellungen anzeigen</button>
-      </div>
-
-      <div id="advancedPanel" class="collapsed">
-        <div class="grid-2">
-          <div class="group">
-            <label for="apiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
-            <input id="apiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
-          </div>
-
-          <div class="group">
-            <label for="apiKeyChat">API Key · openai/gpt-4o-mini</label>
-            <input id="apiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
-          </div>
+      <div class="grid-2">
+        <div class="group">
+          <label for="startupApiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
+          <input id="startupApiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
         </div>
 
-        <div class="grid-4">
-          <div class="group">
-            <label for="baseUrl">Base URL</label>
-            <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
-          </div>
-
-          <div class="group">
-            <label for="voice">Stimme</label>
-            <select id="voice">
-              <option value="alloy">alloy</option>
-              <option value="ash">ash</option>
-              <option value="ballad">ballad</option>
-              <option value="coral">coral</option>
-              <option value="echo">echo</option>
-              <option value="fable">fable</option>
-              <option value="nova">nova</option>
-              <option value="onyx">onyx</option>
-              <option value="sage">sage</option>
-              <option value="shimmer">shimmer</option>
-            </select>
-          </div>
-
-          <div class="group">
-            <label for="questionCount">Anzahl Fragen</label>
-            <input id="questionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
-          </div>
-
-          <div class="group">
-            <label for="format">Format</label>
-            <select id="format">
-              <option value="mp3">mp3</option>
-              <option value="opus">opus</option>
-              <option value="aac">aac</option>
-              <option value="flac">flac</option>
-              <option value="wav">wav</option>
-              <option value="pcm">pcm</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="group">
-            <label for="speed">Geschwindigkeit</label>
-            <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
-          </div>
-        </div>
-
-        <div class="inline-checks">
-          <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
-          <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
-          <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
+        <div class="group">
+          <label for="startupApiKeyChat">API Key · openai/gpt-4o-mini</label>
+          <input id="startupApiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
         </div>
       </div>
 
-      <div class="group" style="margin-top:14px;">
-        <label for="text">Originaltext</label>
-        <textarea id="text" placeholder="Hier medizinischen Text einfügen..."></textarea>
-        <div class="meta">
-          <span id="charCount">0 Zeichen</span>
-          <span id="wordCount">0 Wörter</span>
-          <span id="lineCount">0 Zeilen</span>
+      <div class="grid-3">
+        <div class="group">
+          <label for="startupBaseUrl">Base URL</label>
+          <input id="startupBaseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+        </div>
+
+        <div class="group">
+          <label for="startupVoice">Standardstimme</label>
+          <select id="startupVoice">
+            <option value="alloy">alloy</option>
+            <option value="ash">ash</option>
+            <option value="ballad">ballad</option>
+            <option value="coral">coral</option>
+            <option value="echo">echo</option>
+            <option value="fable">fable</option>
+            <option value="nova">nova</option>
+            <option value="onyx">onyx</option>
+            <option value="sage">sage</option>
+            <option value="shimmer">shimmer</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label for="startupQuestionCount">Anzahl Fragen</label>
+          <input id="startupQuestionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
         </div>
       </div>
 
       <div class="btn-row">
-        <button id="speakBtn" type="button">Vorlesen</button>
-        <button id="pauseBtn" class="secondary" type="button">Pause</button>
-        <button id="resumeBtn" class="secondary" type="button">Weiter</button>
-        <button id="stopBtn" class="secondary" type="button">Stop</button>
-        <button id="generateQuestionsBtn" class="blue" type="button">Fragen generieren</button>
-        <button id="clearAllBtn" class="danger" type="button">Clear</button>
-        <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
-        <label class="file-btn" for="fileInput">.txt laden</label>
-        <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
+        <button id="saveStartupBtn" class="success" type="button">Lokal speichern</button>
+        <button id="hideStartupBtn" class="secondary" type="button">Startfeld einklappen</button>
+        <button id="clearApiBtn" class="danger" type="button">Alle Keys löschen</button>
       </div>
 
-      <div id="status" class="status">Bereit.</div>
-      <audio id="audioPlayer" controls class="hidden"></audio>
-      <a id="downloadLink" class="download-link hidden">Audio herunterladen</a>
-    </div>
-  </div>
-
-  <div class="col col-right">
-    <div class="card">
-      <div class="toolbar">
-        <div>
-          <h2>Fragen & Antworten</h2>
-          <p class="subtitle">Fragen bleiben lokal gespeichert. Antworten können beliebig oft überschrieben und neu bewertet werden.</p>
-        </div>
-        <div class="toolbar-right">
-          <button id="exportBtn" class="secondary" type="button">Export</button>
-          <button id="clearQuestionsBtn" class="ghost" type="button">Nur Fragen löschen</button>
-        </div>
-      </div>
-
-      <div id="questionsContainer" class="question-list"></div>
-      <div id="emptyQuestions" class="empty">
-        Noch keine Fragen vorhanden.
+      <div class="note" style="margin-top:10px;">
+        Die API-Keys werden lokal gespeichert. TTS und Chat können parallel benutzt werden.
       </div>
     </div>
-  </div>
-</div>
 
-  </div>
+    <div class="row">
+      <div class="col col-left">
+        <div class="card">
+          <div class="top">
+            <div>
+              <h2>Text und Vorlesen</h2>
+              <p class="subtitle">Originaltext eingeben, vorlesen lassen und Fragen generieren.</p>
+            </div>
+            <div class="badge" id="modelBadge">TTS: openai/gpt-4o-mini-tts-2025-12-15 · Chat: openai/gpt-4o-mini</div>
+          </div>
 
+          <div class="group">
+            <button id="toggleAdvancedBtn" class="toggle-btn" type="button">Erweiterte Einstellungen anzeigen</button>
+          </div>
+
+          <div id="advancedPanel" class="collapsed">
+            <div class="grid-2">
+              <div class="group">
+                <label for="apiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
+                <input id="apiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
+              </div>
+
+              <div class="group">
+                <label for="apiKeyChat">API Key · openai/gpt-4o-mini</label>
+                <input id="apiKeyChat" type="password" placeholder="Key für gpt-4o-mini" />
+              </div>
+            </div>
+
+            <div class="grid-4">
+              <div class="group">
+                <label for="baseUrl">Base URL</label>
+                <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+              </div>
+
+              <div class="group">
+                <label for="voice">Stimme</label>
+                <select id="voice">
+                  <option value="alloy">alloy</option>
+                  <option value="ash">ash</option>
+                  <option value="ballad">ballad</option>
+                  <option value="coral">coral</option>
+                  <option value="echo">echo</option>
+                  <option value="fable">fable</option>
+                  <option value="nova">nova</option>
+                  <option value="onyx">onyx</option>
+                  <option value="sage">sage</option>
+                  <option value="shimmer">shimmer</option>
+                </select>
+              </div>
+
+              <div class="group">
+                <label for="questionCount">Anzahl Fragen</label>
+                <input id="questionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
+              </div>
+
+              <div class="group">
+                <label for="format">Format</label>
+                <select id="format">
+                  <option value="mp3">mp3</option>
+                  <option value="opus">opus</option>
+                  <option value="aac">aac</option>
+                  <option value="flac">flac</option>
+                  <option value="wav">wav</option>
+                  <option value="pcm">pcm</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="group">
+                <label for="speed">Geschwindigkeit</label>
+                <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
+              </div>
+            </div>
+
+            <div class="inline-checks">
+              <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
+              <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
+              <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
+            </div>
+          </div>
+
+          <div class="group" style="margin-top:14px;">
+            <label for="text">Originaltext</label>
+            <textarea id="text" placeholder="Hier medizinischen Text einfügen..."></textarea>
+            <div class="meta">
+              <span id="charCount">0 Zeichen</span>
+              <span id="wordCount">0 Wörter</span>
+              <span id="lineCount">0 Zeilen</span>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="speakBtn" type="button">Vorlesen</button>
+            <button id="pauseBtn" class="secondary" type="button">Pause</button>
+            <button id="resumeBtn" class="secondary" type="button">Weiter</button>
+            <button id="stopBtn" class="secondary" type="button">Stop</button>
+            <button id="generateQuestionsBtn" class="blue" type="button">Fragen generieren</button>
+            <button id="clearAllBtn" class="danger" type="button">Clear</button>
+            <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
+            <label class="file-btn" for="fileInput">.txt laden</label>
+            <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
+          </div>
+
+          <div id="status" class="status">Bereit.</div>
+          <audio id="audioPlayer" controls class="hidden"></audio>
+          <a id="downloadLink" class="download-link hidden">Audio herunterladen</a>
+        </div>
+      </div>
+
+      <div class="col col-right">
+        <div class="card">
+          <div class="toolbar">
+            <div>
+              <h2>Fragen & Antworten</h2>
+              <p class="subtitle">Fragen bleiben lokal gespeichert. Antworten können beliebig oft überschrieben und neu bewertet werden.</p>
+            </div>
+            <div class="toolbar-right">
+              <button id="exportBtn" class="secondary" type="button">Export</button>
+              <button id="clearQuestionsBtn" class="ghost" type="button">Nur Fragen löschen</button>
+            </div>
+          </div>
+
+          <div id="questionsContainer" class="question-list"></div>
+          <div id="emptyQuestions" class="empty">
+            Noch keine Fragen vorhanden.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const STORAGE_KEY = "med_tts_active_recall_v2";
@@ -789,6 +856,8 @@ audio{
     const CHAT_MODEL = "openai/gpt-4o-mini";
 
     const themeSwitch = document.getElementById("themeSwitch");
+    const pomodoroBtn = document.getElementById("pomodoroBtn");
+
     const startupCard = document.getElementById("startupCard");
     const startupBaseUrl = document.getElementById("startupBaseUrl");
     const startupApiKeyTts = document.getElementById("startupApiKeyTts");
@@ -844,6 +913,13 @@ audio{
     let appState = {
       questions: []
     };
+
+    const POMODORO_START_SECONDS = 50 * 60;
+    const POMODORO_OVERTIME_LIMIT_SECONDS = 10 * 60;
+
+    let pomodoroState = "paused";
+    let pomodoroSeconds = POMODORO_START_SECONDS;
+    let pomodoroInterval = null;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -916,7 +992,7 @@ audio{
         advancedOpen: !advancedPanel.classList.contains("collapsed"),
         startupCollapsed: startupCard.classList.contains("collapsed"),
         questions: appState.questions,
-        theme: document.documentElement.getAttribute('data-theme') || 'light'
+        theme: document.documentElement.getAttribute("data-theme") || "light"
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -962,9 +1038,11 @@ audio{
           startupCard.classList.add("collapsed");
         }
 
-        if (data.theme === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          themeSwitch.textContent = '☀️ Light';
+        if (data.theme === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+          themeSwitch.textContent = "☀️ Light";
+        } else {
+          themeSwitch.textContent = "🌙 Dark";
         }
 
         syncMainToStartup();
@@ -997,6 +1075,62 @@ audio{
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    function formatPomodoroTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      if (pomodoroState === "paused" && totalSeconds === POMODORO_START_SECONDS) {
+        return "50";
+      }
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function renderPomodoro() {
+      pomodoroBtn.classList.remove("paused", "running", "overtime");
+      pomodoroBtn.classList.add(pomodoroState);
+      pomodoroBtn.textContent = formatPomodoroTime(pomodoroSeconds);
+    }
+
+    function stopPomodoroInterval() {
+      if (pomodoroInterval) {
+        clearInterval(pomodoroInterval);
+        pomodoroInterval = null;
+      }
+    }
+
+    function resetPomodoro() {
+      stopPomodoroInterval();
+      pomodoroState = "paused";
+      pomodoroSeconds = POMODORO_START_SECONDS;
+      renderPomodoro();
+    }
+
+    function tickPomodoro() {
+      if (pomodoroState === "running") {
+        if (pomodoroSeconds > 0) {
+          pomodoroSeconds -= 1;
+          if (pomodoroSeconds === 0) {
+            pomodoroState = "overtime";
+          }
+        }
+      } else if (pomodoroState === "overtime") {
+        if (pomodoroSeconds < POMODORO_OVERTIME_LIMIT_SECONDS) {
+          pomodoroSeconds += 1;
+        } else {
+          stopPomodoroInterval();
+        }
+      }
+
+      renderPomodoro();
+    }
+
+    function startPomodoro() {
+      stopPomodoroInterval();
+      pomodoroState = "running";
+      pomodoroSeconds = POMODORO_START_SECONDS;
+      renderPomodoro();
+      pomodoroInterval = setInterval(tickPomodoro, 1000);
     }
 
     async function fetchJsonChat({systemPrompt, userPrompt}) {
@@ -1043,7 +1177,7 @@ audio{
       try {
         return JSON.parse(text);
       } catch (_) {
-        const match = text.match(/\{[\s\S]*\}|$begin:math:display$\[\\s\\S\]\*$end:math:display$/);
+        const match = text.match(/\{[\s\S]*\}/);
         if (match) {
           try {
             return JSON.parse(match[0]);
@@ -1362,255 +1496,261 @@ Bewerte die Antwort ausschließlich anhand des Originaltexts.
             <div>
               <label for="answer-${q.id}">Deine Antwort</label>
               <textarea id="answer-${q.id}" class="small-textarea" placeholder="Hier deine Antwort eingeben...">${escapeHtml(q.answer || "")}</textarea>
-
-
-        </div>
-
-        <div class="btn-row">
-          <button class="blue" type="button" data-eval-id="${q.id}">Senden / Bewerten</button>
-        </div>
-
-        ${result ? `
-          <div class="feedback-grid">
-            <div class="feedback">
-              <div class="feedback-title">Richtig</div>
-              <ul>
-                ${result.richtig.length ? result.richtig.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
-              </ul>
             </div>
-            <div class="feedback">
-              <div class="feedback-title">Falsch/Fehlt</div>
-              <ul>
-                ${result.falsch_fehlt.length ? result.falsch_fehlt.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
-              </ul>
+
+            <div class="btn-row">
+              <button class="blue" type="button" data-eval-id="${q.id}">Senden / Bewerten</button>
             </div>
+
+            ${result ? `
+              <div class="feedback-grid">
+                <div class="feedback">
+                  <div class="feedback-title">Richtig</div>
+                  <ul>
+                    ${result.richtig.length ? result.richtig.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
+                  </ul>
+                </div>
+                <div class="feedback">
+                  <div class="feedback-title">Falsch/Fehlt</div>
+                  <ul>
+                    ${result.falsch_fehlt.length ? result.falsch_fehlt.map(item => `<li>${escapeHtml(item)}</li>`).join("") : `<li>—</li>`}
+                  </ul>
+                </div>
+              </div>
+            ` : ""}
           </div>
-        ` : ""}
-      </div>
-    `;
+        `;
 
-    questionsContainer.appendChild(card);
-  });
+        questionsContainer.appendChild(card);
+      });
 
-  questionsContainer.querySelectorAll("[data-toggle-id]").forEach(btn => {
-    btn.addEventListener("click", () => toggleQuestion(btn.dataset.toggleId));
-  });
+      questionsContainer.querySelectorAll("[data-toggle-id]").forEach(btn => {
+        btn.addEventListener("click", () => toggleQuestion(btn.dataset.toggleId));
+      });
 
-  questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
-    btn.addEventListener("click", () => deleteQuestion(btn.dataset.deleteId));
-  });
+      questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
+        btn.addEventListener("click", () => deleteQuestion(btn.dataset.deleteId));
+      });
 
-  questionsContainer.querySelectorAll("textarea[id^='answer-']").forEach(textarea => {
-    const questionId = textarea.id.replace("answer-", "");
-    textarea.addEventListener("input", (e) => updateQuestionAnswer(questionId, e.target.value));
-  });
+      questionsContainer.querySelectorAll("textarea[id^='answer-']").forEach(textarea => {
+        const questionId = textarea.id.replace("answer-", "");
+        textarea.addEventListener("input", (e) => updateQuestionAnswer(questionId, e.target.value));
+      });
 
-  questionsContainer.querySelectorAll("[data-eval-id]").forEach(btn => {
-    btn.addEventListener("click", () => evaluateQuestion(btn.dataset.evalId));
-  });
-}
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function exportQuestions() {
-  if (!appState.questions.length) {
-    setStatus("Es gibt keine Fragen zum Exportieren.", "error");
-    return;
-  }
-
-  const lines = [];
-  lines.push("MED ACTIVE RECALL EXPORT");
-  lines.push("========================");
-  lines.push("");
-  lines.push("Originaltext:");
-  lines.push(textInput.value.trim() || "—");
-  lines.push("");
-  lines.push("Fragen:");
-  lines.push("");
-
-  appState.questions.forEach((q, i) => {
-    lines.push(`Frage ${i + 1}: ${q.question}`);
-    lines.push(`Antwort: ${q.answer?.trim() || "—"}`);
-    if (q.result) {
-      lines.push(`Score: ${q.result.score}%`);
-      lines.push("Richtig:");
-      if (q.result.richtig.length) q.result.richtig.forEach(item => lines.push(`- ${item}`));
-      else lines.push("- —");
-      lines.push("Falsch/Fehlt:");
-      if (q.result.falsch_fehlt.length) q.result.falsch_fehlt.forEach(item => lines.push(`- ${item}`));
-      else lines.push("- —");
-    } else {
-      lines.push("Score: —");
-      lines.push("Richtig:");
-      lines.push("- —");
-      lines.push("Falsch/Fehlt:");
-      lines.push("- —");
+      questionsContainer.querySelectorAll("[data-eval-id]").forEach(btn => {
+        btn.addEventListener("click", () => evaluateQuestion(btn.dataset.evalId));
+      });
     }
-    lines.push("");
-  });
 
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  triggerDownload(url, "active_recall_export.txt");
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-
-  setStatus("Export erstellt.", "ok");
-}
-
-function clearQuestionsOnly() {
-  appState.questions = [];
-  saveState();
-  renderQuestions();
-  setStatus("Alle Fragen wurden gelöscht.", "ok");
-}
-
-function clearAll() {
-  textInput.value = "";
-  questionCountInput.value = "";
-  appState.questions = [];
-  resetAudio();
-  updateStats();
-  saveState();
-  renderQuestions();
-  setStatus("Text, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
-}
-
-themeSwitch.addEventListener("click", () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  if (currentTheme === 'dark') {
-    document.documentElement.removeAttribute('data-theme');
-    themeSwitch.textContent = '🌙 Dark';
-  } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    themeSwitch.textContent = '☀️ Light';
-  }
-  saveState();
-});
-
-saveStartupBtn.addEventListener("click", () => {
-  syncStartupToMain();
-  saveState();
-  setStatus("API-Keys und Einstellungen lokal gespeichert.", "ok");
-});
-
-hideStartupBtn.addEventListener("click", () => {
-  startupCard.classList.add("collapsed");
-  saveState();
-  setStatus("Startfeld eingeklappt.", "ok");
-});
-
-clearApiBtn.addEventListener("click", () => {
-  startupApiKeyTts.value = "";
-  startupApiKeyChat.value = "";
-  apiKeyTtsInput.value = "";
-  apiKeyChatInput.value = "";
-  saveState();
-  updateApiBadge();
-  setStatus("Alle API-Keys lokal gelöscht.", "ok");
-});
-
-toggleAdvancedBtn.addEventListener("click", () => {
-  if (advancedPanel.classList.contains("collapsed")) {
-    advancedPanel.classList.remove("collapsed");
-    toggleAdvancedBtn.textContent = "Erweiterte Einstellungen verbergen";
-  } else {
-    advancedPanel.classList.add("collapsed");
-    toggleAdvancedBtn.textContent = "Erweiterte Einstellungen anzeigen";
-  }
-  saveState();
-});
-
-[startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupVoice, startupQuestionCount].forEach(el => {
-  el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
-  el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
-});
-
-[baseUrlInput, apiKeyTtsInput, apiKeyChatInput, voiceInput, formatInput, speedInput, questionCountInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox].forEach(el => {
-  el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
-  el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
-});
-
-textInput.addEventListener("input", () => {
-  updateStats();
-  saveState();
-});
-
-speakBtn.addEventListener("click", generateSpeech);
-generateQuestionsBtn.addEventListener("click", generateQuestions);
-
-pauseBtn.addEventListener("click", () => {
-  if (!audioPlayer.paused) {
-    audioPlayer.pause();
-    setStatus("Wiedergabe pausiert.", "info");
-  }
-});
-
-resumeBtn.addEventListener("click", async () => {
-  if (audioPlayer.src) {
-    try {
-      await audioPlayer.play();
-      setStatus("Wiedergabe fortgesetzt.", "ok");
-    } catch {
-      setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
-  }
-});
 
-stopBtn.addEventListener("click", () => {
-  if (audioPlayer.src) {
-    audioPlayer.pause();
-    audioPlayer.currentTime = 0;
-    setStatus("Wiedergabe gestoppt.", "info");
-  }
-});
+    function exportQuestions() {
+      if (!appState.questions.length) {
+        setStatus("Es gibt keine Fragen zum Exportieren.", "error");
+        return;
+      }
 
-copyBtn.addEventListener("click", async () => {
-  const text = textInput.value;
-  if (!text) {
-    setStatus("Kein Text zum Kopieren vorhanden.", "error");
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(text);
-    setStatus("Text kopiert.", "ok");
-  } catch {
-    setStatus("Kopieren fehlgeschlagen.", "error");
-  }
-});
+      const lines = [];
+      lines.push("MED ACTIVE RECALL EXPORT");
+      lines.push("========================");
+      lines.push("");
+      lines.push("Originaltext:");
+      lines.push(textInput.value.trim() || "—");
+      lines.push("");
+      lines.push("Fragen:");
+      lines.push("");
 
-clearAllBtn.addEventListener("click", clearAll);
-clearQuestionsBtn.addEventListener("click", clearQuestionsOnly);
-exportBtn.addEventListener("click", exportQuestions);
+      appState.questions.forEach((q, i) => {
+        lines.push(`Frage ${i + 1}: ${q.question}`);
+        lines.push(`Antwort: ${q.answer?.trim() || "—"}`);
+        if (q.result) {
+          lines.push(`Score: ${q.result.score}%`);
+          lines.push("Richtig:");
+          if (q.result.richtig.length) q.result.richtig.forEach(item => lines.push(`- ${item}`));
+          else lines.push("- —");
+          lines.push("Falsch/Fehlt:");
+          if (q.result.falsch_fehlt.length) q.result.falsch_fehlt.forEach(item => lines.push(`- ${item}`));
+          else lines.push("- —");
+        } else {
+          lines.push("Score: —");
+          lines.push("Richtig:");
+          lines.push("- —");
+          lines.push("Falsch/Fehlt:");
+          lines.push("- —");
+        }
+        lines.push("");
+      });
 
-fileInput.addEventListener("change", async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  try {
-    const content = await file.text();
-    textInput.value = content;
+      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, "active_recall_export.txt");
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      setStatus("Export erstellt.", "ok");
+    }
+
+    function clearQuestionsOnly() {
+      appState.questions = [];
+      saveState();
+      renderQuestions();
+      setStatus("Alle Fragen wurden gelöscht.", "ok");
+    }
+
+    function clearAll() {
+      textInput.value = "";
+      questionCountInput.value = "";
+      appState.questions = [];
+      resetAudio();
+      updateStats();
+      saveState();
+      renderQuestions();
+      setStatus("Text, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
+    }
+
+    themeSwitch.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      if (currentTheme === "dark") {
+        document.documentElement.removeAttribute("data-theme");
+        themeSwitch.textContent = "🌙 Dark";
+      } else {
+        document.documentElement.setAttribute("data-theme", "dark");
+        themeSwitch.textContent = "☀️ Light";
+      }
+      saveState();
+    });
+
+    pomodoroBtn.addEventListener("click", () => {
+      if (pomodoroState === "paused") {
+        startPomodoro();
+      } else {
+        resetPomodoro();
+      }
+    });
+
+    saveStartupBtn.addEventListener("click", () => {
+      syncStartupToMain();
+      saveState();
+      setStatus("API-Keys und Einstellungen lokal gespeichert.", "ok");
+    });
+
+    hideStartupBtn.addEventListener("click", () => {
+      startupCard.classList.add("collapsed");
+      saveState();
+      setStatus("Startfeld eingeklappt.", "ok");
+    });
+
+    clearApiBtn.addEventListener("click", () => {
+      startupApiKeyTts.value = "";
+      startupApiKeyChat.value = "";
+      apiKeyTtsInput.value = "";
+      apiKeyChatInput.value = "";
+      saveState();
+      updateApiBadge();
+      setStatus("Alle API-Keys lokal gelöscht.", "ok");
+    });
+
+    toggleAdvancedBtn.addEventListener("click", () => {
+      if (advancedPanel.classList.contains("collapsed")) {
+        advancedPanel.classList.remove("collapsed");
+        toggleAdvancedBtn.textContent = "Erweiterte Einstellungen verbergen";
+      } else {
+        advancedPanel.classList.add("collapsed");
+        toggleAdvancedBtn.textContent = "Erweiterte Einstellungen anzeigen";
+      }
+      saveState();
+    });
+
+    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupVoice, startupQuestionCount].forEach(el => {
+      el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
+      el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
+    });
+
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, voiceInput, formatInput, speedInput, questionCountInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox].forEach(el => {
+      el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
+      el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
+    });
+
+    textInput.addEventListener("input", () => {
+      updateStats();
+      saveState();
+    });
+
+    speakBtn.addEventListener("click", generateSpeech);
+    generateQuestionsBtn.addEventListener("click", generateQuestions);
+
+    pauseBtn.addEventListener("click", () => {
+      if (!audioPlayer.paused) {
+        audioPlayer.pause();
+        setStatus("Wiedergabe pausiert.", "info");
+      }
+    });
+
+    resumeBtn.addEventListener("click", async () => {
+      if (audioPlayer.src) {
+        try {
+          await audioPlayer.play();
+          setStatus("Wiedergabe fortgesetzt.", "ok");
+        } catch {
+          setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
+        }
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (audioPlayer.src) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        setStatus("Wiedergabe gestoppt.", "info");
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      const text = textInput.value;
+      if (!text) {
+        setStatus("Kein Text zum Kopieren vorhanden.", "error");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("Text kopiert.", "ok");
+      } catch {
+        setStatus("Kopieren fehlgeschlagen.", "error");
+      }
+    });
+
+    clearAllBtn.addEventListener("click", clearAll);
+    clearQuestionsBtn.addEventListener("click", clearQuestionsOnly);
+    exportBtn.addEventListener("click", exportQuestions);
+
+    fileInput.addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const content = await file.text();
+        textInput.value = content;
+        updateStats();
+        saveState();
+        setStatus(`Datei geladen: ${file.name}`, "ok");
+      } catch {
+        setStatus("Datei konnte nicht gelesen werden.", "error");
+      } finally {
+        fileInput.value = "";
+      }
+    });
+
+    loadState();
     updateStats();
-    saveState();
-    setStatus(`Datei geladen: ${file.name}`, "ok");
-  } catch {
-    setStatus("Datei konnte nicht gelesen werden.", "error");
-  } finally {
-    fileInput.value = "";
-  }
-});
-
-loadState();
-updateStats();
-renderQuestions();
-updateApiBadge();
-updateModelBadge();
-
+    renderQuestions();
+    updateApiBadge();
+    updateModelBadge();
+    resetPomodoro();
   </script>
 </body>
 </html>
