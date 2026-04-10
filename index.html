@@ -347,7 +347,8 @@ audio{
 }
 
 .question-card,
-.mistake-card{
+.mistake-card,
+.segment-card{
   border:1px solid var(--line);
   background:var(--card);
   border-radius:16px;
@@ -356,12 +357,14 @@ audio{
 }
 
 [data-theme="dark"] .question-card,
-[data-theme="dark"] .mistake-card{
+[data-theme="dark"] .mistake-card,
+[data-theme="dark"] .segment-card{
   box-shadow:0 6px 20px rgba(0,0,0,.2);
 }
 
 .question-head,
-.mistake-head{
+.mistake-head,
+.segment-head{
   padding:12px 14px;
   display:flex;
   flex-direction:column;
@@ -371,14 +374,16 @@ audio{
 }
 
 .question-index,
-.mistake-index{
+.mistake-index,
+.segment-index{
   font-size:11px;
   color:var(--muted);
   margin-bottom:4px;
 }
 
 .question-text,
-.mistake-title{
+.mistake-title,
+.segment-title{
   font-weight:700;
   line-height:1.5;
   color:var(--text);
@@ -386,14 +391,16 @@ audio{
 }
 
 .question-actions,
-.mistake-actions{
+.mistake-actions,
+.segment-actions{
   display:flex;
   gap:6px;
   flex-wrap:wrap;
 }
 
 .question-actions button,
-.mistake-actions button{
+.mistake-actions button,
+.segment-actions button{
   min-width:auto;
   padding:8px 10px;
   font-size:12px;
@@ -402,7 +409,8 @@ audio{
 }
 
 .question-body,
-.mistake-body{
+.mistake-body,
+.segment-body{
   padding:12px 14px;
   display:grid;
   gap:10px;
@@ -410,7 +418,8 @@ audio{
 }
 
 .score-pill,
-.type-pill{
+.type-pill,
+.chunk-pill{
   display:inline-flex;
   align-items:center;
   gap:4px;
@@ -429,6 +438,11 @@ audio{
 .type-pill{
   background:rgba(20,184,166,.12);
   color:#0f766e;
+}
+
+.chunk-pill{
+  background:var(--card-2);
+  color:var(--text);
 }
 
 [data-theme="dark"] .type-pill{
@@ -596,7 +610,8 @@ audio{
   display:block;
 }
 
-.mistake-list{
+.mistake-list,
+.segment-list{
   display:grid;
   gap:12px;
   margin-top:8px;
@@ -608,14 +623,16 @@ audio{
   gap:10px;
 }
 
-.mistake-field{
+.mistake-field,
+.segment-field{
   padding:12px;
   border:1px solid var(--line);
   border-radius:14px;
   background:var(--card-2);
 }
 
-.mistake-label{
+.mistake-label,
+.segment-label{
   font-size:11px;
   font-weight:800;
   color:var(--muted);
@@ -624,7 +641,8 @@ audio{
   margin-bottom:6px;
 }
 
-.mistake-content{
+.mistake-content,
+.segment-content{
   white-space:pre-wrap;
   line-height:1.55;
   font-size:14px;
@@ -645,6 +663,39 @@ audio{
 
 .mono{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.flag-help{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--card-2);
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.55;
+}
+
+.flag-preview{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.flag-item{
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--card-2);
+  font-size:12px;
+  line-height:1.55;
+}
+
+.flag-item strong{
+  color:var(--text);
+  display:block;
+  margin-bottom:4px;
 }
 
 @keyframes pomodoroBlink{
@@ -683,7 +734,8 @@ audio{
   }
 
   .question-head,
-  .mistake-head{
+  .mistake-head,
+  .segment-head{
     flex-direction:row;
     justify-content:space-between;
     align-items:flex-start;
@@ -759,14 +811,14 @@ audio{
   .inline-checks{ font-size:14px; }
   .download-link{ font-size:14px; }
   .note{ font-size:12px; }
-  .question-list, .mistake-list{ gap:14px; }
-  .question-head, .mistake-head{ padding:14px 16px; }
-  .question-index, .mistake-index{ font-size:12px; margin-bottom:6px; }
-  .question-text, .mistake-title{ font-size:16px; }
-  .question-actions, .mistake-actions{ gap:8px; }
-  .question-actions button, .mistake-actions button{ padding:10px 12px; font-size:13px; }
-  .question-body, .mistake-body{ padding:14px 16px 16px; gap:12px; }
-  .score-pill, .type-pill{ font-size:12px; padding:7px 11px; gap:6px; }
+  .question-list, .mistake-list, .segment-list{ gap:14px; }
+  .question-head, .mistake-head, .segment-head{ padding:14px 16px; }
+  .question-index, .mistake-index, .segment-index{ font-size:12px; margin-bottom:6px; }
+  .question-text, .mistake-title, .segment-title{ font-size:16px; }
+  .question-actions, .mistake-actions, .segment-actions{ gap:8px; }
+  .question-actions button, .mistake-actions button, .segment-actions button{ padding:10px 12px; font-size:13px; }
+  .question-body, .mistake-body, .segment-body{ padding:14px 16px 16px; gap:12px; }
+  .score-pill, .type-pill, .chunk-pill{ font-size:12px; padding:7px 11px; gap:6px; }
   .feedback{ padding:12px 14px; }
   .feedback-title{ font-size:13px; margin-bottom:8px; }
   .feedback ul{ font-size:14px; padding-left:18px; }
@@ -947,7 +999,12 @@ audio{
             <span id="charCount">0 Zeichen</span>
             <span id="wordCount">0 Wörter</span>
             <span id="lineCount">0 Zeilen</span>
+            <span id="flagCount">0 Flaggen</span>
           </div>
+          <div class="flag-help">
+            Markierungen für Pflicht-Fragen: Nutze den Button „Auswahl flaggen“ oder schreibe direkt <span class="mono">[[FLAG]] ... [[/FLAG]]</span> in den Text. Diese Bereiche werden beim Vorlesen ignoriert markiert und bei der Fragengenerierung zwingend berücksichtigt.
+          </div>
+          <div class="flag-preview" id="flagPreview"></div>
         </div>
 
         <div class="btn-row">
@@ -956,6 +1013,7 @@ audio{
           <button id="resumeBtn" class="secondary" type="button">Weiter</button>
           <button id="stopBtn" class="secondary" type="button">Stop</button>
           <button id="generateQuestionsBtn" class="blue" type="button">Fragen generieren</button>
+          <button id="flagSelectionBtn" class="ghost" type="button">Auswahl flaggen</button>
           <button id="clearAllBtn" class="danger" type="button">Clear</button>
           <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
           <label class="file-btn" for="fileInput">.txt laden</label>
@@ -965,6 +1023,12 @@ audio{
         <div id="status" class="status">Bereit.</div>
         <audio id="audioPlayer" controls class="hidden"></audio>
         <a id="downloadLink" class="download-link hidden">Audio herunterladen</a>
+
+        <div id="audioQueueMeta" class="panel-slim hidden" style="margin-top:12px;"></div>
+        <div id="audioSegmentsContainer" class="segment-list"></div>
+        <div id="emptySegments" class="empty">
+          Noch keine Audio-Blöcke vorhanden.
+        </div>
       </div>
     </div>
 
@@ -1049,9 +1113,12 @@ audio{
 
 
   <script>
-    const STORAGE_KEY = "med_tts_active_recall_v3";
+    const STORAGE_KEY = "med_tts_active_recall_v4";
     const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
     const CHAT_MODEL = "openai/gpt-4o-mini";
+    const MAX_TTS_WORDS_PER_CHUNK = 515;
+    const FLAG_OPEN = "[[FLAG]]";
+    const FLAG_CLOSE = "[[/FLAG]]";
 
     const themeSwitch = document.getElementById("themeSwitch");
     const pomodoroBtn = document.getElementById("pomodoroBtn");
@@ -1092,6 +1159,7 @@ audio{
     const resumeBtn = document.getElementById("resumeBtn");
     const stopBtn = document.getElementById("stopBtn");
     const generateQuestionsBtn = document.getElementById("generateQuestionsBtn");
+    const flagSelectionBtn = document.getElementById("flagSelectionBtn");
     const clearAllBtn = document.getElementById("clearAllBtn");
     const copyBtn = document.getElementById("copyBtn");
     const fileInput = document.getElementById("fileInput");
@@ -1102,6 +1170,15 @@ audio{
     const statusEl = document.getElementById("status");
     const audioPlayer = document.getElementById("audioPlayer");
     const downloadLink = document.getElementById("downloadLink");
+    const audioQueueMeta = document.getElementById("audioQueueMeta");
+    const audioSegmentsContainer = document.getElementById("audioSegmentsContainer");
+    const emptySegments = document.getElementById("emptySegments");
+    const toggleSegmentsBtn = document.createElement(“button”);
+toggleSegmentsBtn.id = “toggleSegmentsBtn”;
+toggleSegmentsBtn.type = “button”;
+toggleSegmentsBtn.className = “ghost”;
+toggleSegmentsBtn.textContent = “Audio-Blöcke ausblenden”;
+let segmentsHidden = false;
 
     const questionsContainer = document.getElementById("questionsContainer");
     const emptyQuestions = document.getElementById("emptyQuestions");
@@ -1109,6 +1186,8 @@ audio{
     const charCount = document.getElementById("charCount");
     const wordCount = document.getElementById("wordCount");
     const lineCount = document.getElementById("lineCount");
+    const flagCount = document.getElementById("flagCount");
+    const flagPreview = document.getElementById("flagPreview");
 
     const kreuzenInput = document.getElementById("kreuzenInput");
     const kreuzenSendBtn = document.getElementById("kreuzenSendBtn");
@@ -1125,6 +1204,9 @@ audio{
     const kreuzenLineCount = document.getElementById("kreuzenLineCount");
 
     let currentAudioUrl = null;
+    let nextChunkWaitTimer = null;
+    let ttsSession = null;
+
     let appState = {
       mode: "T",
       questions: [],
@@ -1152,18 +1234,89 @@ audio{
       return Math.random().toString(36).slice(2) + Date.now().toString(36);
     }
 
+    function countWords(text) {
+      const cleaned = String(text || "").trim();
+      return cleaned ? cleaned.split(/\s+/).length : 0;
+    }
+
+    function extractFlaggedSections(text) {
+      const source = String(text || "");
+      const sections = [];
+      const regex = /$begin:math:display$\\\[FLAG$end:math:display$\]([\s\S]*?)$begin:math:display$\\\[\\\/FLAG$end:math:display$\]/g;
+      let match;
+      while ((match = regex.exec(source)) !== null) {
+        const content = String(match[1] || "").trim();
+        if (content) {
+          const before = source.slice(0, match.index);
+          const startLine = before ? before.split(/\n/).length : 1;
+          const lineSpan = match[0].split(/\n/).length - 1;
+          const endLine = startLine + lineSpan;
+          sections.push({
+            text: content,
+            startLine,
+            endLine
+          });
+        }
+      }
+      const cleanedText = source.replace(regex, "$1");
+      return { cleanedText, flaggedSections: sections };
+    }
+
+    function splitTextIntoWordChunks(text, maxWords = MAX_TTS_WORDS_PER_CHUNK) {
+      const normalized = String(text || "").replace(/\s+/g, " ").trim();
+      if (!normalized) return [];
+      const words = normalized.split(" ");
+      const chunks = [];
+      for (let i = 0; i < words.length; i += maxWords) {
+        const chunkWords = words.slice(i, i + maxWords);
+        chunks.push({
+          index: chunks.length,
+          text: chunkWords.join(" "),
+          wordCount: chunkWords.length,
+          status: "pending",
+          url: null,
+          error: null,
+          generatedAt: null,
+          fileName: ""
+        });
+      }
+      return chunks;
+    }
+
     function updateStats() {
-      const text = textInput.value || "";
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-      const lines = text ? text.split(/\n/).length : 0;
-      charCount.textContent = `${text.length} Zeichen`;
+      const rawText = textInput.value || "";
+      const { cleanedText, flaggedSections } = extractFlaggedSections(rawText);
+      const words = countWords(cleanedText);
+      const lines = rawText ? rawText.split(/\n/).length : 0;
+
+      charCount.textContent = `${rawText.length} Zeichen`;
       wordCount.textContent = `${words} Wörter`;
       lineCount.textContent = `${lines} Zeilen`;
+      flagCount.textContent = `${flaggedSections.length} Flaggen`;
+
+      renderFlagPreview(flaggedSections);
+    }
+
+    function renderFlagPreview(flaggedSections) {
+      flagPreview.innerHTML = "";
+      if (!flaggedSections.length) {
+        return;
+      }
+
+      flaggedSections.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "flag-item";
+        div.innerHTML = `
+          <strong>Flagge ${index + 1} · Zeile ${item.startLine}${item.endLine !== item.startLine ? "–" + item.endLine : ""}</strong>
+          ${escapeHtml(item.text)}
+        `;
+        flagPreview.appendChild(div);
+      });
     }
 
     function updateKreuzenStats() {
       const text = kreuzenInput.value || "";
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const words = countWords(text);
       const lines = text ? text.split(/\n/).length : 0;
       kreuzenCharCount.textContent = `${text.length} Zeichen`;
       kreuzenWordCount.textContent = `${words} Wörter`;
@@ -1242,6 +1395,7 @@ audio{
           updateApiBadge();
           updateModelBadge();
           applyMode();
+          renderSegmentList();
           return;
         }
 
@@ -1289,6 +1443,7 @@ audio{
         updateKreuzenStats();
         renderQuestions();
         renderMistakes();
+        renderSegmentList();
         updateApiBadge();
         updateModelBadge();
         applyMode();
@@ -1297,17 +1452,43 @@ audio{
       }
     }
 
-    function resetAudio() {
+    function clearNextChunkWaitTimer() {
+      if (nextChunkWaitTimer) {
+        clearTimeout(nextChunkWaitTimer);
+        nextChunkWaitTimer = null;
+      }
+    }
+
+    function resetAudioState() {
+      clearNextChunkWaitTimer();
+
+      if (ttsSession && Array.isArray(ttsSession.chunks)) {
+        ttsSession.chunks.forEach(chunk => {
+          if (chunk.url) {
+            URL.revokeObjectURL(chunk.url);
+            chunk.url = null;
+          }
+        });
+      }
+
+      ttsSession = null;
+
       if (currentAudioUrl) {
-        URL.revokeObjectURL(currentAudioUrl);
         currentAudioUrl = null;
       }
+
       audioPlayer.pause();
       audioPlayer.removeAttribute("src");
       audioPlayer.load();
       audioPlayer.classList.add("hidden");
+
       downloadLink.classList.add("hidden");
       downloadLink.removeAttribute("href");
+      downloadLink.removeAttribute("download");
+      downloadLink.textContent = "Audio herunterladen";
+
+      pauseAllSegmentAudios();
+      renderSegmentList();
     }
 
     function triggerDownload(url, filename) {
@@ -1447,20 +1628,195 @@ audio{
       return null;
     }
 
-    async function generateSpeech() {
+    async function requestTtsChunk(chunkText) {
       const apiKey = apiKeyTtsInput.value.trim();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
       const model = TTS_MODEL;
-      const text = textInput.value.trim();
       const voice = voiceInput.value;
       const format = formatInput.value;
       const speed = parseFloat(speedInput.value);
 
       if (!apiKey) {
-        setStatus(`Bitte den API-Key für das TTS-Modell setzen.`, "error");
+        throw new Error(`Kein API-Key für ${TTS_MODEL} gesetzt.`);
+      }
+      if (Number.isNaN(speed) || speed < 0.25 || speed > 4) {
+        throw new Error("Geschwindigkeit muss zwischen 0.25 und 4 liegen.");
+      }
+
+      const response = await fetch(`${baseUrl}/v1/audio/speech`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          input: chunkText,
+          voice,
+          response_format: format,
+          speed
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const data = await response.json();
+          errorMessage = JSON.stringify(data, null, 2);
+        } catch {
+          errorMessage = await response.text();
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.blob();
+    }
+
+    function getChunkExt() {
+      return formatInput.value === "pcm" ? "raw" : formatInput.value;
+    }
+
+    function getChunkFileName(index) {
+      return `speech_${TTS_MODEL.replaceAll("/", "_")}_part_${String(index + 1).padStart(2, "0")}.${getChunkExt()}`;
+    }
+
+    async function generateChunkForSession(session, index) {
+      const chunk = session.chunks[index];
+      if (!chunk || session.stopped) return null;
+      if (chunk.status === "ready") return chunk;
+      if (chunk.status === "loading") return null;
+
+      chunk.status = "loading";
+      chunk.error = null;
+      renderSegmentList();
+
+      try {
+        const blob = await requestTtsChunk(chunk.text);
+        if (session.id !== (ttsSession && ttsSession.id) || session.stopped) {
+          return null;
+        }
+
+        chunk.url = URL.createObjectURL(blob);
+        chunk.status = "ready";
+        chunk.generatedAt = new Date().toISOString();
+        chunk.fileName = getChunkFileName(index);
+
+        if (autoDownloadCheckbox.checked) {
+          triggerDownload(chunk.url, chunk.fileName);
+        }
+
+        renderSegmentList();
+        return chunk;
+      } catch (err) {
+        chunk.status = "error";
+        chunk.error = err.message || "Unbekannter Fehler";
+        renderSegmentList();
+        throw err;
+      }
+    }
+
+    async function startChunkGenerationQueue(session, startIndex) {
+      for (let i = startIndex; i < session.chunks.length; i++) {
+        if (!ttsSession || session.id !== ttsSession.id || session.stopped) return;
+        try {
+          await generateChunkForSession(session, i);
+          if (i === 1 && session.currentIndex === 0) {
+            setStatus(`Block 1 läuft. Block 2 ist bereit oder wird geladen.\n${session.chunks.length} Audio-Blöcke insgesamt.`, "info");
+          }
+        } catch (err) {
+          if (!ttsSession || session.id !== ttsSession.id || session.stopped) return;
+          setStatus(`Fehler bei Audio-Block ${i + 1}: ${err.message}`, "error");
+          return;
+        }
+      }
+
+      if (ttsSession && session.id === ttsSession.id && !session.stopped) {
+        setStatus(`Alle Audio-Blöcke wurden erzeugt.\nGesamt: ${session.chunks.length} Blöcke.`, "ok");
+      }
+    }
+
+    function updateMainAudioForChunk(session, index) {
+      const chunk = session.chunks[index];
+      if (!chunk || !chunk.url) return;
+
+      currentAudioUrl = chunk.url;
+      audioPlayer.src = chunk.url;
+      audioPlayer.classList.remove("hidden");
+      downloadLink.href = chunk.url;
+      downloadLink.download = chunk.fileName || getChunkFileName(index);
+      downloadLink.textContent = `Audio herunterladen (${downloadLink.download})`;
+      downloadLink.classList.remove("hidden");
+      renderSegmentList();
+    }
+
+    function pauseAllSegmentAudios(exceptIndex = null) {
+      audioSegmentsContainer.querySelectorAll("audio[data-segment-audio]").forEach(el => {
+        const idx = Number(el.dataset.segmentAudioIndex);
+        if (exceptIndex !== null && idx === exceptIndex) return;
+        try { el.pause(); } catch {}
+      });
+    }
+
+    async function playChunkSequentially(index, options = {}) {
+      if (!ttsSession || ttsSession.stopped) return;
+      const chunk = ttsSession.chunks[index];
+      if (!chunk) return;
+
+      ttsSession.currentIndex = index;
+      ttsSession.manualStop = false;
+      updateMainAudioForChunk(ttsSession, index);
+      pauseAllSegmentAudios();
+
+      if (options.resetTime !== false) {
+        audioPlayer.currentTime = 0;
+      }
+
+      if (options.autoPlay !== false) {
+        try {
+          await audioPlayer.play();
+        } catch {}
+      }
+
+      setStatus(`Wiedergabe Block ${index + 1}/${ttsSession.chunks.length}\n${chunk.wordCount} Wörter`, "info");
+    }
+
+    function waitForNextChunkAndPlay(index) {
+      clearNextChunkWaitTimer();
+      if (!ttsSession || ttsSession.stopped || ttsSession.manualStop) return;
+
+      const nextChunk = ttsSession.chunks[index];
+      if (!nextChunk) {
+        setStatus("Wiedergabe abgeschlossen.", "ok");
         return;
       }
-      if (!text) {
+
+      if (nextChunk.status === "ready") {
+        playChunkSequentially(index, { autoPlay: true, resetTime: true });
+        return;
+      }
+
+      if (nextChunk.status === "error") {
+        setStatus(`Wiedergabe angehalten. Audio-Block ${index + 1} konnte nicht erzeugt werden.`, "error");
+        return;
+      }
+
+      setStatus(`Warte auf Audio-Block ${index + 1}/${ttsSession.chunks.length} ...`, "info");
+      nextChunkWaitTimer = setTimeout(() => waitForNextChunkAndPlay(index), 350);
+    }
+
+    async function generateSpeech() {
+      const apiKey = apiKeyTtsInput.value.trim();
+      const model = TTS_MODEL;
+      const voice = voiceInput.value;
+      const format = formatInput.value;
+      const speed = parseFloat(speedInput.value);
+      const { cleanedText } = extractFlaggedSections(textInput.value.trim());
+
+      if (!apiKey) {
+        setStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
+        return;
+      }
+      if (!cleanedText) {
         setStatus("Bitte Text eingeben.", "error");
         return;
       }
@@ -1470,62 +1826,41 @@ audio{
       }
 
       speakBtn.disabled = true;
-      setStatus(`Audio wird erzeugt ...\nTTS-Modell: ${model}\nStimme: ${voice}`, "info");
+      saveState();
 
       try {
-        resetAudio();
-        saveState();
+        resetAudioState();
 
-        const response = await fetch(`${baseUrl}/v1/audio/speech`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model,
-            input: text,
-            voice,
-            response_format: format,
-            speed
-          })
-        });
-
-        if (!response.ok) {
-          let errorMessage = `HTTP ${response.status}`;
-          try {
-            const data = await response.json();
-            errorMessage = JSON.stringify(data, null, 2);
-          } catch {
-            errorMessage = await response.text();
-          }
-          throw new Error(errorMessage);
+        const chunks = splitTextIntoWordChunks(cleanedText, MAX_TTS_WORDS_PER_CHUNK);
+        if (!chunks.length) {
+          throw new Error("Es konnten keine Audio-Blöcke erzeugt werden.");
         }
 
-        const blob = await response.blob();
-        currentAudioUrl = URL.createObjectURL(blob);
+        ttsSession = {
+          id: uid(),
+          stopped: false,
+          manualStop: false,
+          currentIndex: 0,
+          chunks
+        };
 
-        audioPlayer.src = currentAudioUrl;
-        audioPlayer.classList.remove("hidden");
+        setStatus(`Audio wird erzeugt ...\nTTS-Modell: ${model}\nStimme: ${voice}\nBlöcke: ${chunks.length}`, "info");
+        renderSegmentList();
 
-        const ext = format === "pcm" ? "raw" : format;
-        const fileName = `speech_${model.replaceAll("/", "_")}.${ext}`;
-        downloadLink.href = currentAudioUrl;
-        downloadLink.download = fileName;
-        downloadLink.textContent = `Audio herunterladen (${fileName})`;
-        downloadLink.classList.remove("hidden");
+        await generateChunkForSession(ttsSession, 0);
 
+        if (!ttsSession || ttsSession.stopped) return;
+
+        updateMainAudioForChunk(ttsSession, 0);
         if (autoPlayCheckbox.checked) {
-          try {
-            await audioPlayer.play();
-          } catch (_) {}
+          await playChunkSequentially(0, { autoPlay: true, resetTime: true });
+        } else {
+          audioPlayer.classList.remove("hidden");
+          setStatus(`Erster Audio-Block erfolgreich erzeugt.\nWeitere Blöcke werden im Hintergrund geladen.`, "ok");
         }
 
-        if (autoDownloadCheckbox.checked) {
-          triggerDownload(currentAudioUrl, fileName);
-        }
-
-        setStatus(`Audio erfolgreich erzeugt.\nTTS-Modell: ${model}`, "ok");
+        renderSegmentList();
+        startChunkGenerationQueue(ttsSession, 1);
       } catch (err) {
         console.error(err);
         setStatus("Fehler: " + err.message, "error");
@@ -1535,13 +1870,14 @@ audio{
     }
 
     async function generateQuestions() {
-      const text = textInput.value.trim();
+      const rawText = textInput.value.trim();
+      const { cleanedText, flaggedSections } = extractFlaggedSections(rawText);
 
       if (!apiKeyChatInput.value.trim()) {
         setStatus(`Bitte den API-Key für ${CHAT_MODEL} setzen.`, "error");
         return;
       }
-      if (!text) {
+      if (!cleanedText) {
         setStatus("Bitte zuerst einen Originaltext eingeben.", "error");
         return;
       }
@@ -1552,9 +1888,16 @@ audio{
       const countRaw = questionCountInput.value.trim();
       const count = countRaw ? Number(countRaw) : null;
 
+      const forcedFlagsBlock = flaggedSections.length
+        ? flaggedSections.map((item, index) => `Flagge ${index + 1} (Zeile ${item.startLine}${item.endLine !== item.startLine ? "-" + item.endLine : ""}): ${item.text}`).join("\n")
+        : "Keine markierten Flaggen vorhanden.";
+
+      const minQuestionsBecauseFlags = flaggedSections.length ? `Mindestens ${flaggedSections.length} Fragen müssen die markierten Flaggen direkt abdecken.` : "Es gibt keine Pflicht-Flaggen.";
+
       const systemPrompt = `
 Du bist ein extrem zeiteffizienter medizinischer Prüfungs-Coach.
 Erzeuge aus medizinischem Text kurze, präzise Active-Recall-Fragen.
+
 Regeln:
 - Maximal 1–2 Sätze pro Frage.
 - Keine langen Erklärungen.
@@ -1563,6 +1906,10 @@ Regeln:
 - Wenn Anzahl vorgegeben ist, halte dich daran.
 - Wenn keine Anzahl vorgegeben ist, entscheide sinnvoll selbst.
 - Wenn der Text lang ist, fokussiere die wichtigsten Kernpunkte.
+- Jeder markierte FLAG-Bereich muss zwingend in mindestens einer konkreten Frage vorkommen.
+- Wenn FLAG-Bereiche vorhanden sind, priorisiere diese.
+- Formuliere Fragen direkt prüfungsorientiert.
+
 Gib ausschließlich valides JSON zurück in exakt diesem Format:
 {
   "questions": [
@@ -1570,12 +1917,19 @@ Gib ausschließlich valides JSON zurück in exakt diesem Format:
     "Frage 2"
   ]
 }
+
 Keine zusätzlichen Sätze.
       `.trim();
 
       const userPrompt = `
 Originaltext:
-"""${text}"""
+"""${cleanedText}"""
+
+Markierte Pflicht-Bereiche:
+${forcedFlagsBlock}
+
+Regel:
+${minQuestionsBecauseFlags}
 
 Gewünschte Anzahl Fragen: ${count ? count : "nicht definiert, entscheide selbst"}
 
@@ -1605,7 +1959,7 @@ Erzeuge nur die Fragen als JSON.
         saveState();
         renderQuestions();
 
-        setStatus(`Fragen erfolgreich generiert: ${newQuestions.length}`, "ok");
+        setStatus(`Fragen erfolgreich generiert: ${newQuestions.length}${flaggedSections.length ? ` · Pflicht-Flaggen: ${flaggedSections.length}` : ""}`, "ok");
       } catch (err) {
         console.error(err);
         setStatus("Fehler bei der Fragengenerierung: " + err.message, "error");
@@ -1616,7 +1970,7 @@ Erzeuge nur die Fragen als JSON.
 
     async function evaluateQuestion(questionId) {
       const question = appState.questions.find(q => q.id === questionId);
-      const originalText = textInput.value.trim();
+      const { cleanedText: originalText } = extractFlaggedSections(textInput.value.trim());
 
       if (!apiKeyChatInput.value.trim()) {
         setStatus(`Bitte den API-Key für ${CHAT_MODEL} setzen.`, "error");
@@ -1918,6 +2272,93 @@ Strukturiere die Fehlerliste als JSON.
   });
 }
 
+function getSegmentStatusLabel(status) {
+  switch (status) {
+    case "loading": return "wird erzeugt";
+    case "ready": return "bereit";
+    case "error": return "Fehler";
+    default: return "wartet";
+  }
+}
+
+function renderSegmentList() {
+  audioSegmentsContainer.innerHTML = "";
+
+  if (!ttsSession || !Array.isArray(ttsSession.chunks) || !ttsSession.chunks.length) {
+    emptySegments.classList.remove("hidden");
+    audioQueueMeta.classList.add("hidden");
+    return;
+  }
+
+  emptySegments.classList.add("hidden");
+
+  const readyCount = ttsSession.chunks.filter(chunk => chunk.status === "ready").length;
+  const loadingCount = ttsSession.chunks.filter(chunk => chunk.status === "loading").length;
+  const errorCount = ttsSession.chunks.filter(chunk => chunk.status === "error").length;
+
+  audioQueueMeta.classList.remove("hidden");
+  audioQueueMeta.innerHTML = `
+    <div class="meta" style="margin-top:0;">
+      <span>${ttsSession.chunks.length} Audio-Blöcke</span>
+      <span>${readyCount} bereit</span>
+      <span>${loadingCount} aktiv</span>
+      <span>${errorCount} Fehler</span>
+      <span>Grenze: ${MAX_TTS_WORDS_PER_CHUNK} Wörter/Block</span>
+    </div>
+  `;
+
+  ttsSession.chunks.forEach((chunk, idx) => {
+    const card = document.createElement("div");
+    card.className = "segment-card";
+    const isCurrent = idx === ttsSession.currentIndex && !audioPlayer.classList.contains("hidden");
+
+    card.innerHTML = `
+      <div class="segment-head">
+        <div style="flex:1 1 auto;">
+          <div class="segment-index">Audio-Block ${idx + 1}/${ttsSession.chunks.length}</div>
+          <div class="segment-title">${chunk.wordCount} Wörter · Status: ${escapeHtml(getSegmentStatusLabel(chunk.status))}${isCurrent ? " · aktuell" : ""}</div>
+        </div>
+        <div class="segment-actions">
+          <div class="chunk-pill">${escapeHtml(getSegmentStatusLabel(chunk.status))}</div>
+          ${chunk.status === "ready" ? `<button class="ghost" type="button" data-play-segment="${idx}">Abspielen</button>` : ""}
+        </div>
+      </div>
+      <div class="segment-body">
+        <div class="segment-field">
+          <div class="segment-label">Textauszug</div>
+          <div class="segment-content">${escapeHtml(chunk.text.slice(0, 700))}${chunk.text.length > 700 ? " …" : ""}</div>
+        </div>
+        ${chunk.status === "ready" ? `
+          <audio controls data-segment-audio="1" data-segment-audio-index="${idx}" src="${chunk.url}"></audio>
+          <a class="download-link" href="${chunk.url}" download="${chunk.fileName || getChunkFileName(idx)}">Audio herunterladen (${chunk.fileName || getChunkFileName(idx)})</a>
+        ` : ""}
+        ${chunk.status === "error" ? `
+          <div class="status error" style="margin-top:0;">${escapeHtml(chunk.error || "Unbekannter Fehler")}</div>
+        ` : ""}
+      </div>
+    `;
+
+    audioSegmentsContainer.appendChild(card);
+  });
+
+  audioSegmentsContainer.querySelectorAll("[data-play-segment]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const index = Number(btn.dataset.playSegment);
+      if (!ttsSession || Number.isNaN(index)) return;
+      ttsSession.manualStop = false;
+      await playChunkSequentially(index, { autoPlay: true, resetTime: true });
+    });
+  });
+
+  audioSegmentsContainer.querySelectorAll("audio[data-segment-audio]").forEach(el => {
+    el.addEventListener("play", () => {
+      const idx = Number(el.dataset.segmentAudioIndex);
+      pauseAllSegmentAudios(idx);
+      audioPlayer.pause();
+    });
+  });
+}
+
 function renderMistakes() {
   mistakesContainer.innerHTML = "";
 
@@ -2074,8 +2515,7 @@ function deleteMistake(id) {
 }
 
 function toggleMistakeOpen(id) {
-  appState.mistakes = appState.mistakes.map(item => item.id === id ? { ...item, open: item.open === false ? true : false ? false : !item.open } : item);
-  appState.mistakes = appState.mistakes.map(item => item.id === id ? { ...item, open: !(item.open === false) } : item);
+  appState.mistakes = appState.mistakes.map(item => item.id === id ? { ...item, open: item.open === false ? true : false } : item);
   saveState();
   renderMistakes();
 }
@@ -2100,7 +2540,7 @@ function exportQuestions() {
   lines.push("========================");
   lines.push("");
   lines.push("Originaltext:");
-  lines.push(textInput.value.trim() || "—");
+  lines.push(extractFlaggedSections(textInput.value.trim()).cleanedText || "—");
   lines.push("");
   lines.push("Fragen:");
   lines.push("");
@@ -2273,11 +2713,11 @@ function clearAll() {
   textInput.value = "";
   questionCountInput.value = "";
   appState.questions = [];
-  resetAudio();
+  resetAudioState();
   updateStats();
   saveState();
   renderQuestions();
-  setStatus("Text, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
+  setStatus("Text, Audio-Blöcke, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
 }
 
 function clearKreuzenAll() {
@@ -2299,6 +2739,31 @@ function sortMistakesByType() {
   saveState();
   renderMistakes();
   setKreuzenStatus("Nach Fehlerart sortiert.", "ok");
+}
+
+function wrapSelectionWithFlag() {
+  const textarea = textInput;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+
+  if (typeof start !== "number" || typeof end !== "number" || start === end) {
+    setStatus("Bitte zuerst einen Textbereich markieren.", "error");
+    return;
+  }
+
+  const selected = value.slice(start, end);
+  const wrapped = `${FLAG_OPEN}${selected}${FLAG_CLOSE}`;
+  textarea.value = value.slice(0, start) + wrapped + value.slice(end);
+
+  const newStart = start + FLAG_OPEN.length;
+  const newEnd = newStart + selected.length;
+  textarea.focus();
+  textarea.setSelectionRange(newStart, newEnd);
+
+  updateStats();
+  saveState();
+  setStatus("Bereich mit FLAG markiert.", "ok");
 }
 
 themeSwitch.addEventListener("click", () => {
@@ -2389,6 +2854,7 @@ kreuzenInput.addEventListener("input", () => {
 
 speakBtn.addEventListener("click", generateSpeech);
 generateQuestionsBtn.addEventListener("click", generateQuestions);
+flagSelectionBtn.addEventListener("click", wrapSelectionWithFlag);
 kreuzenSendBtn.addEventListener("click", processKreuzenEntry);
 kreuzenClearInputBtn.addEventListener("click", () => {
   kreuzenInput.value = "";
@@ -2404,27 +2870,79 @@ kreuzenSortBtn.addEventListener("click", sortMistakesByType);
 pauseBtn.addEventListener("click", () => {
   if (!audioPlayer.paused) {
     audioPlayer.pause();
+    pauseAllSegmentAudios();
+    if (ttsSession) ttsSession.manualStop = false;
     setStatus("Wiedergabe pausiert.", "info");
   }
 });
 
 resumeBtn.addEventListener("click", async () => {
-  if (audioPlayer.src) {
+  if (!ttsSession || !ttsSession.chunks.length) {
+    setStatus("Keine Audio-Blöcke vorhanden.", "error");
+    return;
+  }
+
+  ttsSession.manualStop = false;
+  pauseAllSegmentAudios();
+
+  const currentChunk = ttsSession.chunks[ttsSession.currentIndex];
+  if (!currentChunk) {
+    setStatus("Kein aktueller Audio-Block verfügbar.", "error");
+    return;
+  }
+
+  if (currentChunk.status === "ready" && audioPlayer.src) {
     try {
       await audioPlayer.play();
-      setStatus("Wiedergabe fortgesetzt.", "ok");
-    } catch {
-      setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
-    }
+      setStatus(`Wiedergabe fortgesetzt.\nBlock ${ttsSession.currentIndex + 1}/${ttsSession.chunks.length}`, "ok");
+      return;
+    } catch {}
   }
+
+  if (currentChunk.status === "ready") {
+    await playChunkSequentially(ttsSession.currentIndex, { autoPlay: true, resetTime: false });
+    return;
+  }
+
+  waitForNextChunkAndPlay(ttsSession.currentIndex);
 });
 
 stopBtn.addEventListener("click", () => {
-  if (audioPlayer.src) {
-    audioPlayer.pause();
-    audioPlayer.currentTime = 0;
-    setStatus("Wiedergabe gestoppt.", "info");
+  if (!ttsSession || !ttsSession.chunks.length) {
+    setStatus("Keine Audio-Blöcke vorhanden.", "error");
+    return;
   }
+
+  clearNextChunkWaitTimer();
+  pauseAllSegmentAudios();
+  audioPlayer.pause();
+  ttsSession.manualStop = true;
+  ttsSession.currentIndex = 0;
+
+  const firstChunk = ttsSession.chunks[0];
+  if (firstChunk && firstChunk.status === "ready") {
+    updateMainAudioForChunk(ttsSession, 0);
+    audioPlayer.currentTime = 0;
+  } else {
+    audioPlayer.removeAttribute("src");
+    audioPlayer.load();
+  }
+
+  setStatus("Wiedergabe gestoppt und auf Anfang gesetzt.", "info");
+});
+
+audioPlayer.addEventListener("ended", () => {
+  if (!ttsSession || ttsSession.manualStop) return;
+  const nextIndex = ttsSession.currentIndex + 1;
+  if (nextIndex >= ttsSession.chunks.length) {
+    setStatus("Wiedergabe abgeschlossen.", "ok");
+    return;
+  }
+  waitForNextChunkAndPlay(nextIndex);
+});
+
+audioPlayer.addEventListener("play", () => {
+  pauseAllSegmentAudios();
 });
 
 copyBtn.addEventListener("click", async () => {
@@ -2466,6 +2984,7 @@ updateStats();
 updateKreuzenStats();
 renderQuestions();
 renderMistakes();
+renderSegmentList();
 updateApiBadge();
 updateModelBadge();
 resetPomodoro();
