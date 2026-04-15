@@ -586,6 +586,11 @@ audio{
       </div>
 
       <div class="group">
+        <label for="apiKeyEditorial">API Key · openai/gpt-5.4 (optional)</label>
+        <input id="apiKeyEditorial" type="password" placeholder="Optional: Key für Redaktion (leer = TTS-Key)" autocomplete="off" />
+      </div>
+
+      <div class="group">
         <label for="baseUrl">Base URL</label>
         <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
       </div>
@@ -635,6 +640,7 @@ audio{
       <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
       <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
       <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
+      <label><input type="checkbox" id="enableEditorial" /> Blöcke vorlesen mit Redaktion (openai/gpt-5.4)</label>
     </div>
   </div>
 
@@ -674,6 +680,21 @@ audio{
   <script>
     const STORAGE_KEY = "med_tts_audio_only_v1";
     const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
+    const EDITOR_MODEL = "openai/gpt-5.4";
+    const EDITOR_SYSTEM_PROMPT = `Du bist ein praeziser Redaktionsassistent. Deine Aufgabe ist es, einen eingegebenen Text inhaltlich exakt wiederzugeben und sprachlich in gut lesbaren Fliesstext zu ueberfuehren.
+
+Vorgaben:
+- Gib den Inhalt inhaltlich praezise und vollstaendig wieder.
+- Veraendere keine Aussagen, fuege nichts hinzu und lasse nichts weg.
+- Wenn der Eingangstext stichwortartig, unvollstaendig oder fragmentarisch ist, forme ihn nur dann in sinnvolle, grammatikalisch korrekte Saetze um, wenn es fuer Verstaendlichkeit und Lesefluss noetig ist.
+- Der Text soll natuerlich, klar und zusammenhaengend klingen.
+- Erhalte die fachliche Bedeutung und alle relevanten Details exakt.
+- Das Ausgabeformat ist reiner Fliesstext.
+- Keine Kommentare, keine Einleitung, keine Zusammenfassung, keine Erklaerungen.
+- Kein Markdown, keine Fettung, keine Kursivschrift, keine Aufzaehlungen.
+- Zwischen den Absaetzen steht genau eine Leerzeile.
+- Gib ausschliesslich den ueberarbeiteten Text aus.
+- Prinzip: Text rein, Text raus.`;
 
     const themeSwitch = document.getElementById("themeSwitch");
 
@@ -690,6 +711,7 @@ audio{
     const apiStateBadge = document.getElementById("apiStateBadge");
 
     const apiKeyTtsInput = document.getElementById("apiKeyTts");
+    const apiKeyEditorialInput = document.getElementById("apiKeyEditorial");
     const baseUrlInput = document.getElementById("baseUrl");
     const voiceInput = document.getElementById("voice");
     const formatInput = document.getElementById("format");
@@ -700,6 +722,7 @@ audio{
     const saveSettingsCheckbox = document.getElementById("saveSettings");
     const autoPlayCheckbox = document.getElementById("autoPlay");
     const autoDownloadCheckbox = document.getElementById("autoDownload");
+    const enableEditorialCheckbox = document.getElementById("enableEditorial");
 
     const toggleAdvancedBtn = document.getElementById("toggleAdvancedBtn");
     const advancedPanel = document.getElementById("advancedPanel");
@@ -774,18 +797,43 @@ audio{
       const chunks = [];
       for (let i = 0; i < words.length; i += maxWords) {
         const chunkWords = words.slice(i, i + maxWords);
+        const rawChunkText = chunkWords.join(" ");
         chunks.push({
           index: chunks.length,
-          text: chunkWords.join(" "),
+          text: rawChunkText,
+          originalText: rawChunkText,
           wordCount: chunkWords.length,
           status: "pending",
           url: null,
           error: null,
           generatedAt: null,
-          fileName: ""
+          fileName: "",
+          redactionApplied: false
         });
       }
       return chunks;
+    }
+
+    function getTailWords(text, wordCount = 26) {
+      const normalized = String(text || "").replace(/\s+/g, " ").trim();
+      if (!normalized) return "";
+      const words = normalized.split(" ");
+      return words.slice(Math.max(0, words.length - wordCount)).join(" ");
+    }
+
+    function extractAssistantContent(content) {
+      if (typeof content === "string") return content.trim();
+      if (Array.isArray(content)) {
+        return content
+          .map(part => {
+            if (typeof part === "string") return part;
+            if (part && typeof part.text === "string") return part.text;
+            return "";
+          })
+          .join("")
+          .trim();
+      }
+      return "";
     }
 
     function updateApiBadge() {
@@ -825,6 +873,7 @@ audio{
 
       const data = {
         apiKeyTts: apiKeyTtsInput.value,
+        apiKeyEditorial: apiKeyEditorialInput.value,
         baseUrl: baseUrlInput.value,
         voice: voiceInput.value,
         format: formatInput.value,
@@ -833,6 +882,7 @@ audio{
         text: textInput.value,
         autoPlay: autoPlayCheckbox.checked,
         autoDownload: autoDownloadCheckbox.checked,
+        enableEditorial: enableEditorialCheckbox.checked,
         saveSettings: saveSettingsCheckbox.checked,
         advancedOpen: !advancedPanel.classList.contains("collapsed"),
         startupCollapsed: startupCard.classList.contains("collapsed"),
@@ -857,6 +907,7 @@ audio{
         const data = JSON.parse(raw);
 
         apiKeyTtsInput.value = data.apiKeyTts || "";
+        apiKeyEditorialInput.value = data.apiKeyEditorial || "";
         baseUrlInput.value = data.baseUrl || "https://api.hrz.uni-giessen.de";
         voiceInput.value = data.voice || "alloy";
         formatInput.value = data.format || "mp3";
@@ -866,6 +917,7 @@ audio{
 
         autoPlayCheckbox.checked = data.autoPlay !== false;
         autoDownloadCheckbox.checked = data.autoDownload === true;
+        enableEditorialCheckbox.checked = data.enableEditorial === true;
         saveSettingsCheckbox.checked = data.saveSettings !== false;
 
         if (data.advancedOpen) {
@@ -951,6 +1003,67 @@ audio{
       a.remove();
     }
 
+    async function requestEditorialChunk({ chunkText, previousTail = "", chunkIndex = 0, totalChunks = 1 }) {
+      const apiKey = (apiKeyEditorialInput.value || apiKeyTtsInput.value).trim();
+      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+
+      if (!apiKey) {
+        throw new Error(`Kein API-Key für ${EDITOR_MODEL} gesetzt.`);
+      }
+      if (!baseUrl) {
+        throw new Error("Base URL fehlt.");
+      }
+
+      const userPrompt = [
+        `Block ${chunkIndex + 1} von ${totalChunks}.`,
+        "Wichtiger Hinweis: Gib ausschliesslich den redaktionierten Text des aktuellen Blocks aus.",
+        previousTail ? `Vorheriger Block (letzte Woerter fuer Anschluss): ${previousTail}` : "Vorheriger Block (letzte Woerter fuer Anschluss):",
+        "",
+        "Aktueller Block:",
+        chunkText
+      ].join("\n");
+
+      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: EDITOR_MODEL,
+          temperature: 0,
+          messages: [
+            {
+              role: "system",
+              content: EDITOR_SYSTEM_PROMPT
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const data = await response.json();
+          errorMessage = JSON.stringify(data, null, 2);
+        } catch {
+          errorMessage = await response.text();
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const messageContent = extractAssistantContent(data?.choices?.[0]?.message?.content);
+      if (!messageContent) {
+        throw new Error("Leere Antwort vom Redaktionsmodell erhalten.");
+      }
+      return messageContent;
+    }
+
     async function requestTtsChunk(chunkText) {
       const apiKey = apiKeyTtsInput.value.trim();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
@@ -1011,11 +1124,35 @@ audio{
       if (chunk.status === "ready") return chunk;
       if (chunk.status === "loading") return null;
 
-      chunk.status = "loading";
-      chunk.error = null;
-      renderSegmentList();
-
       try {
+        if (session.useEditorial && !chunk.redactionApplied) {
+          chunk.status = "editing";
+          chunk.error = null;
+          renderSegmentList();
+
+          const previousChunk = session.chunks[index - 1];
+          const previousTail = previousChunk ? getTailWords(previousChunk.text) : "";
+          const editedText = await requestEditorialChunk({
+            chunkText: chunk.originalText,
+            previousTail,
+            chunkIndex: index,
+            totalChunks: session.chunks.length
+          });
+
+          if (session.id !== (ttsSession && ttsSession.id) || session.stopped) {
+            return null;
+          }
+
+          chunk.text = editedText;
+          chunk.wordCount = countWords(editedText);
+          chunk.redactionApplied = true;
+          renderSegmentList();
+        }
+
+        chunk.status = "loading";
+        chunk.error = null;
+        renderSegmentList();
+
         const blob = await requestTtsChunk(chunk.text);
         if (session.id !== (ttsSession && ttsSession.id) || session.stopped) {
           return null;
@@ -1123,6 +1260,7 @@ audio{
       const text = textInput.value.trim();
       const speed = parseFloat(speedInput.value);
       const maxWords = getChunkLimit();
+      const useEditorial = enableEditorialCheckbox.checked;
 
       if (!apiKey) {
         setStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
@@ -1153,10 +1291,11 @@ audio{
           stopped: false,
           manualStop: false,
           currentIndex: 0,
+          useEditorial,
           chunks
         };
 
-        setStatus(`Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nBlöcke: ${chunks.length}`, "info");
+        setStatus(`Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${EDITOR_MODEL})` : "aus"}\nBlöcke: ${chunks.length}`, "info");
         renderSegmentList();
 
         await generateChunkForSession(ttsSession, 0);
@@ -1184,6 +1323,7 @@ audio{
 
     function getSegmentStatusLabel(status) {
       switch (status) {
+        case "editing": return "wird redaktioniert";
         case "loading": return "wird erzeugt";
         case "ready": return "bereit";
         case "error": return "Fehler";
@@ -1203,6 +1343,7 @@ audio{
       emptySegments.classList.add("hidden");
 
       const readyCount = ttsSession.chunks.filter(chunk => chunk.status === "ready").length;
+      const editingCount = ttsSession.chunks.filter(chunk => chunk.status === "editing").length;
       const loadingCount = ttsSession.chunks.filter(chunk => chunk.status === "loading").length;
       const errorCount = ttsSession.chunks.filter(chunk => chunk.status === "error").length;
 
@@ -1211,8 +1352,10 @@ audio{
         <div class="meta" style="margin-top:0;">
           <span>${ttsSession.chunks.length} Audio-Blöcke</span>
           <span>${readyCount} bereit</span>
-          <span>${loadingCount} aktiv</span>
+          <span>${editingCount} Redaktion aktiv</span>
+          <span>${loadingCount} TTS aktiv</span>
           <span>${errorCount} Fehler</span>
+          <span>Redaktion: ${ttsSession.useEditorial ? "an" : "aus"}</span>
           <span>Grenze: ${getChunkLimit()} Wörter/Block</span>
         </div>
       `;
@@ -1304,6 +1447,7 @@ audio{
     clearApiBtn.addEventListener("click", () => {
       startupApiKeyTts.value = "";
       apiKeyTtsInput.value = "";
+      apiKeyEditorialInput.value = "";
       saveState(true);
       updateApiBadge();
       setStatus("API-Key lokal gelöscht.", "ok");
@@ -1331,7 +1475,7 @@ audio{
       });
     });
 
-    [apiKeyTtsInput, baseUrlInput, voiceInput, formatInput, speedInput, chunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox].forEach(el => {
+    [apiKeyTtsInput, apiKeyEditorialInput, baseUrlInput, voiceInput, formatInput, speedInput, chunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, enableEditorialCheckbox].forEach(el => {
       el.addEventListener("input", () => {
         syncMainToStartup();
         saveState();
