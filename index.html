@@ -128,11 +128,66 @@
     .question-card.integration{ border-color:var(--integration); }
     .question-card.integration .question-head{ background:var(--integration-soft); }
     [data-theme="dark"] .question-card, [data-theme="dark"] .error-block{ box-shadow:0 6px 20px rgba(0,0,0,.2); }
-    .question-head, .error-block-head{ padding:12px 14px; display:flex; flex-direction:column; gap:10px; background:var(--card-2); border-bottom:1px solid var(--line); }
+    .question-head{ position:relative; padding:12px 48px 12px 14px; display:flex; flex-direction:column; gap:10px; background:var(--card-2); border-bottom:1px solid var(--line); }
+    .error-block-head{ padding:12px 14px; display:flex; flex-direction:row; align-items:flex-start; justify-content:space-between; gap:12px; background:var(--card-2); border-bottom:1px solid var(--line); }
     .question-index, .error-index{ font-size:11px; color:var(--muted); margin-bottom:4px; }
     .question-text, .error-title{ font-weight:700; line-height:1.5; color:var(--text); font-size:14px; }
-    .question-actions, .error-actions{ display:flex; gap:6px; flex-wrap:wrap; }
-    .question-actions button, .error-actions button{ min-width:auto; padding:8px 10px; font-size:12px; border-radius:12px; flex:1 1 auto; }
+    .question-head > div:first-child{ width:100%; min-width:0; }
+    .error-block-head > div:first-child{ flex:1 1 auto; min-width:0; }
+    .question-actions{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-start;
+      width:100%;
+      min-width:0;
+    }
+    .error-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+      margin-left:auto;
+    }
+    .question-actions button{
+      min-width:auto;
+      padding:8px 12px;
+      font-size:12px;
+      border-radius:999px;
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+    .error-actions button{ min-width:auto; padding:8px 10px; font-size:12px; border-radius:12px; flex:1 1 auto; }
+    .flag-btn{
+      position:absolute;
+      top:10px;
+      right:12px;
+      width:30px !important;
+      min-width:30px !important;
+      height:30px;
+      padding:0 !important;
+      font-size:14px !important;
+      line-height:1;
+      background:var(--card-2);
+      color:var(--muted);
+      border:1px solid var(--line);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      z-index:1;
+    }
+    .flag-btn.active{
+      background:#fff7ed;
+      color:#f97316;
+      border-color:#fdba74;
+    }
+    [data-theme="dark"] .flag-btn.active{
+      background:#3b2a10;
+      color:#fb923c;
+      border-color:#f97316;
+    }
     .question-body, .error-body{ padding:12px 14px; display:grid; gap:10px; background:var(--card); }
     .score-pill{ display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:11px; border-radius:999px; padding:6px 10px; background:var(--info-bg); color:var(--info-text); border:1px solid var(--line); }
     .integration-pill{ display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:11px; border-radius:999px; padding:6px 10px; background:var(--integration); color:#fff; border:1px solid transparent; }
@@ -218,7 +273,8 @@
       .grid-4{ grid-template-columns:1fr 1fr; }
       .btn-row button, .btn-row label.file-btn{ max-width:none; }
       .top{ flex-direction:row; justify-content:space-between; align-items:flex-start; }
-      .question-head, .error-block-head{ flex-direction:row; justify-content:space-between; align-items:flex-start; }
+      .question-head{ flex-direction:column; }
+      .error-block-head{ flex-direction:row; justify-content:space-between; align-items:flex-start; }
       .segment-head{ flex-direction:row; justify-content:space-between; align-items:flex-start; }
       .toolbar{ flex-direction:row; justify-content:space-between; align-items:center; }
       .inline-checks{ flex-direction:row; flex-wrap:wrap; gap:16px; }
@@ -249,11 +305,13 @@
       .download-link{ font-size:14px; }
       .note{ font-size:12px; }
       .question-list, .error-block-list{ gap:14px; }
-      .question-head, .error-block-head{ padding:14px 16px; }
+      .question-head{ padding:14px 50px 14px 16px; }
+      .error-block-head{ padding:14px 16px; }
       .question-index, .error-index{ font-size:12px; margin-bottom:6px; }
       .question-text, .error-title{ font-size:16px; }
       .question-actions, .error-actions{ gap:8px; }
-      .question-actions button, .error-actions button{ padding:10px 12px; font-size:13px; }
+      .question-actions button{ padding:8px 13px; font-size:13px; }
+      .error-actions button{ padding:10px 12px; font-size:13px; }
       .question-body, .error-body{ padding:14px 16px 16px; gap:12px; }
       .score-pill{ font-size:12px; padding:7px 11px; gap:6px; }
       .feedback{ padding:12px 14px; }
@@ -476,6 +534,7 @@
                 <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
+                <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
                 <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
@@ -501,6 +560,7 @@
               <button id="clearAllBtn" class="danger" type="button">Clear</button>
               <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
               <label class="file-btn" for="fileInput">.txt laden</label>
+              <button id="repeatFlaggedBtn" class="secondary hidden" type="button">Flaggen wiederholen</button>
               <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
             </div>
 
@@ -816,6 +876,7 @@ Vorgaben:
     const generateExpectedAnswersCheckbox = document.getElementById("generateExpectedAnswers");
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
+    const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const permanentSaveEnabled = document.getElementById("permanentSaveEnabled");
     const permanentSaveBtn = document.getElementById("permanentSaveBtn");
@@ -837,6 +898,7 @@ Vorgaben:
     const generateQuestionsBtn = document.getElementById("generateQuestionsBtn");
     const clearAllBtn = document.getElementById("clearAllBtn");
     const copyBtn = document.getElementById("copyBtn");
+    const repeatFlaggedBtn = document.getElementById("repeatFlaggedBtn");
     const fileInput = document.getElementById("fileInput");
 
     const exportBtn = document.getElementById("exportBtn");
@@ -977,6 +1039,7 @@ Vorgaben:
         id: String(safeItem.id || uid()),
         question: questionText,
         answer: String(safeItem.answer ?? ""),
+        flagged: safeItem.flagged === true,
         result: rawResult ? {
           score: clamp(Number(rawResult.score) || 0, 0, 100),
           richtig: Array.isArray(rawResult.richtig) ? rawResult.richtig.slice(0, 3).map(String) : [],
@@ -998,6 +1061,7 @@ Vorgaben:
         open: options.open ?? idx === 0,
         expectedAnswer: String(options.expectedAnswer || "").trim(),
         expectedOpen: false,
+        flagged: options.flagged === true,
         questionType: options.questionType === "integration" ? "integration" : "standard"
       }, idx);
     }
@@ -1167,6 +1231,7 @@ Vorgaben:
       const nextMode = isT ? "K" : (isK ? "L" : "T");
       const modeTitle = nextMode === "T" ? "TTS/Fragen-Modus" : (nextMode === "K" ? "Kreuzen-Modus" : "Lang-Audio-Modus");
       modeToggleBtn.title = `Wechsel zu ${modeTitle}`;
+      syncRepeatFlaggedButton();
     }
 
     function buildPersistedState() {
@@ -1198,6 +1263,7 @@ Vorgaben:
         generateExpectedAnswers: generateExpectedAnswersCheckbox.checked,
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
+        repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         saveSettings: saveSettingsCheckbox.checked,
         permanentSaveEnabled: permanentSaveEnabled.checked,
@@ -1264,6 +1330,7 @@ Vorgaben:
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
+        repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         saveSettingsCheckbox.checked = data.saveSettings !== false;
         permanentSaveEnabled.checked = data.permanentSaveEnabled === true;
@@ -1300,6 +1367,7 @@ Vorgaben:
         renderErrorBlocks();
         renderLongAudioSegments();
         updateApiBadge();
+        syncRepeatFlaggedButton();
         applyModeUI();
       } catch (e) {
         console.error("Fehler beim Laden des Zustands:", e);
@@ -2920,15 +2988,49 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveState();
     }
 
+    function toggleQuestionFlag(questionId) {
+      const question = appState.questions.find(q => q.id === questionId);
+      if (!question) return;
+      question.flagged = !question.flagged;
+      saveState();
+      renderQuestions();
+    }
+
+    function repeatFlaggedQuestions() {
+      const flaggedQuestions = appState.questions.filter(q => q.flagged === true);
+      if (!flaggedQuestions.length) {
+        setStatus("Keine markierten Fragen vorhanden.", "info");
+        return;
+      }
+      const removedCount = appState.questions.length - flaggedQuestions.length;
+
+      flaggedQuestions.forEach(question => {
+        question.answer = "";
+        question.result = null;
+        question.open = true;
+      });
+      appState.questions = flaggedQuestions;
+
+      saveState();
+      renderQuestions();
+      setStatus(`Flaggen wiederholt: ${flaggedQuestions.length} Frage(n) behalten, ${removedCount} ohne Flagge gelöscht. Erwartungshorizonte bleiben erhalten.`, "ok");
+    }
+
+    function syncRepeatFlaggedButton() {
+      repeatFlaggedBtn.classList.toggle("hidden", !(repeatFlaggedQuestionsCheckbox.checked && appState.mode === "T"));
+    }
+
     function renderQuestions() {
       questionsContainer.innerHTML = "";
 
       if (!appState.questions.length) {
         emptyQuestions.classList.remove("hidden");
+        emptyQuestions.textContent = "Noch keine Fragen vorhanden.";
         return;
       }
 
       emptyQuestions.classList.add("hidden");
+      emptyQuestions.textContent = "Noch keine Fragen vorhanden.";
       const speechSupported = isSpeechInputSupported();
       const showQuestionAudioButton = !hideQuestionAudioButtonCheckbox.checked;
       let regularCounter = 0;
@@ -2969,6 +3071,13 @@ Analysiere die Eingabe und liefere nur das JSON.
             <div class="question-actions">
               ${isIntegration ? `<div class="integration-pill">Integration</div>` : ""}
               ${result ? `<div class="score-pill">Score: ${result.score}%</div>` : ""}
+              <button
+                class="flag-btn ${q.flagged ? "active" : ""}"
+                type="button"
+                data-flag-id="${q.id}"
+                title="${q.flagged ? "Flagge entfernen" : "Frage markieren"}"
+                aria-label="${q.flagged ? "Flagge entfernen" : "Frage markieren"}"
+              >⚑</button>
               <button class="ghost" type="button" data-toggle-id="${q.id}">
                 ${q.open ? "Einklappen" : "Öffnen"}
               </button>
@@ -3046,6 +3155,10 @@ Analysiere die Eingabe und liefere nur das JSON.
 
       questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
         btn.addEventListener("click", () => deleteQuestion(btn.dataset.deleteId));
+      });
+
+      questionsContainer.querySelectorAll("[data-flag-id]").forEach(btn => {
+        btn.addEventListener("click", () => toggleQuestionFlag(btn.dataset.flagId));
       });
 
       questionsContainer.querySelectorAll("[data-hint-id]").forEach(btn => {
@@ -3526,7 +3639,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -3540,6 +3653,11 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     longHighlightCurrentTextCheckbox.addEventListener("change", () => {
       refreshLongAudioPlaybackUI(true);
+      saveState();
+    });
+
+    repeatFlaggedQuestionsCheckbox.addEventListener("change", () => {
+      syncRepeatFlaggedButton();
       saveState();
     });
 
@@ -3558,6 +3676,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     speakBtn.addEventListener("click", generateSpeech);
     generateQuestionsBtn.addEventListener("click", generateQuestions);
     analyzeKreuzenBtn.addEventListener("click", analyzeKreuzenInput);
+    repeatFlaggedBtn.addEventListener("click", repeatFlaggedQuestions);
     longGenerateBtn.addEventListener("click", generateLongAudio);
 
     pauseBtn.addEventListener("click", () => {
