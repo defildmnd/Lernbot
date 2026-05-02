@@ -589,8 +589,8 @@
         <div id="longSettingsPanel">
           <div class="grid-2">
             <div class="group">
-              <label for="apiKeyEditorial">API Key · openai/gpt-5.4 (Redaktion optional)</label>
-              <input id="apiKeyEditorial" type="password" placeholder="Optional: separater Key für Redaktionsschritt" />
+              <label for="apiKeyEditorial">API Key · Redaktion optional (aktives Sprachmodell)</label>
+              <input id="apiKeyEditorial" type="password" placeholder="Optional: separater Key für den Redaktionsschritt" />
             </div>
             <div class="group">
               <label for="longChunkSize">Wörter pro Block</label>
@@ -599,7 +599,7 @@
           </div>
 
           <div class="inline-checks">
-            <label><input type="checkbox" id="longEnableEditorial" /> Blöcke vor TTS redaktionieren (openai/gpt-5.4)</label>
+            <label><input type="checkbox" id="longEnableEditorial" /> Blöcke vor TTS redaktionieren (aktives Sprachmodell)</label>
             <label><input type="checkbox" id="longAutoPlay" checked /> Blöcke automatisch abspielen</label>
             <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
             <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
@@ -758,7 +758,6 @@
     const GPT54_MODEL = "openai/gpt-5.4";
     const GPT54_MINI_MODEL = "openai/gpt-5.4-mini";
     const TRANSCRIBE_MODEL = "openai/gpt-4o-transcribe";
-    const LONG_AUDIO_EDITOR_MODEL = "openai/gpt-5.4";
     const LONG_AUDIO_EDITOR_SYSTEM_PROMPT = `Du bist ein praeziser Redaktionsassistent. Deine Aufgabe ist es, einen eingegebenen Text inhaltlich exakt wiederzugeben und sprachlich in gut lesbaren Fliesstext zu ueberfuehren.
 
 Vorgaben:
@@ -1050,8 +1049,13 @@ Vorgaben:
 
     function getLongAudioEditorialApiKey() {
       const editorialKey = apiKeyEditorialInput.value.trim();
-      if (editorialKey) return editorialKey;
-      return apiKeyGpt54Input.value.trim() || getActiveChatApiKey() || apiKeyTtsInput.value.trim();
+      return getActiveChatApiKey() || editorialKey;
+    }
+
+    function getResolvedLongAudioEditorialKeyLabel() {
+      if (getActiveChatApiKey()) return getResolvedChatKeyLabel();
+      if (apiKeyEditorialInput.value.trim()) return "Redaktions-Override-Key";
+      return "kein Key";
     }
 
     function updateStats() {
@@ -1430,9 +1434,10 @@ Vorgaben:
     async function requestLongAudioEditorialChunk({ chunkText, previousTail = "", chunkIndex = 0, totalChunks = 1 }) {
       const apiKey = getLongAudioEditorialApiKey();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const model = getCurrentChatModel();
 
       if (!apiKey) {
-        throw new Error(`Kein API-Key für ${LONG_AUDIO_EDITOR_MODEL} gesetzt.`);
+        throw new Error(`Kein API-Key für ${model} gesetzt.`);
       }
       if (!baseUrl) {
         throw new Error("Base URL fehlt.");
@@ -1454,7 +1459,7 @@ Vorgaben:
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: LONG_AUDIO_EDITOR_MODEL,
+          model,
           temperature: 0,
           messages: [
             { role: "system", content: LONG_AUDIO_EDITOR_SYSTEM_PROMPT },
@@ -1833,7 +1838,13 @@ Vorgaben:
         return;
       }
 
-      const mergedText = session.chunks.map(chunk => String(chunk.text || chunk.originalText || "").trim()).filter(Boolean).join("\n\n");
+      const previewChunks = session.chunks
+        .map((chunk, idx) => ({ chunk, idx }))
+        .filter(item => !session.useEditorial || item.chunk.redactionApplied);
+      const mergedText = previewChunks
+        .map(({ chunk }) => String(chunk.text || chunk.originalText || "").trim())
+        .filter(Boolean)
+        .join("\n\n");
       if (!mergedText) {
         longPreviewPanel.classList.add("hidden");
         longCopyEditedBtn.classList.add("hidden");
@@ -1843,12 +1854,16 @@ Vorgaben:
       longPreviewPanel.classList.remove("hidden");
       const hasEditedText = session.useEditorial && session.chunks.some(chunk => chunk.redactionApplied);
       longCopyEditedBtn.classList.toggle("hidden", !hasEditedText);
+      const previewLabel = longPreviewPanel.querySelector(".segment-label");
+      if (previewLabel) {
+        previewLabel.textContent = session.useEditorial ? "Gesamter redaktionierter Text" : "Gesamter Audio-Text";
+      }
       const previewLimit = 1400;
       const isLong = mergedText.length > previewLimit;
-      const shouldShowFull = longAudioShowFullPreview || !isLong || longHighlightCurrentTextCheckbox.checked;
+      const shouldShowFull = session.useEditorial || longAudioShowFullPreview || !isLong || longHighlightCurrentTextCheckbox.checked;
       if (longHighlightCurrentTextCheckbox.checked && shouldShowFull) {
-        longPreviewContent.innerHTML = session.chunks
-          .map((chunk, idx) => renderTextWithCurrentHighlight(String(chunk.text || chunk.originalText || "").trim(), chunk, idx))
+        longPreviewContent.innerHTML = previewChunks
+          .map(({ chunk, idx }) => renderTextWithCurrentHighlight(String(chunk.text || chunk.originalText || "").trim(), chunk, idx))
           .filter(Boolean)
           .join("<br><br>");
       } else {
@@ -1856,7 +1871,7 @@ Vorgaben:
         longPreviewContent.innerHTML = escapeHtml(textToRender);
       }
       longTogglePreviewBtn.textContent = shouldShowFull ? "Kurzansicht anzeigen" : "Volltext anzeigen";
-      longTogglePreviewBtn.classList.toggle("hidden", !isLong || longHighlightCurrentTextCheckbox.checked);
+      longTogglePreviewBtn.classList.toggle("hidden", session.useEditorial || !isLong || longHighlightCurrentTextCheckbox.checked);
     }
 
     function renderLongAudioSegments() {
@@ -1969,6 +1984,7 @@ Vorgaben:
       const speed = parseFloat(speedInput.value);
       const maxWords = getLongChunkLimit();
       const useEditorial = longEnableEditorialCheckbox.checked;
+      const editorialModel = getCurrentChatModel();
 
       if (!apiKey) {
         setLongStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
@@ -1983,7 +1999,7 @@ Vorgaben:
         return;
       }
       if (useEditorial && !getLongAudioEditorialApiKey()) {
-        setLongStatus(`Bitte API-Key für ${LONG_AUDIO_EDITOR_MODEL} setzen oder Redaktion deaktivieren.`, "error");
+        setLongStatus(`Bitte API-Key für ${editorialModel} setzen oder Redaktion deaktivieren.`, "error");
         return;
       }
 
@@ -2009,7 +2025,7 @@ Vorgaben:
         longAudioShowFullPreview = false;
 
         setLongStatus(
-          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${LONG_AUDIO_EDITOR_MODEL})` : "aus"}\nBlöcke: ${chunks.length}`,
+          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}`,
           "info"
         );
         renderLongAudioSegments();
@@ -3538,14 +3554,6 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     kreuzenInput.addEventListener("input", saveState);
-    kreuzenInput.addEventListener("keydown", (e) => {
-      if (!kreuzenEnterToSendCheckbox.checked || appState.mode !== "K") return;
-      if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
-      e.preventDefault();
-      if (!analyzeKreuzenBtn.disabled) {
-        void analyzeKreuzenInput();
-      }
-    });
 
     speakBtn.addEventListener("click", generateSpeech);
     generateQuestionsBtn.addEventListener("click", generateQuestions);
@@ -3727,6 +3735,47 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       if (e.key === "Escape" && !blockModalBackdrop.classList.contains("hidden")) {
         closeEditModal();
+        return;
+      }
+
+      if (!kreuzenEnterToSendCheckbox.checked || e.key !== "Enter" || e.shiftKey || e.isComposing) {
+        return;
+      }
+
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.matches("textarea")) return;
+      if (target.id === "longAudioText") return;
+
+      if (target.id === "kreuzenInput") {
+        e.preventDefault();
+        if (!analyzeKreuzenBtn.disabled) {
+          void analyzeKreuzenInput();
+        }
+        return;
+      }
+
+      if (target.id === "text") {
+        e.preventDefault();
+        if (!generateQuestionsBtn.disabled) {
+          void generateQuestions();
+        }
+        return;
+      }
+
+      if (target.id.startsWith("answer-")) {
+        e.preventDefault();
+        const questionId = target.id.replace("answer-", "");
+        const evalBtn = questionsContainer.querySelector(`[data-eval-id="${questionId}"]`);
+        if (evalBtn && !evalBtn.disabled) {
+          evalBtn.click();
+        }
+        return;
+      }
+
+      if (["modalFrage", "modalFehlerart", "modalKonzept", "modalMerksatz", "modalSource"].includes(target.id)) {
+        e.preventDefault();
+        saveModalBlock();
       }
     });
 
