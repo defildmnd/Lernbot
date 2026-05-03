@@ -244,7 +244,7 @@
     .chunk-pill{ display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:11px; border-radius:999px; padding:6px 10px; background:var(--card-2); color:var(--text); border:1px solid var(--line); }
     .preview-text{ max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--card); white-space:pre-wrap; line-height:1.55; font-size:13px; }
     .audio-progress-panel{ display:grid; gap:8px; margin-top:10px; }
-    .audio-progress-track{ width:100%; height:12px; border-radius:999px; overflow:hidden; background:var(--line); border:1px solid var(--line); }
+    .audio-progress-track{ width:100%; height:12px; border-radius:999px; overflow:hidden; background:var(--line); border:1px solid var(--line); cursor:pointer; }
     .audio-progress-fill{ width:0%; height:100%; background:linear-gradient(90deg, var(--accent-2), var(--mode-l)); transition:width .18s ease; }
     .audio-progress-meta{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px; }
     .audio-jump-btn{ margin-top:14px; margin-bottom:7px; padding-top:9px; padding-bottom:9px; }
@@ -260,6 +260,9 @@
     .settings-segment{ display:grid; grid-template-columns:1fr; gap:8px; }
     .settings-segment button{ background:var(--card); color:var(--text); border:1px solid var(--line); }
     .settings-segment button.active{ background:var(--accent-2); color:#fff; border-color:transparent; }
+    .confirm-modal{ width:min(430px, 100%); }
+    .time-input-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; }
+    .time-input-grid input{ text-align:center; font-weight:800; }
     .legacy-model-select{ display:none; }
     .kreuzen-layout{ display:grid; grid-template-columns:1fr; gap:16px; }
     .sticky-tools{ position:sticky; top:70px; }
@@ -684,7 +687,7 @@
           <button id="longGenerateBtn" type="button">Lang-Audio erzeugen</button>
           <button id="longPauseBtn" class="secondary" type="button">Pause</button>
           <button id="longResumeBtn" class="secondary" type="button">Weiter</button>
-          <button id="longStopBtn" class="secondary" type="button">Stop</button>
+          <button id="longStopBtn" class="danger" type="button">Stop</button>
           <button id="longClearBtn" class="danger" type="button">Clear</button>
           <button id="longCopyBtn" class="ghost" type="button">Text kopieren</button>
           <label class="file-btn" for="longFileInput">.txt laden</label>
@@ -693,7 +696,7 @@
 
         <div id="longStatus" class="status">Bereit.</div>
         <div id="longAudioProgressPanel" class="audio-progress-panel panel-slim hidden">
-          <div class="audio-progress-track" aria-label="Lang-Audio Fortschritt">
+          <div class="audio-progress-track" aria-label="Lang-Audio Fortschritt" title="Klicken, um zu einer Zeit zu springen">
             <div id="longAudioProgressFill" class="audio-progress-fill"></div>
           </div>
           <div class="audio-progress-meta">
@@ -702,8 +705,8 @@
           </div>
         </div>
         <div class="btn-row">
-          <button id="longRewind15Btn" class="ghost audio-jump-btn" type="button">-15 Sekunden</button>
-          <button id="longForward15Btn" class="ghost audio-jump-btn" type="button">+15 Sekunden</button>
+          <button id="longRewind15Btn" class="ghost audio-jump-btn" type="button">-30 Sekunden</button>
+          <button id="longForward15Btn" class="ghost audio-jump-btn" type="button">+30 Sekunden</button>
         </div>
         <audio id="longAudioPlayer" controls class="hidden"></audio>
         <a id="longDownloadLink" class="download-link hidden">Audio herunterladen</a>
@@ -808,6 +811,49 @@
     </div>
   </div>
 
+  <div id="longStopConfirmBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Audio zurücksetzen & stoppen?</h2>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="longStopConfirmYesBtn" class="danger" type="button">Ja</button>
+        <button id="longStopConfirmNoBtn" class="secondary" type="button">Nein</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="longSeekBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Zu Zeit springen</h2>
+          <p id="longSeekTotalLabel" class="subtitle">Gesamtlänge: 00:00</p>
+        </div>
+      </div>
+      <div class="time-input-grid">
+        <div class="group">
+          <label for="longSeekHours">Stunden</label>
+          <input id="longSeekHours" type="number" min="0" step="1" placeholder="0" />
+        </div>
+        <div class="group">
+          <label for="longSeekMinutes">Minuten</label>
+          <input id="longSeekMinutes" type="number" min="0" step="1" placeholder="0" />
+        </div>
+        <div class="group">
+          <label for="longSeekSeconds">Sekunden</label>
+          <input id="longSeekSeconds" type="number" min="0" step="1" placeholder="0" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="longSeekConfirmBtn" class="success" type="button">Springen</button>
+        <button id="longSeekCancelBtn" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
@@ -827,8 +873,6 @@ Vorgaben:
 - Der Text soll natuerlich, klar und zusammenhaengend klingen.
 - Erhalte die fachliche Bedeutung und alle relevanten Details exakt.
 - Das Ausgabeformat ist reiner Fliesstext.
-- Wenn du erkennst das es sich um eine tabelle handelt, wandle die inhalte immer in einen kompletten satz um. 
-- Lies die Inhalte einer Tabelle nicht einfach vor, sondern stelle sie in einem intelligenten satz in bezug miteinander.
 - Keine Kommentare, keine Einleitung, keine Zusammenfassung, keine Erklaerungen.
 - Kein Markdown, keine Fettung, keine Kursivschrift, keine Aufzaehlungen.
 - Zwischen den Absaetzen steht genau eine Leerzeile.
@@ -962,6 +1006,16 @@ Vorgaben:
     const longAudioProgressFill = document.getElementById("longAudioProgressFill");
     const longAudioProgressTime = document.getElementById("longAudioProgressTime");
     const longAudioProgressInfo = document.getElementById("longAudioProgressInfo");
+    const longStopConfirmBackdrop = document.getElementById("longStopConfirmBackdrop");
+    const longStopConfirmYesBtn = document.getElementById("longStopConfirmYesBtn");
+    const longStopConfirmNoBtn = document.getElementById("longStopConfirmNoBtn");
+    const longSeekBackdrop = document.getElementById("longSeekBackdrop");
+    const longSeekTotalLabel = document.getElementById("longSeekTotalLabel");
+    const longSeekHoursInput = document.getElementById("longSeekHours");
+    const longSeekMinutesInput = document.getElementById("longSeekMinutes");
+    const longSeekSecondsInput = document.getElementById("longSeekSeconds");
+    const longSeekConfirmBtn = document.getElementById("longSeekConfirmBtn");
+    const longSeekCancelBtn = document.getElementById("longSeekCancelBtn");
     const longDownloadLink = document.getElementById("longDownloadLink");
     const longQueueMeta = document.getElementById("longQueueMeta");
     const longPreviewPanel = document.getElementById("longPreviewPanel");
@@ -1621,8 +1675,12 @@ Vorgaben:
 
     function formatAudioTime(seconds) {
       const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
-      const minutes = Math.floor(safeSeconds / 60);
+      const hours = Math.floor(safeSeconds / 3600);
+      const minutes = Math.floor((safeSeconds % 3600) / 60);
       const rest = safeSeconds % 60;
+      if (hours > 0) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+      }
       return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
     }
 
@@ -1741,7 +1799,14 @@ Vorgaben:
       if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return;
 
       const progress = getLongAudioProgress();
-      const target = clamp(progress.elapsed + secondsDelta, 0, progress.total || 0);
+      await seekLongAudioTo(progress.elapsed + secondsDelta);
+    }
+
+    async function seekLongAudioTo(targetSeconds) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return;
+
+      const progress = getLongAudioProgress();
+      const target = clamp(Number(targetSeconds) || 0, 0, progress.total || 0);
       let cursor = 0;
 
       for (let i = 0; i < longAudioSession.chunks.length; i += 1) {
@@ -1756,11 +1821,90 @@ Vorgaben:
           longAudioPlayer.currentTime = clamp(target - cursor, 0, duration);
           updateLongAudioProgress();
           renderLongAudioSegments();
+          setLongStatus(`Zu ${formatAudioTime(target)} gesprungen.\nBlock ${i + 1}/${longAudioSession.chunks.length}`, "ok");
           return;
         }
 
         cursor += duration;
       }
+    }
+
+    function openLongStopConfirm() {
+      if (!longAudioSession || !longAudioSession.chunks.length) {
+        setLongStatus("Keine Audio-Blöcke vorhanden.", "error");
+        return;
+      }
+      longStopConfirmBackdrop.classList.remove("hidden");
+    }
+
+    function closeLongStopConfirm() {
+      longStopConfirmBackdrop.classList.add("hidden");
+    }
+
+    function stopLongAudioConfirmed() {
+      if (!longAudioSession || !longAudioSession.chunks.length) {
+        setLongStatus("Keine Audio-Blöcke vorhanden.", "error");
+        return;
+      }
+      clearLongAudioWaitTimer();
+      pauseLongSegmentAudios();
+      longAudioPlayer.pause();
+      longAudioSession.manualStop = true;
+      longAudioSession.currentIndex = 0;
+
+      const firstChunk = longAudioSession.chunks[0];
+      if (firstChunk && firstChunk.status === "ready") {
+        updateLongMainAudioForChunk(longAudioSession, 0);
+        longAudioPlayer.currentTime = 0;
+      } else {
+        longAudioPlayer.removeAttribute("src");
+        longAudioPlayer.load();
+      }
+
+      refreshLongAudioPlaybackUI(true);
+      setLongStatus("Wiedergabe gestoppt und auf Anfang gesetzt.", "info");
+    }
+
+    function setLongSeekInputsFromSeconds(seconds) {
+      const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+      longSeekHoursInput.value = String(Math.floor(safeSeconds / 3600));
+      longSeekMinutesInput.value = String(Math.floor((safeSeconds % 3600) / 60));
+      longSeekSecondsInput.value = String(safeSeconds % 60);
+    }
+
+    function getLongSeekInputSeconds() {
+      const hours = Math.max(0, Number(longSeekHoursInput.value) || 0);
+      const minutes = Math.max(0, Number(longSeekMinutesInput.value) || 0);
+      const seconds = Math.max(0, Number(longSeekSecondsInput.value) || 0);
+      return (hours * 3600) + (minutes * 60) + seconds;
+    }
+
+    function openLongSeekModal() {
+      const progress = getLongAudioProgress();
+      if (!longAudioSession || !progress.total) {
+        setLongStatus("Noch keine Audio-Zeit verfügbar.", "error");
+        return;
+      }
+      longSeekTotalLabel.textContent = `Gesamtlänge: ${formatAudioTime(progress.total)}`;
+      setLongSeekInputsFromSeconds(progress.elapsed);
+      longSeekBackdrop.classList.remove("hidden");
+      setTimeout(() => longSeekMinutesInput.focus(), 0);
+    }
+
+    function closeLongSeekModal() {
+      longSeekBackdrop.classList.add("hidden");
+    }
+
+    async function confirmLongSeek() {
+      const progress = getLongAudioProgress();
+      if (!progress.total) {
+        closeLongSeekModal();
+        setLongStatus("Noch keine Audio-Zeit verfügbar.", "error");
+        return;
+      }
+      const target = clamp(getLongSeekInputSeconds(), 0, progress.total);
+      closeLongSeekModal();
+      await seekLongAudioTo(target);
     }
 
     function updateLongMainAudioForChunk(session, index) {
@@ -3747,37 +3891,45 @@ Analysiere die Eingabe und liefere nur das JSON.
       waitForLongNextChunkAndPlay(longAudioSession.currentIndex);
     });
 
-    longStopBtn.addEventListener("click", () => {
-      if (!longAudioSession || !longAudioSession.chunks.length) {
-        setLongStatus("Keine Audio-Blöcke vorhanden.", "error");
-        return;
-      }
+    longStopBtn.addEventListener("click", openLongStopConfirm);
 
-      clearLongAudioWaitTimer();
-      pauseLongSegmentAudios();
-      longAudioPlayer.pause();
-      longAudioSession.manualStop = true;
-      longAudioSession.currentIndex = 0;
+    longStopConfirmYesBtn.addEventListener("click", () => {
+      closeLongStopConfirm();
+      stopLongAudioConfirmed();
+    });
 
-      const firstChunk = longAudioSession.chunks[0];
-      if (firstChunk && firstChunk.status === "ready") {
-        updateLongMainAudioForChunk(longAudioSession, 0);
-        longAudioPlayer.currentTime = 0;
-      } else {
-        longAudioPlayer.removeAttribute("src");
-        longAudioPlayer.load();
-      }
+    longStopConfirmNoBtn.addEventListener("click", closeLongStopConfirm);
 
-      refreshLongAudioPlaybackUI(true);
-      setLongStatus("Wiedergabe gestoppt und auf Anfang gesetzt.", "info");
+    longStopConfirmBackdrop.addEventListener("click", (e) => {
+      if (e.target === longStopConfirmBackdrop) closeLongStopConfirm();
+    });
+
+    longAudioProgressPanel.addEventListener("click", openLongSeekModal);
+
+    longSeekConfirmBtn.addEventListener("click", () => {
+      void confirmLongSeek();
+    });
+
+    longSeekCancelBtn.addEventListener("click", closeLongSeekModal);
+
+    longSeekBackdrop.addEventListener("click", (e) => {
+      if (e.target === longSeekBackdrop) closeLongSeekModal();
+    });
+
+    [longSeekHoursInput, longSeekMinutesInput, longSeekSecondsInput].forEach(input => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" || e.isComposing) return;
+        e.preventDefault();
+        void confirmLongSeek();
+      });
     });
 
     longRewind15Btn.addEventListener("click", () => {
-      void seekLongAudioBy(-15);
+      void seekLongAudioBy(-30);
     });
 
     longForward15Btn.addEventListener("click", () => {
-      void seekLongAudioBy(15);
+      void seekLongAudioBy(30);
     });
 
     copyBtn.addEventListener("click", async () => {
@@ -3856,6 +4008,14 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       if (e.key === "Escape" && !blockModalBackdrop.classList.contains("hidden")) {
         closeEditModal();
+        return;
+      }
+      if (e.key === "Escape" && !longStopConfirmBackdrop.classList.contains("hidden")) {
+        closeLongStopConfirm();
+        return;
+      }
+      if (e.key === "Escape" && !longSeekBackdrop.classList.contains("hidden")) {
+        closeLongSeekModal();
         return;
       }
 
