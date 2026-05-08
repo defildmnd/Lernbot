@@ -34,6 +34,12 @@
       --mode-l-soft:#dbeafe;
       --integration:#7e22ce;
       --integration-soft:#f5e8ff;
+      --session-soft:#e7f8f4;
+      --session-soft-2:#eef9ff;
+      --session-accent:#0f766e;
+      --session-accent-2:#2563eb;
+      --session-warn:#f59e0b;
+      --session-danger:#dc2626;
     }
 
     [data-theme="dark"] {
@@ -64,6 +70,12 @@
       --mode-l-soft:#152b4a;
       --integration:#d8b4fe;
       --integration-soft:#3b2354;
+      --session-soft:#102f33;
+      --session-soft-2:#132a3d;
+      --session-accent:#5eead4;
+      --session-accent-2:#93c5fd;
+      --session-warn:#fbbf24;
+      --session-danger:#f87171;
     }
 
     *{ box-sizing:border-box; }
@@ -210,14 +222,82 @@
     .toolbar-right{ display:flex; gap:8px; flex-wrap:wrap; }
     .toolbar-right button{ flex:1 1 auto; min-width:100px; }
     .panel-slim{ padding:12px; border:1px solid var(--line); background:var(--card-2); border-radius:16px; }
-    .floating-controls{ position:fixed; top:10px; left:10px; z-index:1000; width:min(380px, calc(100vw - 20px)); display:flex; align-items:center; gap:10px; }
-    .theme-switch{ flex:1 1 auto; min-width:0; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 12px; cursor:pointer; font-size:12px; font-weight:700; color:var(--text); box-shadow:var(--shadow); white-space:nowrap; }
+    .floating-controls{ position:fixed; top:10px; left:10px; z-index:1800; width:auto; max-width:calc(100vw - 20px); display:flex; align-items:center; gap:10px; }
+    .session-menu-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; min-height:42px; border-radius:999px; box-shadow:var(--shadow); padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--card); color:var(--text); border:1px solid var(--line); position:relative; }
+    .session-menu-btn span{ position:absolute; width:18px; height:2px; border-radius:999px; background:currentColor; transition:transform .22s ease, opacity .16s ease, top .22s ease; }
+    .session-menu-btn span:nth-child(1){ top:14px; }
+    .session-menu-btn span:nth-child(2){ top:20px; }
+    .session-menu-btn span:nth-child(3){ top:26px; }
+    body.sessions-open .session-menu-btn span:nth-child(1){ top:20px; transform:rotate(45deg); }
+    body.sessions-open .session-menu-btn span:nth-child(2){ opacity:0; }
+    body.sessions-open .session-menu-btn span:nth-child(3){ top:20px; transform:rotate(-45deg); }
+    .theme-switch{ flex:0 0 82px; min-width:82px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 10px; cursor:pointer; font-size:12px; font-weight:700; color:var(--text); box-shadow:var(--shadow); white-space:nowrap; }
     .pomodoro-btn{ flex:0 0 84px; min-width:0; border-radius:999px; padding:8px 10px; font-size:12px; font-weight:800; text-align:center; box-shadow:var(--shadow); border:1px solid transparent; user-select:none; background:var(--timer-paused); color:#fff; }
     .mode-toggle-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; min-height:42px; border-radius:999px; box-shadow:var(--shadow); padding:0; display:inline-flex; align-items:center; justify-content:center; font-weight:900; font-size:16px; border:1px solid transparent; }
     .settings-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; min-height:42px; border-radius:999px; box-shadow:var(--shadow); padding:0; display:inline-flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; background:var(--card); color:var(--text); border:1px solid var(--line); }
     .mode-toggle-btn.mode-t{ background:var(--mode-t); color:#fff; }
     .mode-toggle-btn.mode-k{ background:var(--mode-k); color:#063531; }
     .mode-toggle-btn.mode-l{ background:var(--mode-l); color:#fff; }
+    body.sessions-open .theme-switch,
+    body.sessions-open .pomodoro-btn,
+    body.sessions-open .settings-btn,
+    body.sessions-open .mode-toggle-btn{ display:none; }
+    .session-backdrop{ position:fixed; inset:0; z-index:1200; background:rgba(15,23,42,.42); opacity:0; pointer-events:none; transition:opacity .24s ease; }
+    .session-drawer{
+      position:fixed;
+      top:0;
+      left:0;
+      z-index:1500;
+      width:min(560px, 100vw);
+      height:100vh;
+      background:linear-gradient(145deg, var(--card), var(--session-soft-2));
+      border-right:1px solid var(--line);
+      box-shadow:26px 0 70px rgba(15,23,42,.18);
+      transform:translateX(-104%);
+      transition:transform .28s cubic-bezier(.2,.75,.2,1);
+      padding:74px 16px 18px;
+      overflow:auto;
+    }
+    [data-theme="dark"] .session-drawer{ box-shadow:26px 0 70px rgba(0,0,0,.42); }
+    body.sessions-open .session-backdrop{ opacity:1; pointer-events:auto; }
+    body.sessions-open .session-drawer{ transform:translateX(0); }
+    .session-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+    .session-head h2{ margin:0; font-size:22px; }
+    .session-add-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--session-accent); color:#fff; font-size:22px; line-height:1; box-shadow:0 12px 30px rgba(15,118,110,.18); }
+    .session-list{ display:grid; gap:10px; }
+    .session-card{
+      display:grid;
+      grid-template-columns:28px minmax(0, 1fr) auto 38px;
+      align-items:center;
+      gap:10px;
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:color-mix(in srgb, var(--session-soft) 42%, var(--card));
+      padding:10px;
+      cursor:pointer;
+      transition:transform .12s ease, border-color .16s ease, background .16s ease;
+    }
+    .session-card:hover{ transform:translateY(-1px); border-color:var(--session-accent); }
+    .session-card.active{ border-color:var(--session-accent); background:color-mix(in srgb, var(--session-soft) 64%, var(--card)); }
+    .session-active-mark{ width:24px; height:24px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); color:transparent; background:var(--card); font-weight:900; }
+    .session-card.active .session-active-mark{ background:var(--session-accent); border-color:transparent; color:#fff; }
+    .session-title-wrap{ min-width:0; }
+    .session-title{ font-weight:850; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+    .session-updated{ margin-top:3px; color:var(--muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .session-metrics{ display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+    .metric-bubble{ position:relative; width:32px; height:32px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; color:#073a35; border:1px solid rgba(255,255,255,.6); box-shadow:0 7px 18px rgba(15,23,42,.08); }
+    .metric-understanding{ background:#a7f3d0; }
+    .metric-days{ background:#bfdbfe; }
+    .metric-percent{ background:#fde68a; }
+    [data-theme="dark"] .metric-bubble{ color:#082f2d; border-color:rgba(255,255,255,.14); }
+    .metric-tooltip{ position:absolute; top:38px; left:50%; transform:translateX(-50%) translateY(-3px); opacity:0; pointer-events:none; z-index:4; width:max-content; max-width:190px; padding:7px 9px; border-radius:10px; background:var(--text); color:var(--card); font-size:11px; font-weight:700; white-space:normal; box-shadow:var(--shadow); transition:opacity .12s ease, transform .12s ease; }
+    .metric-bubble:hover .metric-tooltip{ opacity:1; transform:translateX(-50%) translateY(0); }
+    .session-edit-btn{ width:34px; height:34px; min-width:34px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--card); color:var(--text); border:1px solid var(--line); box-shadow:none; }
+    .session-empty{ border:1px dashed var(--line); border-radius:18px; padding:18px; color:var(--muted); background:var(--card); text-align:center; font-size:13px; }
+    .session-delete-confirm{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--card-2); }
+    .session-delete-confirm span{ flex:1 1 160px; font-size:12px; color:var(--muted); font-weight:700; }
+    .session-delete-confirm button{ width:auto; min-width:70px; }
     .pomodoro-btn.paused{ background:var(--timer-paused); color:#fff; }
     .pomodoro-btn.running{ background:var(--timer-running); color:#fff; }
     .pomodoro-btn.overtime{ background:var(--timer-overtime-a); color:#fff; animation:pomodoroBlink 1s steps(1, end) infinite; }
@@ -263,10 +343,40 @@
     .confirm-modal{ width:min(430px, 100%); }
     .time-input-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; }
     .time-input-grid input{ text-align:center; font-weight:800; }
+    .global-loading{
+      position:fixed;
+      left:14px;
+      bottom:14px;
+      z-index:2600;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:max-content;
+      max-width:calc(100vw - 28px);
+      padding:9px 12px;
+      border-radius:999px;
+      background:var(--card);
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .loading-spinner{
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      border:2px solid var(--line);
+      border-top-color:var(--accent-2);
+      animation:spin .75s linear infinite;
+      flex:0 0 auto;
+    }
     .legacy-model-select{ display:none; }
     .kreuzen-layout{ display:grid; grid-template-columns:1fr; gap:16px; }
     .sticky-tools{ position:sticky; top:70px; }
     @keyframes pomodoroBlink{ 0%, 49.999%{ background:var(--timer-overtime-a); filter:brightness(1);} 50%, 100%{ background:var(--timer-overtime-b); filter:brightness(1.06);} }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
 
     @media (min-width: 768px) {
       .app{ padding:88px 12px 30px; }
@@ -282,8 +392,9 @@
       .toolbar{ flex-direction:row; justify-content:space-between; align-items:center; }
       .inline-checks{ flex-direction:row; flex-wrap:wrap; gap:16px; }
       .feedback-grid, .error-field-grid{ grid-template-columns:1fr 1fr; }
-      .floating-controls{ width:430px; }
+      .floating-controls{ width:auto; }
       .settings-segment{ grid-template-columns:1fr 1fr 1fr; }
+      .session-drawer{ padding-left:22px; padding-right:22px; }
     }
 
     @media (min-width: 1024px) {
@@ -323,7 +434,7 @@
       .empty{ padding:22px; font-size:14px; }
       .toolbar-right{ gap:10px; }
       .panel-slim{ padding:14px; }
-      .floating-controls{ width:500px; }
+      .floating-controls{ width:auto; }
       .theme-switch, .pomodoro-btn{ font-size:13px; }
       .kreuzen-layout{ grid-template-columns:420px minmax(0, 1fr); align-items:start; }
     }
@@ -331,11 +442,25 @@
 </head>
 <body>
   <div class="floating-controls">
+    <button class="session-menu-btn" id="sessionMenuBtn" type="button" title="Lernsessions" aria-label="Lernsessions öffnen">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
     <button class="theme-switch" id="themeSwitch" type="button">🌙 Dark</button>
     <button class="pomodoro-btn paused" id="pomodoroBtn" type="button">50</button>
     <button class="settings-btn" id="settingsBtn" type="button" title="Einstellungen">⚙</button>
     <button class="mode-toggle-btn mode-t" id="modeToggleBtn" type="button" title="Modus wechseln">T</button>
   </div>
+
+  <div class="session-backdrop" id="sessionBackdrop"></div>
+  <aside class="session-drawer" id="sessionDrawer" aria-label="Lernsessions">
+    <div class="session-head">
+      <h2>Lernsessions</h2>
+      <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
+    </div>
+    <div id="sessionList" class="session-list"></div>
+  </aside>
 
   <div class="app">
     <div class="card collapsed" id="startupCard">
@@ -538,6 +663,12 @@
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
+                <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
+                <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
+                <label><input type="checkbox" id="oralExamMode" /> Oral examination mode</label>
+                <label><input type="checkbox" id="autoModelSwitch" /> Automatischer Modell Switch</label>
+                <label><input type="checkbox" id="enablePlausibilityCheck" checked /> Zweitmeinung bei Zusatzinfos</label>
+                <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
                 <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
@@ -811,6 +942,77 @@
     </div>
   </div>
 
+  <div id="newSessionBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Neue Lernsession</h2>
+        </div>
+        <button id="closeNewSessionBtn" class="ghost modal-close" type="button">✕</button>
+      </div>
+
+      <div class="group">
+        <label for="newSessionNameInput">Name</label>
+        <input id="newSessionNameInput" type="text" placeholder="Lernsession" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="createSessionBtn" class="success" type="button">Starten</button>
+        <button id="createAndEditSessionBtn" class="blue" type="button" title="Direkt bearbeiten" aria-label="Direkt bearbeiten">✎</button>
+        <button id="cancelNewSessionBtn" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sessionEditBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Session bearbeiten</h2>
+        </div>
+        <button id="closeSessionEditBtn" class="ghost modal-close" type="button">✕</button>
+      </div>
+
+      <div class="group">
+        <label for="sessionNameInput">Name</label>
+        <input id="sessionNameInput" type="text" placeholder="Lernsession" />
+      </div>
+
+      <div class="grid-2">
+        <div class="group">
+          <label for="sessionPercentInput">Prozent</label>
+          <input id="sessionPercentInput" type="number" min="0" max="100" step="1" />
+        </div>
+        <div class="group">
+          <label for="sessionDateInput">Datum</label>
+          <input id="sessionDateInput" type="date" />
+        </div>
+      </div>
+
+      <div class="group">
+        <label for="sessionUnderstandingInput">Verständnis</label>
+        <select id="sessionUnderstandingInput">
+          <option value="none">keins</option>
+          <option value="beginner">beginner</option>
+          <option value="repeat">wiederholung nötig</option>
+          <option value="exam">prüfungsreif</option>
+        </select>
+      </div>
+
+      <div id="sessionDeleteConfirm" class="session-delete-confirm hidden">
+        <span>Diese Session wirklich löschen?</span>
+        <button id="confirmDeleteSessionBtn" class="danger" type="button">Ja</button>
+        <button id="cancelDeleteSessionBtn" class="secondary" type="button">Nein</button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="saveSessionEditBtn" class="success" type="button">Speichern</button>
+        <button id="deleteSessionBtn" class="danger" type="button">Löschen</button>
+        <button id="cancelSessionEditBtn" class="secondary" type="button">Schließen</button>
+      </div>
+    </div>
+  </div>
+
   <div id="longStopConfirmBackdrop" class="modal-backdrop hidden">
     <div class="modal confirm-modal">
       <div class="modal-head">
@@ -854,11 +1056,50 @@
     </div>
   </div>
 
+  <div id="globalLoading" class="global-loading hidden" role="status" aria-live="polite">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <span id="globalLoadingText">Antwort wird geladen</span>
+  </div>
+
+  <div id="cancelActionBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Aktion abbrechen?</h2>
+          <p class="subtitle">Laufende Anfrage wird gestoppt und der aktuelle Arbeitszustand zurückgesetzt.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelActionYesBtn" class="danger" type="button">Ja</button>
+        <button id="cancelActionNoBtn" class="secondary" type="button">Nein</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modeClearBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2 id="modeClearTitle">Modus zurücksetzen?</h2>
+          <p id="modeClearText" class="subtitle">Bist du dir sicher, dass die Inhalte in diesem Modus zurückgesetzt werden sollen?</p>
+          <p class="subtitle">Alle Inhalte gehen dabei verloren.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="modeClearConfirmBtn" class="danger" type="button">Clear</button>
+        <button id="modeClearCancelBtn" class="secondary" type="button">Abbruch</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
   <script>
     const STORAGE_KEY = "med_tts_active_recall_v4_gpt54";
+    const SESSION_STORAGE_KEY = "med_tts_learning_sessions_v1";
+    const SESSION_DATA_PREFIX = "med_tts_learning_session_data_v1_";
+    const PENDING_SESSION_EDIT_KEY = "med_tts_pending_session_edit_v1";
     const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
     const DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini";
     const GPT54_MODEL = "openai/gpt-5.4";
@@ -872,8 +1113,14 @@ Vorgaben:
 - Wenn der Eingangstext stichwortartig, unvollstaendig oder fragmentarisch ist, forme ihn nur dann in sinnvolle, grammatikalisch korrekte Saetze um, wenn es fuer Verstaendlichkeit und Lesefluss noetig ist.
 - Der Text soll natuerlich, klar und zusammenhaengend klingen.
 - Erhalte die fachliche Bedeutung und alle relevanten Details exakt.
-- Wenn du erkennst das es sich um eine tabelle handelt, wandle die inhalte immer in einen kompletten satz um. 
+- Wenn du erkennst das es sich um eine tabelle handelt, wandle die inhalte immer in einen kompletten satz um.
 - Lies die Inhalte einer Tabelle nicht einfach vor, sondern stelle sie in einem intelligenten satz in bezug miteinander.
+- Bereite den Text konsequent fuer eine natuerliche TTS-Ausgabe vor.
+- Gib Pfeilketten nicht mit Pfeilsymbolen wieder. Formuliere sie als gesprochene Abfolge, zum Beispiel: "Das Blut fliesst vom rechten Vorhof ueber die rechte Kammer in den Truncus pulmonalis ...".
+- Erhalte bei Pfeilketten die komplette Reihenfolge und alle Stationen.
+- Wandle Symbole in gut sprechbare Woerter um: "↑" bedeutet "erhoeht", "↓" bedeutet "erniedrigt", ">" bedeutet "groesser als", "<" bedeutet "kleiner als", "≥" bedeutet "groesser oder gleich", "≤" bedeutet "kleiner oder gleich".
+- Wenn Tabellen oder tabellenaehnliche Zeilen aus Wert, Richtung und Begruendung bestehen, bilde pro Zeile einen vollstaendigen medizinischen Satz, zum Beispiel: "Albumin ist relativ erniedrigt, weil das Plasmavolumen erhoeht ist; dadurch werden Oedeme beguenstigt."
+- Lasse keine isolierten Sonderzeichen, Pfeile, Tabellenreste oder Stichwortspalten stehen, wenn sie fuer die Sprachausgabe holprig waeren.
 - Das Ausgabeformat ist reiner Fliesstext.
 - Keine Kommentare, keine Einleitung, keine Zusammenfassung, keine Erklaerungen.
 - Kein Markdown, keine Fettung, keine Kursivschrift, keine Aufzaehlungen.
@@ -881,10 +1128,43 @@ Vorgaben:
 - Gib ausschliesslich den ueberarbeiteten Text aus.
 - Prinzip: Text rein, Text raus.`;
 
+    const sessionMenuBtn = document.getElementById("sessionMenuBtn");
+    const sessionBackdrop = document.getElementById("sessionBackdrop");
+    const sessionDrawer = document.getElementById("sessionDrawer");
+    const sessionList = document.getElementById("sessionList");
+    const startSessionBtn = document.getElementById("startSessionBtn");
+    const newSessionBackdrop = document.getElementById("newSessionBackdrop");
+    const newSessionNameInput = document.getElementById("newSessionNameInput");
+    const createSessionBtn = document.getElementById("createSessionBtn");
+    const createAndEditSessionBtn = document.getElementById("createAndEditSessionBtn");
+    const closeNewSessionBtn = document.getElementById("closeNewSessionBtn");
+    const cancelNewSessionBtn = document.getElementById("cancelNewSessionBtn");
+    const sessionEditBackdrop = document.getElementById("sessionEditBackdrop");
+    const closeSessionEditBtn = document.getElementById("closeSessionEditBtn");
+    const cancelSessionEditBtn = document.getElementById("cancelSessionEditBtn");
+    const saveSessionEditBtn = document.getElementById("saveSessionEditBtn");
+    const deleteSessionBtn = document.getElementById("deleteSessionBtn");
+    const confirmDeleteSessionBtn = document.getElementById("confirmDeleteSessionBtn");
+    const cancelDeleteSessionBtn = document.getElementById("cancelDeleteSessionBtn");
+    const sessionDeleteConfirm = document.getElementById("sessionDeleteConfirm");
+    const sessionNameInput = document.getElementById("sessionNameInput");
+    const sessionPercentInput = document.getElementById("sessionPercentInput");
+    const sessionDateInput = document.getElementById("sessionDateInput");
+    const sessionUnderstandingInput = document.getElementById("sessionUnderstandingInput");
     const themeSwitch = document.getElementById("themeSwitch");
     const pomodoroBtn = document.getElementById("pomodoroBtn");
     const settingsBtn = document.getElementById("settingsBtn");
     const modeToggleBtn = document.getElementById("modeToggleBtn");
+    const globalLoading = document.getElementById("globalLoading");
+    const globalLoadingText = document.getElementById("globalLoadingText");
+    const cancelActionBackdrop = document.getElementById("cancelActionBackdrop");
+    const cancelActionYesBtn = document.getElementById("cancelActionYesBtn");
+    const cancelActionNoBtn = document.getElementById("cancelActionNoBtn");
+    const modeClearBackdrop = document.getElementById("modeClearBackdrop");
+    const modeClearTitle = document.getElementById("modeClearTitle");
+    const modeClearText = document.getElementById("modeClearText");
+    const modeClearConfirmBtn = document.getElementById("modeClearConfirmBtn");
+    const modeClearCancelBtn = document.getElementById("modeClearCancelBtn");
 
     const tModeSection = document.getElementById("tModeSection");
     const kModeSection = document.getElementById("kModeSection");
@@ -925,6 +1205,12 @@ Vorgaben:
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
+    const autoFlagLowScoreCheckbox = document.getElementById("autoFlagLowScore");
+    const autoUnflagHighScoreCheckbox = document.getElementById("autoUnflagHighScore");
+    const oralExamModeCheckbox = document.getElementById("oralExamMode");
+    const autoModelSwitchCheckbox = document.getElementById("autoModelSwitch");
+    const enablePlausibilityCheckCheckbox = document.getElementById("enablePlausibilityCheck");
+    const audioFeedbackCheckbox = document.getElementById("audioFeedback");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const permanentSaveEnabled = document.getElementById("permanentSaveEnabled");
     const permanentSaveBtn = document.getElementById("permanentSaveBtn");
@@ -1038,6 +1324,10 @@ Vorgaben:
       questions: [],
       errorBlocks: []
     };
+    let learningSessions = [];
+    let activeLearningSessionId = "";
+    let editingSessionId = null;
+    let learningSessionsReady = false;
 
     const POMODORO_START_SECONDS = 50 * 60;
     const POMODORO_OVERTIME_LIMIT_SECONDS = 10 * 60;
@@ -1049,8 +1339,25 @@ Vorgaben:
     let mediaStream = null;
     let recordingQuestionId = null;
     let transcribingQuestionId = null;
+    let recordingCompletionPromise = null;
+    let resolveRecordingCompletion = null;
     let recordingChunks = [];
     let cancelTranscriptionAfterStop = false;
+    let loadingCounter = 0;
+    let loadingMessage = "Antwort wird geladen";
+    let evaluatingQuestionIds = new Set();
+    let activeAbortControllers = new Set();
+    let actionCancelGeneration = 0;
+    let pendingModeClearAction = null;
+    let oralExamAudioByQuestionId = new Map();
+    let oralExamAudioQueueRunning = false;
+    let oralExamAudioGeneration = 0;
+    let oralExamPlayer = null;
+    let oralExamActiveQuestionId = null;
+    let feedbackAudioUrl = null;
+    let feedbackAudioPlayer = null;
+    let feedbackPlaybackAttemptId = 0;
+    let suppressResumeStatus = false;
     let longAudioSession = null;
     let longAudioNextChunkTimer = null;
     let longAudioShowFullPreview = false;
@@ -1070,6 +1377,119 @@ Vorgaben:
     function setLongStatus(message, type = "info") {
       longStatusEl.textContent = message;
       longStatusEl.className = "status " + type;
+    }
+
+    function beginLoading(message = "Antwort wird geladen") {
+      loadingCounter += 1;
+      loadingMessage = message;
+      globalLoadingText.textContent = loadingMessage;
+      globalLoading.classList.remove("hidden");
+    }
+
+    function endLoading() {
+      loadingCounter = Math.max(0, loadingCounter - 1);
+      if (loadingCounter === 0) {
+        globalLoading.classList.add("hidden");
+      } else {
+        globalLoadingText.textContent = loadingMessage;
+      }
+    }
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function createAbortHandle() {
+      const controller = new AbortController();
+      activeAbortControllers.add(controller);
+      controller.signal.addEventListener("abort", () => {
+        activeAbortControllers.delete(controller);
+      }, { once: true });
+      return {
+        signal: controller.signal,
+        cleanup: () => activeAbortControllers.delete(controller)
+      };
+    }
+
+    function openCancelActionModal() {
+      if (globalLoading.classList.contains("hidden")) return;
+      cancelActionBackdrop.classList.remove("hidden");
+    }
+
+    function closeCancelActionModal() {
+      cancelActionBackdrop.classList.add("hidden");
+    }
+
+    function openModeClearConfirm(modeName, clearAction) {
+      pendingModeClearAction = clearAction;
+      modeClearTitle.textContent = `${modeName} zurücksetzen?`;
+      modeClearText.textContent = `Bist du dir sicher, dass die Inhalte in diesem Modus (${modeName}) zurückgesetzt werden sollen?`;
+      modeClearBackdrop.classList.remove("hidden");
+    }
+
+    function closeModeClearConfirm() {
+      modeClearBackdrop.classList.add("hidden");
+      pendingModeClearAction = null;
+    }
+
+    function confirmModeClear() {
+      const action = pendingModeClearAction;
+      closeModeClearConfirm();
+      if (typeof action === "function") {
+        action();
+      }
+    }
+
+    function resetFeedbackAudio() {
+      feedbackPlaybackAttemptId += 1;
+      if (feedbackAudioPlayer) {
+        feedbackAudioPlayer.pause();
+        feedbackAudioPlayer.removeAttribute("src");
+        try { feedbackAudioPlayer.load(); } catch {}
+        feedbackAudioPlayer = null;
+      }
+      if (feedbackAudioUrl) {
+        URL.revokeObjectURL(feedbackAudioUrl);
+        feedbackAudioUrl = null;
+      }
+    }
+
+    function cancelCurrentAction() {
+      actionCancelGeneration += 1;
+      activeAbortControllers.forEach(controller => {
+        try { controller.abort(); } catch {}
+      });
+      activeAbortControllers.clear();
+      loadingCounter = 0;
+      globalLoading.classList.add("hidden");
+      evaluatingQuestionIds.clear();
+      closeCancelActionModal();
+      stopOralExamPlayback();
+      resetFeedbackAudio();
+      clearLongAudioWaitTimer();
+      pauseLongSegmentAudios();
+      longAudioPlayer.pause();
+      if (longAudioSession) {
+        longAudioSession.stopped = true;
+        longAudioSession.manualStop = true;
+        longAudioSession.chunks.forEach(chunk => {
+          if (chunk.status === "loading" || chunk.status === "editing") {
+            chunk.status = "pending";
+            chunk.error = null;
+          }
+        });
+      }
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        cancelTranscriptionAfterStop = true;
+        try { mediaRecorder.stop(); } catch {}
+      }
+      recordingQuestionId = null;
+      transcribingQuestionId = null;
+      finishRecordingCompletion(false);
+      renderQuestions();
+      renderLongAudioSegments();
+      setStatus("Aktion abgebrochen. Du kannst jetzt neu starten.", "info");
+      setLongStatus("Aktion abgebrochen. Du kannst jetzt neu starten.", "info");
     }
 
     function uid() {
@@ -1100,8 +1520,9 @@ Vorgaben:
         flagged: safeItem.flagged === true,
         result: rawResult ? {
           score: clamp(Number(rawResult.score) || 0, 0, 100),
-          richtig: Array.isArray(rawResult.richtig) ? rawResult.richtig.slice(0, 3).map(String) : [],
-          falsch_fehlt: Array.isArray(rawResult.falsch_fehlt) ? rawResult.falsch_fehlt.slice(0, 3).map(String) : []
+          richtig: Array.isArray(rawResult.richtig) ? rawResult.richtig.slice(0, 4).map(String) : [],
+          falsch_fehlt: Array.isArray(rawResult.falsch_fehlt) ? rawResult.falsch_fehlt.slice(0, 4).map(String) : [],
+          feedback: String(rawResult.feedback ?? rawResult.feedback_satz ?? "").trim()
         } : null,
         open: typeof safeItem.open === "boolean" ? safeItem.open : idx === 0,
         expectedAnswer,
@@ -1134,8 +1555,34 @@ Vorgaben:
       return normalizeChatModel(chatModelInput.value);
     }
 
-    function getActiveChatApiKey() {
-      const currentModel = getCurrentChatModel();
+    function getAutoChatModelForTask(task) {
+      if (!autoModelSwitchCheckbox.checked) return getCurrentChatModel();
+      const map = {
+        longEditorial: GPT54_MINI_MODEL,
+        kreuzen: GPT54_MODEL,
+        questions: GPT54_MINI_MODEL,
+        integrationQuestions: GPT54_MINI_MODEL,
+        expectedAnswers: GPT54_MODEL,
+        evaluation: generateExpectedAnswersCheckbox.checked ? DEFAULT_CHAT_MODEL : GPT54_MODEL,
+        plausibilityCheck: GPT54_MINI_MODEL
+      };
+      return normalizeChatModel(map[task] || getCurrentChatModel());
+    }
+
+    function selectChatModelForTask(task) {
+      const model = getAutoChatModelForTask(task);
+      if (autoModelSwitchCheckbox.checked && chatModelInput.value !== model) {
+        chatModelInput.value = model;
+        syncMainToStartup();
+        syncChatModelSegment();
+        saveState();
+      }
+      updateApiBadge();
+      return model;
+    }
+
+    function getActiveChatApiKey(model = getCurrentChatModel()) {
+      const currentModel = normalizeChatModel(model);
       const standardKey = apiKeyChatInput.value.trim();
       const gpt54Key = apiKeyGpt54Input.value.trim();
       const gpt54MiniKey = apiKeyGpt54MiniInput.value.trim();
@@ -1148,8 +1595,8 @@ Vorgaben:
       return standardKey;
     }
 
-    function getResolvedChatKeyLabel() {
-      const currentModel = getCurrentChatModel();
+    function getResolvedChatKeyLabel(model = getCurrentChatModel()) {
+      const currentModel = normalizeChatModel(model);
       if (currentModel === GPT54_MODEL && apiKeyGpt54Input.value.trim()) {
         return "GPT-5.4-Override-Key";
       }
@@ -1171,11 +1618,13 @@ Vorgaben:
 
     function getLongAudioEditorialApiKey() {
       const editorialKey = apiKeyEditorialInput.value.trim();
-      return getActiveChatApiKey() || editorialKey;
+      const editorialModel = getAutoChatModelForTask("longEditorial");
+      return getActiveChatApiKey(editorialModel) || editorialKey;
     }
 
     function getResolvedLongAudioEditorialKeyLabel() {
-      if (getActiveChatApiKey()) return getResolvedChatKeyLabel();
+      const editorialModel = getAutoChatModelForTask("longEditorial");
+      if (getActiveChatApiKey(editorialModel)) return getResolvedChatKeyLabel(editorialModel);
       if (apiKeyEditorialInput.value.trim()) return "Redaktions-Override-Key";
       return "kein Key";
     }
@@ -1292,6 +1741,477 @@ Vorgaben:
       syncRepeatFlaggedButton();
     }
 
+    const learningSessionRepository = {
+      async load() {
+        try {
+          const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (err) {
+          console.error("Fehler beim Laden der Lernsessions:", err);
+          return null;
+        }
+      },
+      async save(data) {
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
+      },
+      async loadSnapshot(sessionId) {
+        try {
+          const raw = localStorage.getItem(`${SESSION_DATA_PREFIX}${sessionId}`);
+          return raw ? JSON.parse(raw) : null;
+        } catch (err) {
+          console.error("Fehler beim Laden des Session-Ordners:", err);
+          return null;
+        }
+      },
+      async saveSnapshot(sessionId, snapshot) {
+        localStorage.setItem(`${SESSION_DATA_PREFIX}${sessionId}`, JSON.stringify(snapshot));
+      },
+      async deleteSnapshot(sessionId) {
+        localStorage.removeItem(`${SESSION_DATA_PREFIX}${sessionId}`);
+      }
+    };
+
+    function todayIsoDate() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function formatShortDate(value) {
+      if (!value) return "heute";
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return "heute";
+      return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
+    }
+
+    function getDaysSince(dateValue) {
+      const date = new Date(`${dateValue || todayIsoDate()}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+      return Math.max(0, Math.floor((today - date) / 86400000));
+    }
+
+    function understandingLabel(value) {
+      const map = {
+        none: "keins",
+        beginner: "beginner",
+        repeat: "wiederholung nötig",
+        exam: "prüfungsreif"
+      };
+      return map[value] || map.none;
+    }
+
+    function understandingShort(value) {
+      const map = {
+        none: "0",
+        beginner: "B",
+        repeat: "W",
+        exam: "P"
+      };
+      return map[value] || map.none;
+    }
+
+    function normalizeSessionItem(item, index = 0) {
+      const now = new Date().toISOString();
+      const snapshot = item?.snapshot && typeof item.snapshot === "object" ? item.snapshot : buildPersistedState();
+      return {
+        id: String(item?.id || uid()),
+        name: String(item?.name || `Lernsession ${index + 1}`),
+        understanding: ["none", "beginner", "repeat", "exam"].includes(item?.understanding) ? item.understanding : "none",
+        percent: clamp(Number(item?.percent) || 0, 0, 100),
+        date: /^\d{4}-\d{2}-\d{2}$/.test(String(item?.date || "")) ? item.date : todayIsoDate(),
+        createdAt: item?.createdAt || now,
+        updatedAt: item?.updatedAt || now,
+        snapshot
+      };
+    }
+
+    function buildLearningSessionPayload() {
+      return {
+        activeSessionId: activeLearningSessionId,
+        sessions: learningSessions
+      };
+    }
+
+    function saveLearningSessions() {
+      return learningSessionRepository.save(buildLearningSessionPayload());
+    }
+
+    function buildBlankSessionSnapshot() {
+      const snapshot = buildPersistedState();
+      return {
+        ...snapshot,
+        text: "",
+        longAudioText: "",
+        longAudioSession: null,
+        longAudioShowFullPreview: false,
+        longAudioTextBlocksExpanded: false,
+        kreuzenInput: "",
+        questions: [],
+        errorBlocks: [],
+        mode: "T"
+      };
+    }
+
+    function persistActiveLearningSession(snapshot = null) {
+      if (!learningSessionsReady || !activeLearningSessionId) return;
+      const active = learningSessions.find(session => session.id === activeLearningSessionId);
+      if (!active) return;
+      active.snapshot = snapshot || buildPersistedState();
+      active.updatedAt = new Date().toISOString();
+      void learningSessionRepository.saveSnapshot(active.id, active.snapshot);
+      void saveLearningSessions();
+      renderLearningSessions();
+    }
+
+    async function initializeLearningSessions() {
+      const stored = await learningSessionRepository.load();
+      let sessions = Array.isArray(stored?.sessions)
+        ? stored.sessions.map((item, idx) => normalizeSessionItem(item, idx))
+        : [];
+      sessions = await Promise.all(sessions.map(async session => {
+        const folderSnapshot = await learningSessionRepository.loadSnapshot(session.id);
+        if (folderSnapshot) {
+          session.snapshot = folderSnapshot;
+        } else if (session.snapshot) {
+          await learningSessionRepository.saveSnapshot(session.id, session.snapshot);
+        }
+        return session;
+      }));
+
+      const hadStoredSessions = sessions.length > 0;
+
+      if (!sessions.length) {
+        const now = new Date().toISOString();
+        const firstSession = {
+          id: uid(),
+          name: "Lernsession 1",
+          understanding: "none",
+          percent: 0,
+          date: todayIsoDate(),
+          createdAt: now,
+          updatedAt: now,
+          snapshot: buildPersistedState()
+        };
+        learningSessions = [firstSession];
+        activeLearningSessionId = firstSession.id;
+        await learningSessionRepository.saveSnapshot(firstSession.id, firstSession.snapshot);
+      } else {
+        learningSessions = sessions;
+        activeLearningSessionId = learningSessions.some(session => session.id === stored?.activeSessionId)
+          ? stored.activeSessionId
+          : learningSessions[0].id;
+      }
+
+      learningSessionsReady = true;
+      if (hadStoredSessions) {
+        const activeSession = learningSessions.find(session => session.id === activeLearningSessionId);
+        if (activeSession?.snapshot) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(activeSession.snapshot));
+          applyPersistedState(activeSession.snapshot);
+        }
+      }
+      persistActiveLearningSession(buildPersistedState());
+      renderLearningSessions();
+
+      const pendingEditId = localStorage.getItem(PENDING_SESSION_EDIT_KEY);
+      if (pendingEditId && learningSessions.some(session => session.id === pendingEditId)) {
+        localStorage.removeItem(PENDING_SESSION_EDIT_KEY);
+        openSessionDrawer();
+        openSessionEditModal(pendingEditId);
+      }
+    }
+
+    function openSessionDrawer() {
+      document.body.classList.add("sessions-open");
+      sessionMenuBtn.setAttribute("aria-label", "Lernsessions schließen");
+      sessionMenuBtn.title = "Zurück zur Lernsession";
+      renderLearningSessions();
+    }
+
+    function closeSessionDrawer() {
+      document.body.classList.remove("sessions-open");
+      sessionMenuBtn.setAttribute("aria-label", "Lernsessions öffnen");
+      sessionMenuBtn.title = "Lernsessions";
+    }
+
+    function toggleSessionDrawer() {
+      if (document.body.classList.contains("sessions-open")) {
+        closeSessionDrawer();
+      } else {
+        openSessionDrawer();
+      }
+    }
+
+    function openNewSessionModal() {
+      const nextNumber = learningSessions.length + 1;
+      newSessionNameInput.value = `Lernsession ${nextNumber}`;
+      newSessionBackdrop.classList.remove("hidden");
+      setTimeout(() => {
+        newSessionNameInput.focus();
+        newSessionNameInput.select();
+      }, 0);
+    }
+
+    function closeNewSessionModal() {
+      newSessionBackdrop.classList.add("hidden");
+    }
+
+    function renderLearningSessions() {
+      if (!sessionList) return;
+      sessionList.innerHTML = "";
+
+      if (!learningSessions.length) {
+        const empty = document.createElement("div");
+        empty.className = "session-empty";
+        empty.textContent = "Keine Sessions.";
+        sessionList.appendChild(empty);
+        return;
+      }
+
+      learningSessions.forEach(session => {
+        const days = getDaysSince(session.date);
+        const percent = clamp(Number(session.percent) || 0, 0, 100);
+        const isActive = session.id === activeLearningSessionId;
+        const card = document.createElement("div");
+        card.className = `session-card${isActive ? " active" : ""}`;
+        card.dataset.sessionId = session.id;
+        card.innerHTML = `
+          <div class="session-active-mark">✓</div>
+          <div class="session-title-wrap">
+            <div class="session-title">${escapeHtml(session.name)}</div>
+            <div class="session-updated">${escapeHtml(formatShortDate(session.date))}</div>
+          </div>
+          <div class="session-metrics">
+            <div class="metric-bubble metric-understanding">
+              ${escapeHtml(understandingShort(session.understanding))}
+              <div class="metric-tooltip">Verständnis: ${escapeHtml(understandingLabel(session.understanding))}</div>
+            </div>
+            <div class="metric-bubble metric-days">
+              ${days}
+              <div class="metric-tooltip">Tage vergangen: ${days}</div>
+            </div>
+            <div class="metric-bubble metric-percent">
+              ${percent}
+              <div class="metric-tooltip">Erreicht: ${percent}%</div>
+            </div>
+          </div>
+          <button class="session-edit-btn" type="button" data-edit-session="${session.id}" title="Session bearbeiten" aria-label="Session bearbeiten">✎</button>
+        `;
+        sessionList.appendChild(card);
+      });
+
+      sessionList.querySelectorAll(".session-card").forEach(card => {
+        card.addEventListener("click", (event) => {
+          if (event.target.closest("[data-edit-session]")) return;
+          void selectLearningSession(card.dataset.sessionId);
+        });
+      });
+
+      sessionList.querySelectorAll("[data-edit-session]").forEach(btn => {
+        btn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openSessionEditModal(btn.dataset.editSession);
+        });
+      });
+    }
+
+    async function selectLearningSession(sessionId) {
+      if (!sessionId || sessionId === activeLearningSessionId) {
+        closeSessionDrawer();
+        return;
+      }
+      persistActiveLearningSession(buildPersistedState());
+      const target = learningSessions.find(session => session.id === sessionId);
+      if (!target) return;
+      activeLearningSessionId = target.id;
+      const targetSnapshot = await learningSessionRepository.loadSnapshot(target.id) || target.snapshot || buildBlankSessionSnapshot();
+      target.snapshot = targetSnapshot;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(targetSnapshot));
+      await saveLearningSessions();
+      applyPersistedState(targetSnapshot);
+      closeSessionDrawer();
+      renderLearningSessions();
+    }
+
+    async function startNewLearningSession(options = {}) {
+      persistActiveLearningSession(buildPersistedState());
+      const now = new Date().toISOString();
+      const nextNumber = learningSessions.length + 1;
+      const sessionName = String(options.name || "").trim() || `Lernsession ${nextNumber}`;
+      const session = {
+        id: uid(),
+        name: sessionName,
+        understanding: "none",
+        percent: 0,
+        date: todayIsoDate(),
+        createdAt: now,
+        updatedAt: now,
+        snapshot: buildBlankSessionSnapshot()
+      };
+      learningSessions.unshift(session);
+      activeLearningSessionId = session.id;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session.snapshot));
+      await learningSessionRepository.saveSnapshot(session.id, session.snapshot);
+      await saveLearningSessions();
+      applyPersistedState(session.snapshot);
+      closeNewSessionModal();
+      openSessionDrawer();
+      renderLearningSessions();
+      if (options.openEdit === true) {
+        openSessionEditModal(session.id);
+      }
+    }
+
+    function openSessionEditModal(sessionId) {
+      const session = learningSessions.find(item => item.id === sessionId);
+      if (!session) return;
+      editingSessionId = session.id;
+      sessionNameInput.value = session.name || "";
+      sessionPercentInput.value = String(clamp(Number(session.percent) || 0, 0, 100));
+      sessionDateInput.value = session.date || todayIsoDate();
+      sessionUnderstandingInput.value = session.understanding || "none";
+      sessionDeleteConfirm.classList.add("hidden");
+      sessionEditBackdrop.classList.remove("hidden");
+    }
+
+    function closeSessionEditModal() {
+      editingSessionId = null;
+      sessionDeleteConfirm.classList.add("hidden");
+      sessionEditBackdrop.classList.add("hidden");
+    }
+
+    function saveSessionEdit() {
+      const session = learningSessions.find(item => item.id === editingSessionId);
+      if (!session) return;
+      session.name = sessionNameInput.value.trim() || "Lernsession";
+      session.percent = clamp(Number(sessionPercentInput.value) || 0, 0, 100);
+      session.date = sessionDateInput.value || todayIsoDate();
+      session.understanding = ["none", "beginner", "repeat", "exam"].includes(sessionUnderstandingInput.value)
+        ? sessionUnderstandingInput.value
+        : "none";
+      session.updatedAt = new Date().toISOString();
+      if (session.id === activeLearningSessionId) {
+        session.snapshot = buildPersistedState();
+        void learningSessionRepository.saveSnapshot(session.id, session.snapshot);
+      }
+      void saveLearningSessions();
+      renderLearningSessions();
+      closeSessionEditModal();
+    }
+
+    function requestDeleteLearningSession() {
+      sessionDeleteConfirm.classList.remove("hidden");
+    }
+
+    function deleteLearningSession() {
+      const sessionId = editingSessionId;
+      if (!sessionId) return;
+      const wasActive = sessionId === activeLearningSessionId;
+      learningSessions = learningSessions.filter(session => session.id !== sessionId);
+      void learningSessionRepository.deleteSnapshot(sessionId);
+
+      if (!learningSessions.length) {
+        const now = new Date().toISOString();
+        learningSessions = [{
+          id: uid(),
+          name: "Lernsession 1",
+          understanding: "none",
+          percent: 0,
+          date: todayIsoDate(),
+          createdAt: now,
+          updatedAt: now,
+          snapshot: buildBlankSessionSnapshot()
+        }];
+        void learningSessionRepository.saveSnapshot(learningSessions[0].id, learningSessions[0].snapshot);
+      }
+
+      if (wasActive) {
+        activeLearningSessionId = learningSessions[0].id;
+        const nextSnapshot = learningSessions[0].snapshot || buildBlankSessionSnapshot();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSnapshot));
+        void saveLearningSessions();
+        applyPersistedState(nextSnapshot);
+        renderLearningSessions();
+        closeSessionEditModal();
+        return;
+      }
+
+      void saveLearningSessions();
+      renderLearningSessions();
+      closeSessionEditModal();
+    }
+
+    function serializeLongAudioSession() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return null;
+      return {
+        id: longAudioSession.id || uid(),
+        stopped: longAudioSession.stopped === true,
+        manualStop: true,
+        currentIndex: 0,
+        useEditorial: longAudioSession.useEditorial === true,
+        chunks: longAudioSession.chunks.map((chunk, idx) => ({
+          index: idx,
+          text: String(chunk.text || ""),
+          originalText: String(chunk.originalText || chunk.text || ""),
+          wordCount: Number(chunk.wordCount) || countWordsFromText(chunk.text || chunk.originalText || ""),
+          status: chunk.status === "error" ? "error" : "pending",
+          url: null,
+          error: chunk.status === "error" ? String(chunk.error || "") : null,
+          generatedAt: chunk.generatedAt || null,
+          fileName: chunk.fileName || "",
+          duration: Number.isFinite(chunk.duration) ? chunk.duration : null,
+          redactionApplied: chunk.redactionApplied === true
+        }))
+      };
+    }
+
+    function restoreLongAudioSession(data) {
+      if (longAudioSession && Array.isArray(longAudioSession.chunks)) {
+        longAudioSession.chunks.forEach(chunk => {
+          if (chunk.url) URL.revokeObjectURL(chunk.url);
+        });
+      }
+      clearLongAudioWaitTimer();
+      pauseLongSegmentAudios();
+      longAudioPlayer.pause();
+      longAudioPlayer.removeAttribute("src");
+      longAudioPlayer.load();
+      longAudioPlayer.classList.add("hidden");
+      longDownloadLink.classList.add("hidden");
+      longDownloadLink.removeAttribute("href");
+      longDownloadLink.removeAttribute("download");
+
+      const stored = data && typeof data === "object" ? data : null;
+      if (!stored || !Array.isArray(stored.chunks) || !stored.chunks.length) {
+        longAudioSession = null;
+        longAudioShowFullPreview = false;
+        longAudioTextBlocksExpanded = false;
+        return;
+      }
+
+      longAudioSession = {
+        id: stored.id || uid(),
+        stopped: true,
+        manualStop: true,
+        currentIndex: 0,
+        useEditorial: stored.useEditorial === true,
+        chunks: stored.chunks.map((chunk, idx) => ({
+          index: idx,
+          text: String(chunk.text || ""),
+          originalText: String(chunk.originalText || chunk.text || ""),
+          wordCount: Number(chunk.wordCount) || countWordsFromText(chunk.text || chunk.originalText || ""),
+          status: chunk.status === "error" ? "error" : "pending",
+          url: null,
+          error: chunk.status === "error" ? String(chunk.error || "") : null,
+          generatedAt: chunk.generatedAt || null,
+          fileName: chunk.fileName || "",
+          duration: Number.isFinite(Number(chunk.duration)) ? Number(chunk.duration) : null,
+          redactionApplied: chunk.redactionApplied === true
+        }))
+      };
+    }
+
     function buildPersistedState() {
       return {
         baseUrl: baseUrlInput.value,
@@ -1315,6 +2235,7 @@ Vorgaben:
         longHighlightCurrentText: longHighlightCurrentTextCheckbox.checked,
         longAudioShowFullPreview,
         longAudioTextBlocksExpanded,
+        longAudioSession: serializeLongAudioSession(),
         kreuzenInput: kreuzenInput.value,
         autoPlay: autoPlayCheckbox.checked,
         autoDownload: autoDownloadCheckbox.checked,
@@ -1322,6 +2243,12 @@ Vorgaben:
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
+        autoFlagLowScore: autoFlagLowScoreCheckbox.checked,
+        autoUnflagHighScore: autoUnflagHighScoreCheckbox.checked,
+        oralExamMode: oralExamModeCheckbox.checked,
+        autoModelSwitch: autoModelSwitchCheckbox.checked,
+        enablePlausibilityCheck: enablePlausibilityCheckCheckbox.checked,
+        audioFeedback: audioFeedbackCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         saveSettings: saveSettingsCheckbox.checked,
         permanentSaveEnabled: permanentSaveEnabled.checked,
@@ -1338,19 +2265,22 @@ Vorgaben:
       const data = buildPersistedState();
       data.saveSettings = true;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      persistActiveLearningSession(data);
       updateApiBadge();
     }
 
     function saveState() {
-      if (!saveSettingsCheckbox.checked) return;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPersistedState()));
+      const data = buildPersistedState();
+      if (saveSettingsCheckbox.checked) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+      persistActiveLearningSession(data);
       updateApiBadge();
     }
 
-    function loadState() {
+    function applyPersistedState(data) {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
+        if (!data || typeof data !== "object") {
           updateApiBadge();
           updateLongStats();
           renderLongAudioSegments();
@@ -1358,7 +2288,9 @@ Vorgaben:
           return;
         }
 
-        const data = JSON.parse(raw);
+        resetAudio();
+        stopOralExamPlayback();
+        resetOralExamQuestionAudio();
 
         baseUrlInput.value = data.baseUrl || "https://api.hrz.uni-giessen.de";
         apiKeyTtsInput.value = data.apiKeyTts || "";
@@ -1377,6 +2309,8 @@ Vorgaben:
         longChunkSizeInput.value = data.longChunkSize || "515";
         kreuzenInput.value = data.kreuzenInput || "";
         longAudioShowFullPreview = data.longAudioShowFullPreview === true;
+        longAudioTextBlocksExpanded = data.longAudioTextBlocksExpanded === true;
+        restoreLongAudioSession(data.longAudioSession);
 
         autoPlayCheckbox.checked = data.autoPlay !== false;
         autoDownloadCheckbox.checked = data.autoDownload === true;
@@ -1384,11 +2318,16 @@ Vorgaben:
         longAutoPlayCheckbox.checked = data.longAutoPlay !== false;
         longAutoDownloadCheckbox.checked = data.longAutoDownload === true;
         longHighlightCurrentTextCheckbox.checked = data.longHighlightCurrentText === true;
-        longAudioTextBlocksExpanded = data.longAudioTextBlocksExpanded === true;
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
+        autoFlagLowScoreCheckbox.checked = data.autoFlagLowScore === true;
+        autoUnflagHighScoreCheckbox.checked = data.autoUnflagHighScore === true;
+        oralExamModeCheckbox.checked = data.oralExamMode === true;
+        autoModelSwitchCheckbox.checked = data.autoModelSwitch === true;
+        enablePlausibilityCheckCheckbox.checked = data.enablePlausibilityCheck !== false;
+        audioFeedbackCheckbox.checked = data.audioFeedback === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         saveSettingsCheckbox.checked = data.saveSettings !== false;
         permanentSaveEnabled.checked = data.permanentSaveEnabled === true;
@@ -1432,10 +2371,29 @@ Vorgaben:
       }
     }
 
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        applyPersistedState(raw ? JSON.parse(raw) : null);
+      } catch (e) {
+        console.error("Fehler beim Laden des Zustands:", e);
+      }
+    }
+
     function resetAudio() {
       if (currentAudioUrl) {
         URL.revokeObjectURL(currentAudioUrl);
         currentAudioUrl = null;
+      }
+      if (feedbackAudioPlayer) {
+        feedbackAudioPlayer.pause();
+        feedbackAudioPlayer.removeAttribute("src");
+        try { feedbackAudioPlayer.load(); } catch {}
+        feedbackAudioPlayer = null;
+      }
+      if (feedbackAudioUrl) {
+        URL.revokeObjectURL(feedbackAudioUrl);
+        feedbackAudioUrl = null;
       }
       audioPlayer.pause();
       audioPlayer.removeAttribute("src");
@@ -1452,6 +2410,18 @@ Vorgaben:
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    function decodePercentEncodedText(text) {
+      const raw = String(text || "");
+      if (!/%[0-9A-Fa-f]{2}/.test(raw)) return raw;
+      try {
+        return decodeURIComponent(raw);
+      } catch (_) {
+        return raw.replace(/(?:%[0-9A-Fa-f]{2})+/g, part => {
+          try { return decodeURIComponent(part); } catch { return part; }
+        });
+      }
     }
 
     function clearLongAudioWaitTimer() {
@@ -1560,7 +2530,7 @@ Vorgaben:
     async function requestLongAudioEditorialChunk({ chunkText, previousTail = "", chunkIndex = 0, totalChunks = 1 }) {
       const apiKey = getLongAudioEditorialApiKey();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
-      const model = getCurrentChatModel();
+      const model = selectChatModelForTask("longEditorial");
 
       if (!apiKey) {
         throw new Error(`Kein API-Key für ${model} gesetzt.`);
@@ -1578,8 +2548,10 @@ Vorgaben:
         chunkText
       ].join("\n");
 
+      const abortHandle = createAbortHandle();
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: "POST",
+        signal: abortHandle.signal,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`
@@ -1593,6 +2565,7 @@ Vorgaben:
           ]
         })
       });
+      abortHandle.cleanup();
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}`;
@@ -1630,33 +2603,143 @@ Vorgaben:
         throw new Error("Geschwindigkeit muss zwischen 0.25 und 4 liegen.");
       }
 
-      const response = await fetch(`${baseUrl}/v1/audio/speech`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: TTS_MODEL,
-          input: chunkText,
-          voice,
-          response_format: format,
-          speed
-        })
-      });
+      beginLoading("Audio wird geladen");
+      try {
+        const abortHandle = createAbortHandle();
+        const response = await fetch(`${baseUrl}/v1/audio/speech`, {
+          method: "POST",
+          signal: abortHandle.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: TTS_MODEL,
+            input: chunkText,
+            voice,
+            response_format: format,
+            speed
+          })
+        });
+        abortHandle.cleanup();
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const data = await response.json();
-          errorMessage = JSON.stringify(data, null, 2);
-        } catch {
-          errorMessage = await response.text();
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const data = await response.json();
+            errorMessage = JSON.stringify(data, null, 2);
+          } catch {
+            errorMessage = await response.text();
+          }
+          throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
+
+        return await response.blob();
+      } finally {
+        endLoading();
+      }
+    }
+
+    async function forceStartVisibleFeedbackAudio(playbackId) {
+      if (!audioPlayer.src) return false;
+      const cancelGeneration = actionCancelGeneration;
+      audioPlayer.classList.remove("hidden");
+      setStatus("Audio Feedback ist bereit. Weiter wird automatisch gedrückt ...", "info");
+
+      let lastError = null;
+      for (let attempt = 0; attempt < 18; attempt += 1) {
+        if (playbackId !== feedbackPlaybackAttemptId || cancelGeneration !== actionCancelGeneration) return false;
+        await delay(attempt === 0 ? 100 : 300);
+        if (playbackId !== feedbackPlaybackAttemptId || cancelGeneration !== actionCancelGeneration) return false;
+
+        try {
+          suppressResumeStatus = true;
+          resumeBtn.click();
+        } catch {
+        } finally {
+          setTimeout(() => { suppressResumeStatus = false; }, 500);
+        }
+
+        await delay(60);
+        try {
+          await audioPlayer.play();
+          setStatus("Audio Feedback wird abgespielt.", "ok");
+          return true;
+        } catch (err) {
+          lastError = err;
+          if (attempt === 2 || attempt === 8) {
+            setStatus("Browser blockiert noch. Die App klickt Weiter automatisch erneut ...", "info");
+          }
+        }
       }
 
-      return await response.blob();
+      console.error(lastError);
+      setStatus("Audio Feedback bleibt vom Browser blockiert. Die Audio liegt im Player bereit; die App hat Weiter mehrfach automatisch ausgelöst.", "info");
+      return false;
+    }
+
+    async function speakFeedbackText(feedbackText) {
+      const text = String(feedbackText || "").trim();
+      if (!text || !audioFeedbackCheckbox.checked) return;
+      if (!apiKeyTtsInput.value.trim()) {
+        setStatus("Bewertung abgeschlossen. Audio Feedback konnte nicht gesprochen werden: Bitte TTS-API-Key setzen.", "error");
+        return;
+      }
+      try {
+        if (feedbackAudioPlayer) {
+          feedbackAudioPlayer.pause();
+          feedbackAudioPlayer.removeAttribute("src");
+          try { feedbackAudioPlayer.load(); } catch {}
+          feedbackAudioPlayer = null;
+        }
+        if (feedbackAudioUrl) {
+          URL.revokeObjectURL(feedbackAudioUrl);
+          feedbackAudioUrl = null;
+        }
+        feedbackPlaybackAttemptId += 1;
+        const playbackId = feedbackPlaybackAttemptId;
+        const blob = await requestLongAudioTtsChunk(text);
+        if (playbackId !== feedbackPlaybackAttemptId) return;
+        feedbackAudioUrl = URL.createObjectURL(blob);
+        feedbackAudioPlayer = new Audio(feedbackAudioUrl);
+        feedbackAudioPlayer.addEventListener("ended", () => {
+          if (playbackId !== feedbackPlaybackAttemptId) return;
+          if (feedbackAudioPlayer) {
+            feedbackAudioPlayer.removeAttribute("src");
+            try { feedbackAudioPlayer.load(); } catch {}
+            feedbackAudioPlayer = null;
+          }
+          if (feedbackAudioUrl) {
+            URL.revokeObjectURL(feedbackAudioUrl);
+            feedbackAudioUrl = null;
+          }
+        }, { once: true });
+        let lastError = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            await feedbackAudioPlayer.play();
+            return;
+          } catch (err) {
+            lastError = err;
+            await delay(250);
+          }
+        }
+        throw lastError || new Error("Audio Feedback konnte nicht gestartet werden.");
+      } catch (err) {
+        console.error(err);
+        if (err?.name === "AbortError") {
+          setStatus("Audio Feedback abgebrochen. Du kannst neu starten.", "info");
+          return;
+        }
+        if (feedbackAudioUrl) {
+          audioPlayer.src = feedbackAudioUrl;
+          audioPlayer.classList.remove("hidden");
+          downloadLink.classList.add("hidden");
+          downloadLink.removeAttribute("href");
+          try { audioPlayer.load(); } catch {}
+        }
+        await forceStartVisibleFeedbackAudio(feedbackPlaybackAttemptId);
+      }
     }
 
     function getLongChunkExt() {
@@ -1864,6 +2947,7 @@ Vorgaben:
       }
 
       refreshLongAudioPlaybackUI(true);
+      saveState();
       setLongStatus("Wiedergabe gestoppt und auf Anfang gesetzt.", "info");
     }
 
@@ -1968,6 +3052,7 @@ Vorgaben:
         chunk.generatedAt = new Date().toISOString();
         chunk.fileName = getLongChunkFileName(index);
         chunk.duration = await loadLongAudioDuration(chunk.url);
+        saveState();
 
         if (longAutoDownloadCheckbox.checked) {
           triggerDownload(chunk.url, chunk.fileName);
@@ -1977,8 +3062,17 @@ Vorgaben:
         renderLongAudioSegments();
         return chunk;
       } catch (err) {
+        if (err?.name === "AbortError" || session.stopped || session.id !== (longAudioSession && longAudioSession.id)) {
+          if (chunk.status === "loading" || chunk.status === "editing") {
+            chunk.status = "pending";
+            chunk.error = null;
+          }
+          renderLongAudioSegments();
+          return null;
+        }
         chunk.status = "error";
         chunk.error = err.message || "Unbekannter Fehler";
+        saveState();
         renderLongAudioSegments();
         throw err;
       }
@@ -2200,7 +3294,7 @@ Vorgaben:
       const speed = parseFloat(speedInput.value);
       const maxWords = getLongChunkLimit();
       const useEditorial = longEnableEditorialCheckbox.checked;
-      const editorialModel = getCurrentChatModel();
+      const editorialModel = getAutoChatModelForTask("longEditorial");
 
       if (!apiKey) {
         setLongStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
@@ -2245,6 +3339,7 @@ Vorgaben:
           "info"
         );
         renderLongAudioSegments();
+        saveState();
 
         await generateLongChunkForSession(longAudioSession, 0);
         if (!longAudioSession || longAudioSession.stopped) return;
@@ -2260,7 +3355,11 @@ Vorgaben:
         void startLongChunkGenerationQueue(longAudioSession, 1);
       } catch (err) {
         console.error(err);
-        setLongStatus("Fehler: " + err.message, "error");
+        if (err?.name === "AbortError") {
+          setLongStatus("Lang-Audio-Aktion abgebrochen. Du kannst neu starten.", "info");
+        } else {
+          setLongStatus("Fehler: " + err.message, "error");
+        }
       } finally {
         longGenerateBtn.disabled = false;
       }
@@ -2329,44 +3428,52 @@ Vorgaben:
       pomodoroInterval = setInterval(tickPomodoro, 1000);
     }
 
-    async function fetchJsonChat({systemPrompt, userPrompt}) {
-      const apiKey = getActiveChatApiKey();
+    async function fetchJsonChat({systemPrompt, userPrompt, task = ""}) {
+      const model = selectChatModelForTask(task);
+      const apiKey = getActiveChatApiKey(model);
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
-      const model = getCurrentChatModel();
 
       if (!apiKey) {
-        throw new Error(`Kein API-Key für ${model} gesetzt. Aktive Quelle: ${getResolvedChatKeyLabel()}.`);
+        throw new Error(`Kein API-Key für ${model} gesetzt. Aktive Quelle: ${getResolvedChatKeyLabel(model)}.`);
       }
 
-      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
-          ],
-          temperature: 0.3
-        })
-      });
+      beginLoading("Antwort wird geladen");
+      try {
+        const abortHandle = createAbortHandle();
+        const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+          method: "POST",
+          signal: abortHandle.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ],
+            temperature: 0.3
+          })
+        });
+        abortHandle.cleanup();
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const err = await response.json();
-          errorMessage = JSON.stringify(err, null, 2);
-        } catch {
-          errorMessage = await response.text();
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const err = await response.json();
+            errorMessage = JSON.stringify(err, null, 2);
+          } catch {
+            errorMessage = await response.text();
+          }
+          throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
-      }
 
-      const data = await response.json();
-      return data?.choices?.[0]?.message?.content ?? "";
+        const data = await response.json();
+        return data?.choices?.[0]?.message?.content ?? "";
+      } finally {
+        endLoading();
+      }
     }
 
     function tryParseJSON(text) {
@@ -2414,8 +3521,10 @@ Vorgaben:
         resetAudio();
         saveState();
 
+        const abortHandle = createAbortHandle();
         const response = await fetch(`${baseUrl}/v1/audio/speech`, {
           method: "POST",
+          signal: abortHandle.signal,
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${apiKey}`
@@ -2428,6 +3537,7 @@ Vorgaben:
             speed
           })
         });
+        abortHandle.cleanup();
 
         if (!response.ok) {
           let errorMessage = `HTTP ${response.status}`;
@@ -2501,7 +3611,7 @@ Gewünschte Anzahl Fragen: ${count ? count : "nicht definiert, entscheide selbst
 Erzeuge nur die Fragen als JSON.
       `.trim();
 
-      const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "questions" });
       const parsed = tryParseJSON(raw);
       if (!parsed || !Array.isArray(parsed.questions)) {
         throw new Error("Die Fragen konnten nicht als JSON gelesen werden.");
@@ -2541,7 +3651,7 @@ ${numberedQuestions}
 Erstelle zu jeder Frage den Erwartungshorizont.
       `.trim();
 
-      const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "expectedAnswers" });
       const parsed = tryParseJSON(raw);
 
       let expectedAnswers = [];
@@ -2603,7 +3713,7 @@ ${contextLines}
 Erzeuge daraus Integrationsfragen.
       `.trim();
 
-      const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "integrationQuestions" });
       const parsed = tryParseJSON(raw);
       const items = parsed && Array.isArray(parsed.integration_questions) ? parsed.integration_questions : [];
       if (!items.length) {
@@ -2637,9 +3747,9 @@ Erzeuge daraus Integrationsfragen.
 
     async function generateQuestions() {
       const text = textInput.value.trim();
-      const chatModel = getCurrentChatModel();
+      const chatModel = getAutoChatModelForTask("questions");
 
-      if (!getActiveChatApiKey()) {
+      if (!getActiveChatApiKey(chatModel)) {
         setStatus(`Bitte den API-Key für ${chatModel} setzen.`, "error");
         return;
       }
@@ -2661,7 +3771,7 @@ Erzeuge daraus Integrationsfragen.
       let step = 1;
 
       generateQuestionsBtn.disabled = true;
-      setStatus(`Schritt ${step}/${totalSteps}: Fragen werden generiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel()}`, "info");
+      setStatus(`Schritt ${step}/${totalSteps}: Fragen werden generiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel(chatModel)}`, "info");
 
       try {
         const rawQuestions = await generateBaseQuestionsOnly(text, count);
@@ -2698,6 +3808,10 @@ Erzeuge daraus Integrationsfragen.
           `Fragen erfolgreich generiert: ${newQuestions.length}\nIntegrationsfragen: ${integrationQuestions.length}\nErwartungshorizonte: ${expectedCount}\nChat-Modell: ${chatModel}`,
           "ok"
         );
+        if (oralExamModeCheckbox.checked) {
+          resetOralExamQuestionAudio();
+          void prepareOralExamAudioQueue();
+        }
       } catch (err) {
         console.error(err);
         setStatus("Fehler bei der Fragengenerierung: " + err.message, "error");
@@ -2734,6 +3848,133 @@ Erzeuge daraus Integrationsfragen.
       recordingChunks = [];
     }
 
+    function createRecordingCompletionPromise() {
+      recordingCompletionPromise = new Promise(resolve => {
+        resolveRecordingCompletion = resolve;
+      });
+    }
+
+    function finishRecordingCompletion(success) {
+      if (resolveRecordingCompletion) {
+        resolveRecordingCompletion(success === true);
+      }
+      recordingCompletionPromise = null;
+      resolveRecordingCompletion = null;
+    }
+
+    function waitForRecordingCompletion() {
+      return recordingCompletionPromise || Promise.resolve(false);
+    }
+
+    function stopOralExamPlayback() {
+      if (oralExamPlayer) {
+        oralExamPlayer.pause();
+        oralExamPlayer.removeAttribute("src");
+        try { oralExamPlayer.load(); } catch {}
+      }
+      oralExamPlayer = null;
+      oralExamActiveQuestionId = null;
+    }
+
+    function resetOralExamQuestionAudio(keepQuestionIds = null) {
+      const keep = keepQuestionIds ? new Set(keepQuestionIds) : null;
+      if (!keep) oralExamAudioGeneration += 1;
+      if (keep && oralExamActiveQuestionId && !keep.has(oralExamActiveQuestionId)) {
+        stopOralExamPlayback();
+      }
+      oralExamAudioByQuestionId.forEach((entry, questionId) => {
+        if (keep && keep.has(questionId)) return;
+        if (entry?.url) URL.revokeObjectURL(entry.url);
+        oralExamAudioByQuestionId.delete(questionId);
+      });
+      if (!keep) stopOralExamPlayback();
+    }
+
+    async function prepareOralExamQuestionAudio(question, position, total) {
+      if (!question || !question.id || !question.question) return false;
+      const existing = oralExamAudioByQuestionId.get(question.id);
+      if (existing?.status === "ready") return true;
+      if (existing?.status === "loading" && existing.promise) return await existing.promise;
+
+      const generation = oralExamAudioGeneration;
+      const promise = (async () => {
+        try {
+          const blob = await requestLongAudioTtsChunk(question.question);
+          if (generation !== oralExamAudioGeneration || !oralExamModeCheckbox.checked) {
+            return false;
+          }
+          const url = URL.createObjectURL(blob);
+          oralExamAudioByQuestionId.set(question.id, { status: "ready", url });
+          setStatus(`Oral Examination: Frage-Audio ${position}/${total} vorbereitet.`, "info");
+          return true;
+        } catch (err) {
+          console.error(err);
+          oralExamAudioByQuestionId.set(question.id, { status: "error", url: "", error: err.message || "Unbekannter Fehler" });
+          setStatus("Oral Examination Audio konnte nicht vorbereitet werden: " + (err.message || "Unbekannter Fehler"), "error");
+          return false;
+        }
+      })();
+
+      oralExamAudioByQuestionId.set(question.id, { status: "loading", url: "", promise });
+      return await promise;
+    }
+
+    async function prepareOralExamAudioQueue() {
+      if (!oralExamModeCheckbox.checked || oralExamAudioQueueRunning || !appState.questions.length) return;
+      if (!apiKeyTtsInput.value.trim()) {
+        setStatus("Oral Examination: Bitte den API-Key für das TTS-Modell setzen.", "error");
+        return;
+      }
+
+      oralExamAudioQueueRunning = true;
+      try {
+        const questionIds = appState.questions.map(q => q.id);
+        resetOralExamQuestionAudio(questionIds);
+        for (let i = 0; i < appState.questions.length; i += 1) {
+          if (!oralExamModeCheckbox.checked) break;
+          await prepareOralExamQuestionAudio(appState.questions[i], i + 1, appState.questions.length);
+        }
+      } finally {
+        oralExamAudioQueueRunning = false;
+      }
+    }
+
+    async function playOralExamQuestionAndRecord(questionId) {
+      if (!oralExamModeCheckbox.checked) return;
+      const question = appState.questions.find(q => q.id === questionId);
+      if (!question || !question.open) return;
+
+      let entry = oralExamAudioByQuestionId.get(questionId);
+      if (!entry || entry.status === "error") {
+        await prepareOralExamQuestionAudio(question, 1, 1);
+        entry = oralExamAudioByQuestionId.get(questionId);
+      }
+      if (!entry || entry.status !== "ready" || !entry.url) return;
+
+      stopOralExamPlayback();
+      oralExamActiveQuestionId = questionId;
+      oralExamPlayer = new Audio(entry.url);
+      try {
+        await oralExamPlayer.play();
+        await new Promise(resolve => {
+          oralExamPlayer.addEventListener("ended", resolve, { once: true });
+          oralExamPlayer.addEventListener("error", resolve, { once: true });
+        });
+      } catch (err) {
+        console.error(err);
+        setStatus("Frage-Audio konnte nicht abgespielt werden.", "error");
+        return;
+      } finally {
+        oralExamPlayer = null;
+        oralExamActiveQuestionId = null;
+      }
+
+      const stillOpen = appState.questions.find(q => q.id === questionId)?.open;
+      if (oralExamModeCheckbox.checked && stillOpen && !recordingQuestionId && !transcribingQuestionId) {
+        await startQuestionRecording(questionId);
+      }
+    }
+
     async function transcribeRecordedAnswer(questionId, audioBlob) {
       const apiKey = getActiveTranscribeApiKey();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
@@ -2752,13 +3993,16 @@ Erzeuge daraus Integrationsfragen.
         formData.append("file", audioBlob, `answer_${Date.now()}.${extension}`);
         formData.append("prompt", "Transkribiere die medizinische Antwort präzise auf Deutsch.");
 
+        const abortHandle = createAbortHandle();
         const response = await fetch(`${baseUrl}/v1/audio/transcriptions`, {
           method: "POST",
+          signal: abortHandle.signal,
           headers: {
             "Authorization": `Bearer ${apiKey}`
           },
           body: formData
         });
+        abortHandle.cleanup();
 
         if (!response.ok) {
           let errorMessage = `HTTP ${response.status}`;
@@ -2786,6 +4030,7 @@ Erzeuge daraus Integrationsfragen.
         saveState();
         renderQuestions();
         setStatus(`Transkription abgeschlossen.\nModell: ${TRANSCRIBE_MODEL}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "ok");
+        return transcript;
       } finally {
         transcribingQuestionId = null;
         renderQuestions();
@@ -2817,6 +4062,7 @@ Erzeuge daraus Integrationsfragen.
         const mimeType = getRecordingMimeType();
         mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream);
         recordingQuestionId = questionId;
+        createRecordingCompletionPromise();
 
         mediaRecorder.addEventListener("dataavailable", event => {
           if (event.data?.size) {
@@ -2836,21 +4082,32 @@ Erzeuge daraus Integrationsfragen.
           if (cancelTranscriptionAfterStop) {
             cancelTranscriptionAfterStop = false;
             setStatus("Audioaufnahme verworfen.", "info");
+            finishRecordingCompletion(false);
             return;
           }
 
-          if (!localQuestionId) return;
+          if (!localQuestionId) {
+            finishRecordingCompletion(false);
+            return;
+          }
           if (!blob.size) {
             setStatus("Keine Audiodaten erkannt. Bitte erneut aufnehmen.", "error");
+            finishRecordingCompletion(false);
             return;
           }
 
           try {
             setStatus(`Audio wird transkribiert ...\nModell: ${TRANSCRIBE_MODEL}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "info");
             await transcribeRecordedAnswer(localQuestionId, blob);
+            finishRecordingCompletion(true);
           } catch (err) {
             console.error(err);
-            setStatus("Fehler bei der Transkription: " + err.message, "error");
+            if (err?.name === "AbortError") {
+              setStatus("Transkription abgebrochen. Du kannst neu starten.", "info");
+            } else {
+              setStatus("Fehler bei der Transkription: " + err.message, "error");
+            }
+            finishRecordingCompletion(false);
           }
         });
 
@@ -2860,6 +4117,7 @@ Erzeuge daraus Integrationsfragen.
           releaseRecordingResources();
           renderQuestions();
           setStatus("Aufnahmefehler. Bitte erneut versuchen.", "error");
+          finishRecordingCompletion(false);
         });
 
         mediaRecorder.start();
@@ -2869,6 +4127,7 @@ Erzeuge daraus Integrationsfragen.
         console.error(err);
         releaseRecordingResources();
         recordingQuestionId = null;
+        finishRecordingCompletion(false);
         renderQuestions();
         if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
           setStatus(
@@ -2900,6 +4159,7 @@ Erzeuge daraus Integrationsfragen.
       recordingQuestionId = null;
       transcribingQuestionId = null;
       releaseRecordingResources();
+      finishRecordingCompletion(false);
       renderQuestions();
     }
 
@@ -2911,31 +4171,142 @@ Erzeuge daraus Integrationsfragen.
       await startQuestionRecording(questionId);
     }
 
+    async function finishActiveRecordingBeforeEvaluation(questionId) {
+      if (recordingQuestionId === questionId) {
+        stopQuestionRecording();
+        const completed = await waitForRecordingCompletion();
+        if (completed) await delay(350);
+        return completed;
+      }
+      if (transcribingQuestionId === questionId) {
+        setStatus("Transkription läuft. Bewertung startet danach automatisch ...", "info");
+        const completed = await waitForRecordingCompletion();
+        if (completed) await delay(350);
+        return completed;
+      }
+      return true;
+    }
+
+    async function checkAdditionalAnswerPlausibility({ question, originalText, expectedAnswer, answer, extraClaims }) {
+      const model = getAutoChatModelForTask("plausibilityCheck");
+      if (!getActiveChatApiKey(model)) {
+        throw new Error(`Kein API-Key für den Plausibilitätscheck mit ${model} gesetzt.`);
+      }
+
+      const claims = Array.isArray(extraClaims)
+        ? extraClaims.map(item => String(item || "").trim()).filter(Boolean)
+        : [];
+
+      const systemPrompt = `
+Du bist ein medizinischer Plausibilitätsprüfer.
+Prüfe ausschließlich Zusatzinformationen, die über den Erwartungshorizont hinausgehen.
+
+Regeln:
+- Nutze den gesamten Originaltext, die Frage, den Erwartungshorizont und die Nutzerantwort.
+- Prüfe Synonyme, andere Formulierungen und fachlich äquivalente Begriffe sorgfältig.
+- Plausible Zusatzinformationen dürfen nicht als falsch gewertet werden.
+- Plausible Zusatzinformationen können einen kleinen Bonus geben, typischerweise +5 bis +10 Prozentpunkte.
+- Nicht plausible oder medizinisch irreführende Zusatzinformationen geben Abzug, typischerweise bis -10 Prozentpunkte.
+- Bei fachlich stark relevanten Zusatzinformationen oder stark problematischen Zusatzbehauptungen ist maximal eine additive Anpassung von -20 bis +20 Prozentpunkten erlaubt.
+- Wenn eine Zusatzinformation dem Originaltext oder Erwartungshorizont widerspricht, bewerte sie als nicht plausibel.
+- Gib genau eine kurze Erklärung in einem Satz.
+
+Gib ausschließlich valides JSON zurück:
+{
+  "plausibel": true,
+  "score_adjustment": 0,
+  "statement": "Ein kurzer Satz zur Zusatzinformation."
+}
+      `.trim();
+
+      const userPrompt = `
+Originaltext:
+"""${originalText}"""
+
+Erwartungshorizont:
+"""${expectedAnswer}"""
+
+Frage:
+"""${question.question}"""
+
+Nutzerantwort:
+"""${answer}"""
+
+Vom ersten Bewertungsmodell erkannte Zusatzinformationen:
+${claims.length ? claims.map((claim, idx) => `${idx + 1}. ${claim}`).join("\n") : "- nicht konkret benannt; prüfe die Antwort auf signifikante Zusatzinformationen"}
+
+Prüfe diese Zusatzinformationen auf Plausibilität.
+      `.trim();
+
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "plausibilityCheck" });
+      const parsed = tryParseJSON(raw);
+      if (!parsed || typeof parsed.score_adjustment === "undefined") {
+        throw new Error("Plausibilitätscheck konnte nicht als JSON gelesen werden.");
+      }
+
+      return {
+        plausible: parsed.plausibel === true || String(parsed.plausibel).toLowerCase() === "true" || String(parsed.plausibel).toLowerCase() === "plausibel",
+        scoreAdjustment: clamp(Number(parsed.score_adjustment) || 0, -20, 20),
+        statement: String(parsed.statement || parsed.erklaerung || "").trim()
+      };
+    }
+
     async function evaluateQuestion(questionId) {
+      if (evaluatingQuestionIds.has(questionId)) return;
+      evaluatingQuestionIds.add(questionId);
+      const evaluationGeneration = actionCancelGeneration;
+      const sendBtn = document.querySelector(`[data-eval-id="${questionId}"]`);
+      if (sendBtn) sendBtn.disabled = true;
+      renderQuestions();
+
+      const recordingReady = await finishActiveRecordingBeforeEvaluation(questionId);
+      if (evaluationGeneration !== actionCancelGeneration) {
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        return;
+      }
+      if (!recordingReady) {
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        if (sendBtn) sendBtn.disabled = false;
+        return;
+      }
+
       const question = appState.questions.find(q => q.id === questionId);
       const originalText = textInput.value.trim();
-      const chatModel = getCurrentChatModel();
+      const chatModel = getAutoChatModelForTask("evaluation");
       const expectedAnswer = String(question?.expectedAnswer || "").trim();
       const useExpectedAnswer = !!expectedAnswer;
       const referenceText = useExpectedAnswer ? expectedAnswer : originalText;
       const referenceLabel = useExpectedAnswer ? "Erwartungshorizont" : "Originaltext";
 
-      if (!getActiveChatApiKey()) {
+      if (!getActiveChatApiKey(chatModel)) {
         setStatus(`Bitte den API-Key für ${chatModel} setzen.`, "error");
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        if (sendBtn) sendBtn.disabled = false;
         return;
       }
       if (!referenceText) {
         setStatus("Es fehlt eine Referenz für den Abgleich (Originaltext oder Erwartungshorizont).", "error");
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        if (sendBtn) sendBtn.disabled = false;
         return;
       }
-      if (!question) return;
+      if (!question) {
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        if (sendBtn) sendBtn.disabled = false;
+        return;
+      }
       if (!question.answer.trim()) {
         setStatus("Bitte zuerst eine Antwort eingeben.", "error");
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
+        if (sendBtn) sendBtn.disabled = false;
         return;
       }
-
-      const sendBtn = document.querySelector(`[data-eval-id="${questionId}"]`);
-      if (sendBtn) sendBtn.disabled = true;
 
       setStatus(`Antwort wird bewertet ...\nFrage: ${question.question}\nChat-Modell: ${chatModel}`, "info");
 
@@ -2943,6 +4314,13 @@ Erzeuge daraus Integrationsfragen.
 Du bist ein "Active-Recall Medizin Agent" und bewertest Antworten streng, kurz und objektiv.
 
 SCORING-REGEL:
+Bewerte zuerst, ob die im Erwartungshorizont oder Originaltext relevanten Kerninhalte genannt wurden.
+Zusätzliche Informationen, die nicht explizit im Erwartungshorizont stehen, dürfen nicht automatisch als falsch gewertet werden.
+Wenn Zusatzinformationen harmlos, randständig oder nur anders formuliert sind, ignoriere sie ohne separaten Plausibilitätscheck.
+Wenn Zusatzinformationen offensichtlich falsch, widersprüchlich oder medizinisch riskant sind, behandle sie direkt nach den Scoring-Kriterien als Fehler.
+Markiere einen separaten Plausibilitätscheck nur dann als nötig, wenn die Antwort signifikant über den Erwartungshorizont hinausgeht UND die Zusatzinformation fachlich grundsätzlich plausibel klingt, aber anhand des Erwartungshorizonts allein nicht sicher einzuordnen ist.
+Wenn Antworten über den Erwartungshorizont hinausgehen, prüfe Synonyme und äquivalente Begriffe sorgfältig, bevor du etwas als Zusatzinformation markierst.
+
 0% = komplett falsch oder gefährlich = Kernaussagen falsch, widersprechen gesichertem Wissen, potenziell medizinisch riskant, keine brauchbaren richtigen Inhalte
 10% = fast vollständig falsch = minimale thematische Überschneidung, aber Kernaussagen falsch, starke Konzeptfehler und Halluzinationen
 20% = sehr große Fehler = Thema erkannt, aber Mechanismen/Definitionen weitgehend falsch, kaum verwertbar
@@ -2960,7 +4338,11 @@ Gib ausschließlich valides JSON zurück in genau diesem Format:
 {
   "score": 0,
   "richtig": ["Punkt 1", "Punkt 2"],
-  "falsch_fehlt": ["Punkt 1", "Punkt 2"]
+  "falsch_fehlt": ["Punkt 1", "Punkt 2"],
+  "geht_ueber_antworthorizont_hinaus": false,
+  "plausibilitaetscheck_noetig": false,
+  "zusatzinformationen": ["Zusatzinformation 1"],
+  "feedback": "Ein kurzer, motivierender Feedbacksatz zur Antwort."
 }
       `.trim();
 
@@ -2974,39 +4356,93 @@ Frage:
 Nutzerantwort:
 """${question.answer}"""
 
-Bewerte die Antwort ausschließlich anhand des ${referenceLabel}.
+Bewerte die Antwort anhand des ${referenceLabel}. Wenn der ${referenceLabel} ein Erwartungshorizont ist, prüfe zuerst nur die erwarteten Kerninhalte. Setze "plausibilitaetscheck_noetig" nur auf true, wenn signifikante, fachlich plausibel klingende Zusatzinformationen ohne Gesamttext nicht sicher beurteilt werden können.
       `.trim();
 
       try {
-        const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+        const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "evaluation" });
+        if (evaluationGeneration !== actionCancelGeneration) return;
         const parsed = tryParseJSON(raw);
 
         if (!parsed || typeof parsed.score === "undefined") {
           throw new Error("Bewertung konnte nicht als JSON gelesen werden.");
         }
 
+        const extraClaims = Array.isArray(parsed.zusatzinformationen)
+          ? parsed.zusatzinformationen.map(item => String(item || "").trim()).filter(Boolean)
+          : [];
+        const goesBeyondExpected = (
+          parsed.geht_ueber_antworthorizont_hinaus === true ||
+          String(parsed.geht_ueber_antworthorizont_hinaus).toLowerCase() === "true" ||
+          extraClaims.length > 0
+        );
+        const needsPlausibilityCheck = (
+          parsed.plausibilitaetscheck_noetig === true ||
+          String(parsed.plausibilitaetscheck_noetig).toLowerCase() === "true"
+        );
+        let score = clamp(Number(parsed.score) || 0, 0, 100);
+        const richtig = Array.isArray(parsed.richtig) ? parsed.richtig.slice(0, 4).map(String) : [];
+        const falschFehlt = Array.isArray(parsed.falsch_fehlt) ? parsed.falsch_fehlt.slice(0, 4).map(String) : [];
+        let plausibilityNote = "";
+
+        if (enablePlausibilityCheckCheckbox.checked && useExpectedAnswer && originalText && goesBeyondExpected && needsPlausibilityCheck) {
+          setStatus(`Zusatzinformationen werden geprüft ...\nModell: ${GPT54_MINI_MODEL}`, "info");
+          const plausibility = await checkAdditionalAnswerPlausibility({
+            question,
+            originalText,
+            expectedAnswer,
+            answer: question.answer,
+            extraClaims
+          });
+          score = clamp(score + plausibility.scoreAdjustment, 0, 100);
+          plausibilityNote = plausibility.statement;
+
+          if (plausibility.statement) {
+            const label = `Zusatzcheck (${plausibility.scoreAdjustment >= 0 ? "+" : ""}${plausibility.scoreAdjustment}%): ${plausibility.statement}`;
+            if (plausibility.plausible) {
+              richtig.push(label);
+            } else {
+              falschFehlt.push(label);
+            }
+          }
+        }
+
         question.result = {
-          score: clamp(Number(parsed.score) || 0, 0, 100),
-          richtig: Array.isArray(parsed.richtig) ? parsed.richtig.slice(0, 3).map(String) : [],
-          falsch_fehlt: Array.isArray(parsed.falsch_fehlt) ? parsed.falsch_fehlt.slice(0, 3).map(String) : []
+          score,
+          richtig: richtig.slice(0, 4),
+          falsch_fehlt: falschFehlt.slice(0, 4),
+          feedback: String(parsed.feedback ?? parsed.feedback_satz ?? plausibilityNote ?? "").trim()
         };
+        if (autoFlagLowScoreCheckbox.checked && question.result.score < 60) {
+          question.flagged = true;
+        }
+        if (autoUnflagHighScoreCheckbox.checked && question.result.score > 80) {
+          question.flagged = false;
+        }
 
         saveState();
         renderQuestions();
         setStatus(`Antwort bewertet.\nScore: ${question.result.score}%\nChat-Modell: ${chatModel}`, "ok");
+        void speakFeedbackText(question.result.feedback);
       } catch (err) {
         console.error(err);
-        setStatus("Fehler bei der Bewertung: " + err.message, "error");
+        if (err?.name === "AbortError") {
+          setStatus("Bewertung abgebrochen. Du kannst neu starten.", "info");
+        } else {
+          setStatus("Fehler bei der Bewertung: " + err.message, "error");
+        }
       } finally {
+        evaluatingQuestionIds.delete(questionId);
+        renderQuestions();
         if (sendBtn) sendBtn.disabled = false;
       }
     }
 
     async function analyzeKreuzenInput() {
       const input = kreuzenInput.value.trim();
-      const chatModel = getCurrentChatModel();
+      const chatModel = getAutoChatModelForTask("kreuzen");
 
-      if (!getActiveChatApiKey()) {
+      if (!getActiveChatApiKey(chatModel)) {
         setKreuzenStatus(`Bitte den API-Key für ${chatModel} setzen.`, "error");
         return;
       }
@@ -3016,7 +4452,7 @@ Bewerte die Antwort ausschließlich anhand des ${referenceLabel}.
       }
 
       analyzeKreuzenBtn.disabled = true;
-      setKreuzenStatus(`Eintrag wird analysiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel()}`, "info");
+      setKreuzenStatus(`Eintrag wird analysiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel(chatModel)}`, "info");
 
       const systemPrompt = `
 Du bist ein medizinischer Fehlerlisten-Assistent für den Kreuzen-Modus.
@@ -3052,7 +4488,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       `.trim();
 
       try {
-        const raw = await fetchJsonChat({ systemPrompt, userPrompt });
+        const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "kreuzen" });
         const parsed = tryParseJSON(raw);
 
         if (!parsed || !parsed.frage || !parsed.fehlerart || !parsed.konzept_erklaert || !parsed.merksatz) {
@@ -3107,18 +4543,28 @@ Analysiere die Eingabe und liefere nur das JSON.
       if (recordingQuestionId === questionId || transcribingQuestionId === questionId) {
         discardQuestionRecording();
       }
+      if (oralExamActiveQuestionId === questionId) {
+        stopOralExamPlayback();
+      }
+      resetOralExamQuestionAudio(appState.questions.filter(q => q.id !== questionId).map(q => q.id));
       appState.questions = appState.questions.filter(q => q.id !== questionId);
       saveState();
       renderQuestions();
       setStatus("Frage gelöscht.", "ok");
     }
 
-    function toggleQuestion(questionId) {
+    async function toggleQuestion(questionId) {
       const question = appState.questions.find(q => q.id === questionId);
       if (!question) return;
-      question.open = !question.open;
+      const willOpen = !question.open;
+      question.open = willOpen;
       saveState();
       renderQuestions();
+      if (willOpen) {
+        await playOralExamQuestionAndRecord(questionId);
+      } else if (oralExamActiveQuestionId === questionId) {
+        stopOralExamPlayback();
+      }
     }
 
     function toggleExpectedAnswer(questionId) {
@@ -3158,6 +4604,8 @@ Analysiere die Eingabe und liefere nur das JSON.
         question.open = true;
       });
       appState.questions = flaggedQuestions;
+      resetOralExamQuestionAudio(flaggedQuestions.map(q => q.id));
+      if (oralExamModeCheckbox.checked) void prepareOralExamAudioQueue();
 
       saveState();
       renderQuestions();
@@ -3190,6 +4638,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         const hasExpectedAnswer = !!String(q.expectedAnswer || "").trim();
         const isRecording = recordingQuestionId === q.id;
         const isTranscribing = transcribingQuestionId === q.id;
+        const isEvaluating = evaluatingQuestionIds.has(q.id);
 
         if (isIntegration) integrationCounter += 1;
         else regularCounter += 1;
@@ -3272,7 +4721,9 @@ Analysiere die Eingabe und liefere nur das JSON.
             ` : ""}
 
             <div class="btn-row">
-              <button class="blue" type="button" data-eval-id="${q.id}">Senden / Bewerten</button>
+              <button class="blue" type="button" data-eval-id="${q.id}" ${isEvaluating ? "disabled" : ""}>
+                ${isEvaluating ? "Antwort wird geladen ..." : "Senden / Bewerten"}
+              </button>
             </div>
 
             ${result ? `
@@ -3298,7 +4749,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       });
 
       questionsContainer.querySelectorAll("[data-toggle-id]").forEach(btn => {
-        btn.addEventListener("click", () => toggleQuestion(btn.dataset.toggleId));
+        btn.addEventListener("click", () => { void toggleQuestion(btn.dataset.toggleId); });
       });
 
       questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
@@ -3630,6 +5081,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     function clearQuestionsOnly() {
       discardQuestionRecording();
+      resetOralExamQuestionAudio();
       appState.questions = [];
       saveState();
       renderQuestions();
@@ -3638,6 +5090,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     function clearAll() {
       discardQuestionRecording();
+      resetOralExamQuestionAudio();
       textInput.value = "";
       questionCountInput.value = "";
       appState.questions = [];
@@ -3645,7 +5098,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       updateStats();
       saveState();
       renderQuestions();
-      setStatus("Text, Fragen, Antworten und Bewertungen wurden vollständig zurückgesetzt.", "ok");
+      setStatus("Text-und-Vorlesen-Modus wurde zurückgesetzt. Kreuzen und Lang-Audio bleiben unverändert.", "ok");
     }
 
     function clearKreuzenAll() {
@@ -3664,6 +5117,32 @@ Analysiere die Eingabe und liefere nur das JSON.
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
+
+    sessionMenuBtn.addEventListener("click", toggleSessionDrawer);
+    sessionBackdrop.addEventListener("click", closeSessionDrawer);
+    startSessionBtn.addEventListener("click", openNewSessionModal);
+    closeNewSessionBtn.addEventListener("click", closeNewSessionModal);
+    cancelNewSessionBtn.addEventListener("click", closeNewSessionModal);
+    createSessionBtn.addEventListener("click", () => {
+      void startNewLearningSession({ name: newSessionNameInput.value, openEdit: false });
+    });
+    createAndEditSessionBtn.addEventListener("click", () => {
+      void startNewLearningSession({ name: newSessionNameInput.value, openEdit: true });
+    });
+    newSessionBackdrop.addEventListener("click", (e) => {
+      if (e.target === newSessionBackdrop) closeNewSessionModal();
+    });
+    closeSessionEditBtn.addEventListener("click", closeSessionEditModal);
+    cancelSessionEditBtn.addEventListener("click", closeSessionEditModal);
+    saveSessionEditBtn.addEventListener("click", saveSessionEdit);
+    deleteSessionBtn.addEventListener("click", requestDeleteLearningSession);
+    confirmDeleteSessionBtn.addEventListener("click", deleteLearningSession);
+    cancelDeleteSessionBtn.addEventListener("click", () => {
+      sessionDeleteConfirm.classList.add("hidden");
+    });
+    sessionEditBackdrop.addEventListener("click", (e) => {
+      if (e.target === sessionEditBackdrop) closeSessionEditModal();
+    });
 
     themeSwitch.addEventListener("click", () => {
       const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -3712,6 +5191,19 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     settingsModalBackdrop.addEventListener("click", (e) => {
       if (e.target === settingsModalBackdrop) closeSettingsModal();
+    });
+
+    globalLoading.addEventListener("click", openCancelActionModal);
+    cancelActionYesBtn.addEventListener("click", cancelCurrentAction);
+    cancelActionNoBtn.addEventListener("click", closeCancelActionModal);
+    cancelActionBackdrop.addEventListener("click", (e) => {
+      if (e.target === cancelActionBackdrop) closeCancelActionModal();
+    });
+
+    modeClearConfirmBtn.addEventListener("click", confirmModeClear);
+    modeClearCancelBtn.addEventListener("click", closeModeClearConfirm);
+    modeClearBackdrop.addEventListener("click", (e) => {
+      if (e.target === modeClearBackdrop) closeModeClearConfirm();
     });
 
     chatModelSegment.querySelectorAll("[data-chat-model-option]").forEach(btn => {
@@ -3787,7 +5279,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -3806,6 +5298,15 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     repeatFlaggedQuestionsCheckbox.addEventListener("change", () => {
       syncRepeatFlaggedButton();
+      saveState();
+    });
+
+    oralExamModeCheckbox.addEventListener("change", () => {
+      if (oralExamModeCheckbox.checked) {
+        void prepareOralExamAudioQueue();
+      } else {
+        resetOralExamQuestionAudio();
+      }
       saveState();
     });
 
@@ -3838,9 +5339,9 @@ Analysiere die Eingabe und liefere nur das JSON.
       if (audioPlayer.src) {
         try {
           await audioPlayer.play();
-          setStatus("Wiedergabe fortgesetzt.", "ok");
+          if (!suppressResumeStatus) setStatus("Wiedergabe fortgesetzt.", "ok");
         } catch {
-          setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
+          if (!suppressResumeStatus) setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
         }
       }
     });
@@ -3949,7 +5450,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     longCopyBtn.addEventListener("click", async () => {
-      const text = longAudioTextInput.value;
+      const text = decodePercentEncodedText(longAudioTextInput.value);
       if (!text) {
         setLongStatus("Kein Text zum Kopieren vorhanden.", "error");
         return;
@@ -3969,7 +5470,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       const editedText = longAudioSession.chunks
         .filter(chunk => chunk.redactionApplied)
-        .map(chunk => String(chunk.text || "").trim())
+        .map(chunk => decodePercentEncodedText(chunk.text).trim())
         .filter(Boolean)
         .join("\n\n");
       if (!editedText) {
@@ -3984,16 +5485,16 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
     });
 
-    clearAllBtn.addEventListener("click", clearAll);
-    longClearBtn.addEventListener("click", clearLongAudioAll);
-    clearQuestionsBtn.addEventListener("click", clearQuestionsOnly);
+    clearAllBtn.addEventListener("click", () => openModeClearConfirm("Text und Vorlesen", clearAll));
+    longClearBtn.addEventListener("click", () => openModeClearConfirm("Lang-Audio-Modus", clearLongAudioAll));
+    clearQuestionsBtn.addEventListener("click", () => openModeClearConfirm("Fragen im Text-und-Vorlesen-Modus", clearQuestionsOnly));
     exportBtn.addEventListener("click", exportQuestions);
 
     addManualBtn.addEventListener("click", () => openEditModal());
     openManualBtnTop.addEventListener("click", () => openEditModal());
     exportKreuzenTxtBtn.addEventListener("click", exportKreuzenTxt);
     exportKreuzenPdfBtn.addEventListener("click", exportKreuzenPdf);
-    clearKreuzenBtn.addEventListener("click", clearKreuzenAll);
+    clearKreuzenBtn.addEventListener("click", () => openModeClearConfirm("Kreuzen-Modus", clearKreuzenAll));
 
     closeModalBtn.addEventListener("click", closeEditModal);
     cancelModalBtn.addEventListener("click", closeEditModal);
@@ -4004,6 +5505,34 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !newSessionBackdrop.classList.contains("hidden")) {
+        const target = e.target;
+        if (target instanceof HTMLElement && target.id === "newSessionNameInput") {
+          e.preventDefault();
+          void startNewLearningSession({ name: newSessionNameInput.value, openEdit: false });
+          return;
+        }
+      }
+      if (e.key === "Escape" && !newSessionBackdrop.classList.contains("hidden")) {
+        closeNewSessionModal();
+        return;
+      }
+      if (e.key === "Escape" && !sessionEditBackdrop.classList.contains("hidden")) {
+        closeSessionEditModal();
+        return;
+      }
+      if (e.key === "Escape" && document.body.classList.contains("sessions-open")) {
+        closeSessionDrawer();
+        return;
+      }
+      if (e.key === "Escape" && !modeClearBackdrop.classList.contains("hidden")) {
+        closeModeClearConfirm();
+        return;
+      }
+      if (e.key === "Escape" && !cancelActionBackdrop.classList.contains("hidden")) {
+        closeCancelActionModal();
+        return;
+      }
       if (e.key === "Escape" && !settingsModalBackdrop.classList.contains("hidden")) {
         closeSettingsModal();
         return;
@@ -4137,6 +5666,10 @@ Analysiere die Eingabe und liefere nur das JSON.
     renderLongAudioSegments();
     updateApiBadge();
     applyModeUI();
+    void initializeLearningSessions();
+    if (oralExamModeCheckbox.checked) {
+      void prepareOralExamAudioQueue();
+    }
     resetPomodoro();
   </script>
 </body>
