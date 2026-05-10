@@ -5104,6 +5104,35 @@ Analysiere die Eingabe und liefere nur das JSON.
       setKreuzenStatus("TXT Export erstellt.", "ok");
     }
 
+    function normalizeTextForPdf(value) {
+      return String(value || "—")
+        .replace(/\u0000/g, "")
+        .replace(/[“”]/g, "\"")
+        .replace(/[‘’]/g, "'")
+        .replace(/→/g, " -> ")
+        .replace(/←/g, " <- ")
+        .replace(/↑/g, " hoch ")
+        .replace(/↓/g, " runter ")
+        .replace(/≥/g, " >= ")
+        .replace(/≤/g, " <= ")
+        .replace(/–|—/g, "-")
+        .replace(/\s+/g, " ")
+        .trim() || "—";
+    }
+
+    function addWrappedPdfField(doc, label, value, x, y, maxWidth) {
+      const labelText = normalizeTextForPdf(label);
+      const bodyText = normalizeTextForPdf(value);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(labelText, x, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const lines = doc.splitTextToSize(bodyText, maxWidth);
+      doc.text(lines, x, y + 5);
+      return y + 7 + (lines.length * 4.3);
+    }
+
     function exportKreuzenPdf() {
       if (!appState.errorBlocks.length) {
         setKreuzenStatus("Es gibt keine Fehlerblöcke zum Exportieren.", "error");
@@ -5113,46 +5142,60 @@ Analysiere die Eingabe und liefere nur das JSON.
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 14;
+        const contentWidth = pageWidth - (margin * 2);
+        let y = 16;
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
-        doc.text("Kreuzen Fehlerliste", 14, 16);
+        doc.text("Kreuzen Fehlerliste", margin, y);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        doc.text(`Strukturierter Export der Fehlerblöcke · Modell: ${getCurrentChatModel()}`, 14, 22);
+        y += 6;
+        doc.text(normalizeTextForPdf(`Strukturierter Export der Fehlerblöcke - Modell: ${getCurrentChatModel()}`), margin, y);
+        y += 10;
 
-        const rows = appState.errorBlocks.map((block, index) => [
-          String(index + 1),
-          block.frage || "—",
-          fehlerartLabel(block.fehlerart || "L1"),
-          block.konzept_erklaert || "—",
-          block.merksatz || "—"
-        ]);
+        appState.errorBlocks.forEach((block, index) => {
+          const fields = [
+            ["Frage", block.frage],
+            ["Fehlerart", fehlerartLabel(block.fehlerart || "L1")],
+            ["Konzept erklärt", block.konzept_erklaert],
+            ["Merksatz", block.merksatz],
+            ["Originaleingabe", block.sourceText || "—"]
+          ];
+          const estimatedLines = fields.reduce((sum, [, value]) => {
+            return sum + doc.splitTextToSize(normalizeTextForPdf(value), contentWidth).length + 1;
+          }, 2);
+          const estimatedHeight = Math.max(28, estimatedLines * 4.5);
 
-        doc.autoTable({
-          startY: 28,
-          head: [["#", "Frage", "Fehlerart", "Konzept Erklärt", "Merksatz"]],
-          body: rows,
-          styles: {
-            font: "helvetica",
-            fontSize: 8,
-            cellPadding: 2,
-            overflow: "linebreak",
-            valign: "top"
-          },
-          headStyles: {
-            fillColor: [20, 184, 166],
-            textColor: 20
-          },
-          columnStyles: {
-            0: { cellWidth: 8 },
-            1: { cellWidth: 45 },
-            2: { cellWidth: 28 },
-            3: { cellWidth: 70 },
-            4: { cellWidth: 35 }
-          },
-          margin: { left: 10, right: 10 }
+          if (y + estimatedHeight > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+          }
+
+          const blockTop = y;
+          doc.setFillColor(240, 253, 250);
+          doc.setDrawColor(204, 251, 241);
+          doc.roundedRect(margin - 2, blockTop - 5, contentWidth + 4, estimatedHeight, 2, 2, "FD");
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(15, 118, 110);
+          doc.text(`Block ${index + 1}`, margin, y);
+          doc.setTextColor(20, 20, 20);
+          y += 7;
+
+          fields.forEach(([label, value]) => {
+            if (y > pageHeight - 24) {
+              doc.addPage();
+              y = margin;
+            }
+            y = addWrappedPdfField(doc, label, value, margin, y, contentWidth);
+          });
+          y += 7;
         });
 
         doc.save("kreuzen_fehlerliste.pdf");
