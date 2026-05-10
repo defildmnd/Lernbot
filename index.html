@@ -335,6 +335,12 @@
     .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
     .modal-close{ width:auto; min-width:42px; border-radius:12px; padding:10px 12px; }
     .modal-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .legal-footer{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin:18px 0 4px; color:var(--muted); font-size:12px; }
+    .legal-footer button{ width:auto; min-width:0; padding:0; border:0; background:transparent; color:var(--muted); box-shadow:none; font-size:12px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+    .legal-text{ display:grid; gap:12px; color:var(--text); font-size:13px; line-height:1.6; }
+    .legal-text h3{ margin:4px 0 0; font-size:14px; }
+    .legal-text p{ margin:0; }
+    .legal-text ul{ margin:0; padding-left:18px; }
     .settings-section{ border:1px solid var(--line); background:var(--card-2); border-radius:16px; padding:12px; margin-bottom:12px; }
     .settings-section h3{ margin:0 0 10px 0; font-size:13px; }
     .settings-segment{ display:grid; grid-template-columns:1fr; gap:8px; }
@@ -855,6 +861,11 @@
         <div id="longEmptySegments" class="empty">Noch keine Audio-Blöcke vorhanden.</div>
       </div>
     </div>
+
+    <footer class="legal-footer">
+      <button id="impressumBtn" type="button">Impressum</button>
+      <button id="privacyBtn" type="button">Datenschutzerklärung</button>
+    </footer>
   </div>
 
   <div id="blockModalBackdrop" class="modal-backdrop hidden">
@@ -1092,6 +1103,22 @@
     </div>
   </div>
 
+  <div id="legalModalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 id="legalModalTitle">Rechtliche Hinweise</h2>
+          <p class="subtitle">Lokale Informationen zu Nutzung, Speicherung und Verantwortung.</p>
+        </div>
+        <button id="closeLegalModalBtn" class="ghost modal-close" type="button">✕</button>
+      </div>
+      <div id="legalModalContent" class="legal-text"></div>
+      <div class="modal-actions">
+        <button id="legalModalOkBtn" class="secondary" type="button">Schließen</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
@@ -1165,6 +1192,13 @@ Vorgaben:
     const modeClearText = document.getElementById("modeClearText");
     const modeClearConfirmBtn = document.getElementById("modeClearConfirmBtn");
     const modeClearCancelBtn = document.getElementById("modeClearCancelBtn");
+    const impressumBtn = document.getElementById("impressumBtn");
+    const privacyBtn = document.getElementById("privacyBtn");
+    const legalModalBackdrop = document.getElementById("legalModalBackdrop");
+    const legalModalTitle = document.getElementById("legalModalTitle");
+    const legalModalContent = document.getElementById("legalModalContent");
+    const closeLegalModalBtn = document.getElementById("closeLegalModalBtn");
+    const legalModalOkBtn = document.getElementById("legalModalOkBtn");
 
     const tModeSection = document.getElementById("tModeSection");
     const kModeSection = document.getElementById("kModeSection");
@@ -1438,6 +1472,40 @@ Vorgaben:
       if (typeof action === "function") {
         action();
       }
+    }
+
+    const legalTexts = {
+      impressum: `
+        <h3>Angaben gemäß § 5 TMG</h3>
+        <p>Max Mustermann<br>Musterstraße 1<br>12345 Musterstadt<br>Deutschland</p>
+        <h3>Kontakt</h3>
+        <p>E-Mail: max.mustermann@example.com</p>
+        <h3>Verantwortung</h3>
+        <p>Diese Anwendung ist ein lokales Lernwerkzeug und dient ausschließlich der privaten Nutzung. Inhalte, Antworten, Audiofunktionen und Auswertungen können fehlerhaft sein und ersetzen keine fachliche, rechtliche, medizinische oder sonstige professionelle Beratung.</p>
+        <p>Die Nutzung erfolgt auf eigenes Risiko. Bitte prüfe insbesondere medizinische Inhalte eigenständig anhand verlässlicher Quellen.</p>
+      `,
+      privacy: `
+        <h3>Datenspeicherung</h3>
+        <p>Diese Anwendung speichert Lerninhalte, Lernsessions, Einstellungen, Fragen, Fehlerblöcke und optional API-Keys lokal im Browser-LocalStorage dieses Geräts. Die Daten bleiben dort gespeichert, bis sie in der App gelöscht werden, der Browser-Speicher geleert wird oder das Gerät/Profil zurückgesetzt wird.</p>
+        <h3>Lernsessions</h3>
+        <p>Jede Lernsession wird lokal mit einem eigenen Session-Speicherbereich abgelegt. Beim Löschen einer Lernsession werden die zugehörigen lokal gespeicherten Inhalte dieser Session entfernt.</p>
+        <h3>API-Keys und externe Dienste</h3>
+        <p>API-Keys können lokal gespeichert werden, wenn die Speicherfunktionen aktiviert sind. Wer Keys einträgt, ist selbst dafür verantwortlich, sie zu schützen, regelmäßig zu prüfen und bei Bedarf zu löschen oder zu widerrufen.</p>
+        <p>Wenn Funktionen verwendet werden, die Sprach-, Chat-, Transkriptions- oder Audio-APIs aufrufen, können die eingegebenen Inhalte an den jeweils konfigurierten API-Dienst übertragen werden. Welche Verarbeitung dort erfolgt, richtet sich nach den Bedingungen und Datenschutzregeln des jeweiligen Anbieters.</p>
+        <h3>Risiko und Kontrolle</h3>
+        <p>Die Nutzung erfolgt auf eigenes Risiko. Verwende keine sensiblen personenbezogenen Daten, Patientendaten oder vertraulichen Inhalte, wenn du nicht sicher bist, wie sie lokal oder durch externe API-Dienste verarbeitet werden.</p>
+      `
+    };
+
+    function openLegalModal(type) {
+      const isPrivacy = type === "privacy";
+      legalModalTitle.textContent = isPrivacy ? "Datenschutzerklärung" : "Impressum";
+      legalModalContent.innerHTML = isPrivacy ? legalTexts.privacy : legalTexts.impressum;
+      legalModalBackdrop.classList.remove("hidden");
+    }
+
+    function closeLegalModal() {
+      legalModalBackdrop.classList.add("hidden");
     }
 
     function resetFeedbackAudio() {
@@ -5217,6 +5285,13 @@ Analysiere die Eingabe und liefere nur das JSON.
     modeClearBackdrop.addEventListener("click", (e) => {
       if (e.target === modeClearBackdrop) closeModeClearConfirm();
     });
+    impressumBtn.addEventListener("click", () => openLegalModal("impressum"));
+    privacyBtn.addEventListener("click", () => openLegalModal("privacy"));
+    closeLegalModalBtn.addEventListener("click", closeLegalModal);
+    legalModalOkBtn.addEventListener("click", closeLegalModal);
+    legalModalBackdrop.addEventListener("click", (e) => {
+      if (e.target === legalModalBackdrop) closeLegalModal();
+    });
 
     chatModelSegment.querySelectorAll("[data-chat-model-option]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -5539,6 +5614,10 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       if (e.key === "Escape" && !modeClearBackdrop.classList.contains("hidden")) {
         closeModeClearConfirm();
+        return;
+      }
+      if (e.key === "Escape" && !legalModalBackdrop.classList.contains("hidden")) {
+        closeLegalModal();
         return;
       }
       if (e.key === "Escape" && !cancelActionBackdrop.classList.contains("hidden")) {
