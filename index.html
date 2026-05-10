@@ -341,6 +341,16 @@
     .legal-text h3{ margin:4px 0 0; font-size:14px; }
     .legal-text p{ margin:0; }
     .legal-text ul{ margin:0; padding-left:18px; }
+    .long-questions-modal{ width:min(720px, 100%); }
+    .sentence-range-shell{ border:1px solid var(--line); background:var(--card-2); border-radius:16px; padding:14px; margin:12px 0; }
+    .sentence-range-head{ display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:10px; }
+    .sentence-range-control{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:center; gap:12px; }
+    .sentence-range-control input[type="range"]{ width:100%; accent-color:var(--mode-l); }
+    .sentence-range-control input[data-range-side="past"]{ direction:rtl; }
+    .sentence-now-marker{ display:grid; gap:3px; place-items:center; min-width:92px; border:1px solid var(--line); background:var(--card); border-radius:14px; padding:8px 10px; box-shadow:0 8px 18px rgba(15,23,42,.06); }
+    .sentence-now-marker strong{ font-size:14px; color:var(--text); }
+    .sentence-now-marker span{ font-size:10px; color:var(--muted); font-weight:800; text-transform:uppercase; }
+    .sentence-range-values{ display:flex; justify-content:space-between; gap:12px; margin-top:10px; color:var(--muted); font-size:12px; font-weight:800; }
     .settings-section{ border:1px solid var(--line); background:var(--card-2); border-radius:16px; padding:12px; margin-bottom:12px; }
     .settings-section h3{ margin:0 0 10px 0; font-size:13px; }
     .settings-segment{ display:grid; grid-template-columns:1fr; gap:8px; }
@@ -1070,7 +1080,7 @@
   </div>
 
   <div id="longQuestionsBackdrop" class="modal-backdrop hidden">
-    <div class="modal confirm-modal">
+    <div class="modal long-questions-modal">
       <div class="modal-head">
         <div>
           <h2>Aus Audio Fragen generieren</h2>
@@ -1078,14 +1088,22 @@
         </div>
         <button id="longQuestionsCloseBtn" class="ghost modal-close" type="button">✕</button>
       </div>
-      <div class="grid-2">
-        <div class="group">
-          <label for="longQuestionsBeforeRange">Sätze vorher: <span id="longQuestionsBeforeValue">1</span></label>
-          <input id="longQuestionsBeforeRange" type="range" min="0" max="8" step="1" value="1" />
+      <div class="sentence-range-shell">
+        <div class="sentence-range-head">
+          <span>Vergangenheit</span>
+          <span>Zukunft</span>
         </div>
-        <div class="group">
-          <label for="longQuestionsAfterRange">Sätze danach: <span id="longQuestionsAfterValue">2</span></label>
-          <input id="longQuestionsAfterRange" type="range" min="0" max="8" step="1" value="2" />
+        <div class="sentence-range-control">
+          <input id="longQuestionsBeforeRange" data-range-side="past" type="range" min="0" max="8" step="1" value="1" aria-label="Sätze vorher" />
+          <div class="sentence-now-marker">
+            <strong id="longQuestionsCurrentTime">00:00</strong>
+            <span>jetzt</span>
+          </div>
+          <input id="longQuestionsAfterRange" data-range-side="future" type="range" min="0" max="8" step="1" value="2" aria-label="Sätze danach" />
+        </div>
+        <div class="sentence-range-values">
+          <span><span id="longQuestionsBeforeValue">1</span> Sätze vorher</span>
+          <span><span id="longQuestionsAfterValue">2</span> Sätze danach</span>
         </div>
       </div>
       <div class="group">
@@ -1384,6 +1402,7 @@ Vorgaben:
     const longQuestionsAfterRange = document.getElementById("longQuestionsAfterRange");
     const longQuestionsBeforeValue = document.getElementById("longQuestionsBeforeValue");
     const longQuestionsAfterValue = document.getElementById("longQuestionsAfterValue");
+    const longQuestionsCurrentTime = document.getElementById("longQuestionsCurrentTime");
     const longQuestionsPreview = document.getElementById("longQuestionsPreview");
     const longDownloadLink = document.getElementById("longDownloadLink");
     const longQueueMeta = document.getElementById("longQueueMeta");
@@ -3093,6 +3112,7 @@ Vorgaben:
       const after = Number(longQuestionsAfterRange.value) || 0;
       longQuestionsBeforeValue.textContent = String(before);
       longQuestionsAfterValue.textContent = String(after);
+      longQuestionsCurrentTime.textContent = formatAudioTime(getLongAudioProgress().elapsed || 0);
       const selection = getCurrentLongAudioSentenceSelection(before, after);
       longQuestionsPreview.value = selection?.text || "";
       longQuestionsGenerateBtn.disabled = !selection?.text;
