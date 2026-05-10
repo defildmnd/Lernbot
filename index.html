@@ -1767,7 +1767,16 @@ Vorgaben:
         localStorage.setItem(`${SESSION_DATA_PREFIX}${sessionId}`, JSON.stringify(snapshot));
       },
       async deleteSnapshot(sessionId) {
-        localStorage.removeItem(`${SESSION_DATA_PREFIX}${sessionId}`);
+        const exactKey = `${SESSION_DATA_PREFIX}${sessionId}`;
+        const nestedKeyPrefix = `${exactKey}_`;
+        const keysToDelete = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key === exactKey || key.startsWith(nestedKeyPrefix))) {
+            keysToDelete.push(key);
+          }
+        }
+        keysToDelete.forEach(key => localStorage.removeItem(key));
       }
     };
 
@@ -1829,7 +1838,7 @@ Vorgaben:
     function buildLearningSessionPayload() {
       return {
         activeSessionId: activeLearningSessionId,
-        sessions: learningSessions
+        sessions: learningSessions.map(({ snapshot, ...session }) => session)
       };
     }
 
@@ -2104,12 +2113,15 @@ Vorgaben:
       sessionDeleteConfirm.classList.remove("hidden");
     }
 
-    function deleteLearningSession() {
+    async function deleteLearningSession() {
       const sessionId = editingSessionId;
       if (!sessionId) return;
       const wasActive = sessionId === activeLearningSessionId;
       learningSessions = learningSessions.filter(session => session.id !== sessionId);
-      void learningSessionRepository.deleteSnapshot(sessionId);
+      await learningSessionRepository.deleteSnapshot(sessionId);
+      if (localStorage.getItem(PENDING_SESSION_EDIT_KEY) === sessionId) {
+        localStorage.removeItem(PENDING_SESSION_EDIT_KEY);
+      }
 
       if (!learningSessions.length) {
         const now = new Date().toISOString();
@@ -2123,21 +2135,21 @@ Vorgaben:
           updatedAt: now,
           snapshot: buildBlankSessionSnapshot()
         }];
-        void learningSessionRepository.saveSnapshot(learningSessions[0].id, learningSessions[0].snapshot);
+        await learningSessionRepository.saveSnapshot(learningSessions[0].id, learningSessions[0].snapshot);
       }
 
       if (wasActive) {
         activeLearningSessionId = learningSessions[0].id;
         const nextSnapshot = learningSessions[0].snapshot || buildBlankSessionSnapshot();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSnapshot));
-        void saveLearningSessions();
+        await saveLearningSessions();
         applyPersistedState(nextSnapshot);
         renderLearningSessions();
         closeSessionEditModal();
         return;
       }
 
-      void saveLearningSessions();
+      await saveLearningSessions();
       renderLearningSessions();
       closeSessionEditModal();
     }
