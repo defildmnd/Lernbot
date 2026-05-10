@@ -1140,8 +1140,11 @@ Vorgaben:
 - Wenn der Eingangstext stichwortartig, unvollstaendig oder fragmentarisch ist, forme ihn nur dann in sinnvolle, grammatikalisch korrekte Saetze um, wenn es fuer Verstaendlichkeit und Lesefluss noetig ist.
 - Der Text soll natuerlich, klar und zusammenhaengend klingen.
 - Erhalte die fachliche Bedeutung und alle relevanten Details exakt.
-- Wenn du erkennst das es sich um eine tabelle handelt, wandle die inhalte immer in einen kompletten satz um.
-- Lies die Inhalte einer Tabelle nicht einfach vor, sondern stelle sie in einem intelligenten satz in bezug miteinander.
+- Bearbeite jeden Block strikt isoliert: Gib nur Inhalte aus dem aktuellen Block aus. Der vorherige Block dient nur als Kontext fuer einen glatten Anschluss und darf nicht wiederholt, zusammengefasst oder erneut ausgegeben werden.
+- Wiederhole keine Satzteile, keine Zeilen und keine Tabelleninhalte. Wenn eine Formulierung bereits im vorherigen Kontext steht, starte mit dem neuen Inhalt des aktuellen Blocks.
+- Halte die Reihenfolge des aktuellen Blocks ein. Springe nicht zwischen Abschnitten, Tabellenzeilen oder Themen.
+- Wenn du erkennst, dass es sich um eine Tabelle handelt, analysiere zuerst still die Spaltenbeziehungen und wandle die Inhalte dann in vollstaendige, natuerlich sprechbare Saetze um.
+- Lies die Inhalte einer Tabelle nicht einfach spaltenweise vor, sondern stelle Werte, Richtung, Ursache, Folge und Bezugsobjekt in einem medizinisch sinnvollen Satz in Bezug miteinander.
 - Bereite den Text konsequent fuer eine natuerliche TTS-Ausgabe vor.
 - Gib Pfeilketten nicht mit Pfeilsymbolen wieder. Formuliere sie als gesprochene Abfolge, zum Beispiel: "Das Blut fliesst vom rechten Vorhof ueber die rechte Kammer in den Truncus pulmonalis ...".
 - Erhalte bei Pfeilketten die komplette Reihenfolge und alle Stationen.
@@ -1153,6 +1156,7 @@ Vorgaben:
 - Kein Markdown, keine Fettung, keine Kursivschrift, keine Aufzaehlungen.
 - Zwischen den Absaetzen steht genau eine Leerzeile.
 - Gib ausschliesslich den ueberarbeiteten Text aus.
+- Pruefe vor der Ausgabe still: keine Dopplungen, keine fremden Inhalte aus anderen Bloecken, keine ausgelassenen relevanten Inhalte, keine kaputten Satzanschluesse.
 - Prinzip: Text rein, Text raus.`;
 
     const sessionMenuBtn = document.getElementById("sessionMenuBtn");
@@ -2561,17 +2565,19 @@ Vorgaben:
     function splitLongTextIntoChunks(text, maxWords) {
       const normalized = String(text || "").replace(/\s+/g, " ").trim();
       if (!normalized) return [];
-      const words = normalized.split(" ");
+      const parts = normalized.match(/[^.!?;:]+[.!?;:]+|[^.!?;:]+$/g)?.map(item => item.trim()).filter(Boolean) || [normalized];
       const chunks = [];
+      let currentParts = [];
+      let currentWordCount = 0;
 
-      for (let i = 0; i < words.length; i += maxWords) {
-        const chunkWords = words.slice(i, i + maxWords);
-        const rawChunkText = chunkWords.join(" ");
+      function pushChunk() {
+        if (!currentParts.length) return;
+        const rawChunkText = currentParts.join(" ").replace(/\s+/g, " ").trim();
         chunks.push({
           index: chunks.length,
           text: rawChunkText,
           originalText: rawChunkText,
-          wordCount: chunkWords.length,
+          wordCount: countWordsFromText(rawChunkText),
           status: "pending",
           url: null,
           error: null,
@@ -2580,7 +2586,31 @@ Vorgaben:
           duration: null,
           redactionApplied: false
         });
+        currentParts = [];
+        currentWordCount = 0;
       }
+
+      parts.forEach(part => {
+        const partWordCount = countWordsFromText(part);
+        if (partWordCount > maxWords) {
+          pushChunk();
+          const words = part.split(" ");
+          for (let i = 0; i < words.length; i += maxWords) {
+            currentParts = [words.slice(i, i + maxWords).join(" ")];
+            currentWordCount = countWordsFromText(currentParts[0]);
+            pushChunk();
+          }
+          return;
+        }
+
+        if (currentWordCount && currentWordCount + partWordCount > maxWords) {
+          pushChunk();
+        }
+        currentParts.push(part);
+        currentWordCount += partWordCount;
+      });
+
+      pushChunk();
 
       return chunks;
     }
@@ -2607,6 +2637,35 @@ Vorgaben:
       return "";
     }
 
+    function normalizeLongAudioEditedText(text) {
+      return String(text || "")
+        .replace(/\r\n?/g, "\n")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+    }
+
+    function stripRepeatedPreviousTail(editedText, previousTail) {
+      const text = normalizeLongAudioEditedText(editedText);
+      const tailWords = String(previousTail || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      if (!text || tailWords.length < 8) return text;
+
+      const textWords = text.split(/\s+/);
+      const maxOverlap = Math.min(22, tailWords.length, textWords.length);
+      const normalizeWord = word => word.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+
+      for (let size = maxOverlap; size >= 8; size -= 1) {
+        const tailSlice = tailWords.slice(tailWords.length - size).map(normalizeWord).join(" ");
+        const textSlice = textWords.slice(0, size).map(normalizeWord).join(" ");
+        if (tailSlice && tailSlice === textSlice) {
+          return normalizeLongAudioEditedText(textWords.slice(size).join(" "));
+        }
+      }
+
+      return text;
+    }
+
     async function requestLongAudioEditorialChunk({ chunkText, previousTail = "", chunkIndex = 0, totalChunks = 1 }) {
       const apiKey = getLongAudioEditorialApiKey();
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
@@ -2622,7 +2681,8 @@ Vorgaben:
       const userPrompt = [
         `Block ${chunkIndex + 1} von ${totalChunks}.`,
         "Wichtiger Hinweis: Gib ausschließlich den redaktionierten Text des aktuellen Blocks aus.",
-        previousTail ? `Vorheriger Block (letzte Wörter für Anschluss): ${previousTail}` : "Vorheriger Block (letzte Wörter für Anschluss):",
+        "Der vorherige Block ist nur Anschlusskontext. Wiederhole daraus kein Wort, keinen Satz und keine Tabellenzeile.",
+        previousTail ? `Vorheriger Block, nur Kontext, nicht ausgeben: ${previousTail}` : "Vorheriger Block, nur Kontext, nicht ausgeben:",
         "",
         "Aktueller Block:",
         chunkText
@@ -2663,7 +2723,7 @@ Vorgaben:
       if (!messageContent) {
         throw new Error("Leere Antwort vom Redaktionsmodell erhalten.");
       }
-      return messageContent;
+      return stripRepeatedPreviousTail(messageContent, previousTail);
     }
 
     async function requestLongAudioTtsChunk(chunkText) {
@@ -3112,8 +3172,8 @@ Vorgaben:
             return null;
           }
 
-          chunk.text = editedText;
-          chunk.wordCount = countWordsFromText(editedText);
+          chunk.text = editedText || chunk.originalText;
+          chunk.wordCount = countWordsFromText(chunk.text);
           chunk.redactionApplied = true;
           renderLongAudioSegments();
         }
