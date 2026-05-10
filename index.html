@@ -803,6 +803,7 @@
             <label><input type="checkbox" id="longAutoPlay" checked /> Blöcke automatisch abspielen</label>
             <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
             <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
+            <label><input type="checkbox" id="longGenerateQuestionsEnabled" /> Aus Audio Fragen generieren</label>
           </div>
 
           <div class="note" style="margin-top:10px;">
@@ -826,6 +827,7 @@
           <button id="longResumeBtn" class="secondary" type="button">Weiter</button>
           <button id="longStopBtn" class="danger" type="button">Stop</button>
           <button id="longClearBtn" class="danger" type="button">Clear</button>
+          <button id="longAudioQuestionsBtn" class="blue hidden" type="button">Aus Audio Fragen generieren</button>
           <button id="longCopyBtn" class="ghost" type="button">Text kopieren</button>
           <label class="file-btn" for="longFileInput">.txt laden</label>
           <input id="longFileInput" type="file" accept=".txt,text/plain" class="hidden" />
@@ -1063,6 +1065,36 @@
       <div class="modal-actions">
         <button id="longSeekConfirmBtn" class="success" type="button">Springen</button>
         <button id="longSeekCancelBtn" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="longQuestionsBackdrop" class="modal-backdrop hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <div>
+          <h2>Aus Audio Fragen generieren</h2>
+          <p class="subtitle">Wähle den Satzbereich um die aktuelle Audiostelle.</p>
+        </div>
+        <button id="longQuestionsCloseBtn" class="ghost modal-close" type="button">✕</button>
+      </div>
+      <div class="grid-2">
+        <div class="group">
+          <label for="longQuestionsBeforeRange">Sätze vorher: <span id="longQuestionsBeforeValue">1</span></label>
+          <input id="longQuestionsBeforeRange" type="range" min="0" max="8" step="1" value="1" />
+        </div>
+        <div class="group">
+          <label for="longQuestionsAfterRange">Sätze danach: <span id="longQuestionsAfterValue">2</span></label>
+          <input id="longQuestionsAfterRange" type="range" min="0" max="8" step="1" value="2" />
+        </div>
+      </div>
+      <div class="group">
+        <label for="longQuestionsPreview">Ausgewählter Text</label>
+        <textarea id="longQuestionsPreview" class="mini-textarea" readonly></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="longQuestionsGenerateBtn" class="blue" type="button">Fragen daraus generieren</button>
+        <button id="longQuestionsCancelBtn" class="secondary" type="button">Verwerfen</button>
       </div>
     </div>
   </div>
@@ -1313,6 +1345,7 @@ Vorgaben:
     const longSettingsPanel = document.getElementById("longSettingsPanel");
     const longChunkSizeInput = document.getElementById("longChunkSize");
     const longEnableEditorialCheckbox = document.getElementById("longEnableEditorial");
+    const longGenerateQuestionsEnabledCheckbox = document.getElementById("longGenerateQuestionsEnabled");
     const longAutoPlayCheckbox = document.getElementById("longAutoPlay");
     const longAutoDownloadCheckbox = document.getElementById("longAutoDownload");
     const longHighlightCurrentTextCheckbox = document.getElementById("longHighlightCurrentText");
@@ -1322,6 +1355,7 @@ Vorgaben:
     const longResumeBtn = document.getElementById("longResumeBtn");
     const longStopBtn = document.getElementById("longStopBtn");
     const longClearBtn = document.getElementById("longClearBtn");
+    const longAudioQuestionsBtn = document.getElementById("longAudioQuestionsBtn");
     const longCopyBtn = document.getElementById("longCopyBtn");
     const longRewind15Btn = document.getElementById("longRewind15Btn");
     const longForward15Btn = document.getElementById("longForward15Btn");
@@ -1342,6 +1376,15 @@ Vorgaben:
     const longSeekSecondsInput = document.getElementById("longSeekSeconds");
     const longSeekConfirmBtn = document.getElementById("longSeekConfirmBtn");
     const longSeekCancelBtn = document.getElementById("longSeekCancelBtn");
+    const longQuestionsBackdrop = document.getElementById("longQuestionsBackdrop");
+    const longQuestionsCloseBtn = document.getElementById("longQuestionsCloseBtn");
+    const longQuestionsCancelBtn = document.getElementById("longQuestionsCancelBtn");
+    const longQuestionsGenerateBtn = document.getElementById("longQuestionsGenerateBtn");
+    const longQuestionsBeforeRange = document.getElementById("longQuestionsBeforeRange");
+    const longQuestionsAfterRange = document.getElementById("longQuestionsAfterRange");
+    const longQuestionsBeforeValue = document.getElementById("longQuestionsBeforeValue");
+    const longQuestionsAfterValue = document.getElementById("longQuestionsAfterValue");
+    const longQuestionsPreview = document.getElementById("longQuestionsPreview");
     const longDownloadLink = document.getElementById("longDownloadLink");
     const longQueueMeta = document.getElementById("longQueueMeta");
     const longPreviewPanel = document.getElementById("longPreviewPanel");
@@ -1811,6 +1854,7 @@ Vorgaben:
       const modeTitle = nextMode === "T" ? "TTS/Fragen-Modus" : (nextMode === "K" ? "Kreuzen-Modus" : "Lang-Audio-Modus");
       modeToggleBtn.title = `Wechsel zu ${modeTitle}`;
       syncRepeatFlaggedButton();
+      longAudioQuestionsBtn.classList.toggle("hidden", !longGenerateQuestionsEnabledCheckbox.checked);
     }
 
     const learningSessionRepository = {
@@ -2314,6 +2358,7 @@ Vorgaben:
         longAudioText: longAudioTextInput.value,
         longChunkSize: longChunkSizeInput.value,
         longEnableEditorial: longEnableEditorialCheckbox.checked,
+        longGenerateQuestionsEnabled: longGenerateQuestionsEnabledCheckbox.checked,
         longAutoPlay: longAutoPlayCheckbox.checked,
         longAutoDownload: longAutoDownloadCheckbox.checked,
         longHighlightCurrentText: longHighlightCurrentTextCheckbox.checked,
@@ -2399,6 +2444,7 @@ Vorgaben:
         autoPlayCheckbox.checked = data.autoPlay !== false;
         autoDownloadCheckbox.checked = data.autoDownload === true;
         longEnableEditorialCheckbox.checked = data.longEnableEditorial === true;
+        longGenerateQuestionsEnabledCheckbox.checked = data.longGenerateQuestionsEnabled === true;
         longAutoPlayCheckbox.checked = data.longAutoPlay !== false;
         longAutoDownloadCheckbox.checked = data.longAutoDownload === true;
         longHighlightCurrentTextCheckbox.checked = data.longHighlightCurrentText === true;
@@ -3018,6 +3064,70 @@ Vorgaben:
           return sentenceIdx === activeIndex ? `<span class="highlight-current">${escapedSentence}</span>` : escapedSentence;
         })
         .join(" ");
+    }
+
+    function getCurrentLongAudioSentenceSelection(beforeCount = 1, afterCount = 2) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return null;
+      const chunk = longAudioSession.chunks[longAudioSession.currentIndex];
+      if (!chunk) return null;
+      const chunkText = String(chunk.text || chunk.originalText || "").trim();
+      const sentences = splitTextIntoSentences(chunkText);
+      if (!sentences.length) return null;
+      const duration = getReadyLongAudioDuration(chunk) || (Number.isFinite(longAudioPlayer.duration) ? longAudioPlayer.duration : 0);
+      const activeIndex = duration
+        ? clamp(Math.floor(((longAudioPlayer.currentTime || 0) / duration) * sentences.length), 0, sentences.length - 1)
+        : 0;
+      const start = clamp(activeIndex - beforeCount, 0, sentences.length - 1);
+      const end = clamp(activeIndex + afterCount, start, sentences.length - 1);
+      return {
+        chunkIndex: longAudioSession.currentIndex,
+        activeIndex,
+        start,
+        end,
+        text: sentences.slice(start, end + 1).join(" ")
+      };
+    }
+
+    function updateLongQuestionsPreview() {
+      const before = Number(longQuestionsBeforeRange.value) || 0;
+      const after = Number(longQuestionsAfterRange.value) || 0;
+      longQuestionsBeforeValue.textContent = String(before);
+      longQuestionsAfterValue.textContent = String(after);
+      const selection = getCurrentLongAudioSentenceSelection(before, after);
+      longQuestionsPreview.value = selection?.text || "";
+      longQuestionsGenerateBtn.disabled = !selection?.text;
+    }
+
+    function openLongQuestionsModal() {
+      if (!longAudioSession || !longAudioSession.chunks?.length) {
+        setLongStatus("Noch kein Long-Audio vorhanden.", "error");
+        return;
+      }
+      updateLongQuestionsPreview();
+      longQuestionsBackdrop.classList.remove("hidden");
+    }
+
+    function closeLongQuestionsModal() {
+      longQuestionsBackdrop.classList.add("hidden");
+    }
+
+    function generateQuestionsFromLongAudioSelection() {
+      updateLongQuestionsPreview();
+      const selectedText = longQuestionsPreview.value.trim();
+      if (!selectedText) {
+        setLongStatus("Kein Satzbereich ausgewählt.", "error");
+        return;
+      }
+      textInput.value = selectedText;
+      appState.mode = "T";
+      closeLongQuestionsModal();
+      updateStats();
+      applyModeUI();
+      saveState();
+      setStatus("Audio-Ausschnitt übernommen. Fragen werden generiert ...", "info");
+      if (!generateQuestionsBtn.disabled) {
+        void generateQuestions();
+      }
     }
 
     async function seekLongAudioBy(secondsDelta) {
@@ -3936,7 +4046,12 @@ Erzeuge daraus Integrationsfragen.
           integrationQuestions = await generateIntegrationQuestions(newQuestions, text);
         }
 
-        appState.questions = [...newQuestions, ...integrationQuestions]
+        const persistentQuestions = appState.questions
+          .filter(q => String(q.expectedAnswer || "").trim())
+          .map((item, idx) => normalizeQuestionItem(item, idx))
+          .filter(Boolean);
+
+        appState.questions = [...persistentQuestions, ...newQuestions, ...integrationQuestions]
           .map((item, idx) => normalizeQuestionItem(item, idx))
           .filter(Boolean);
 
@@ -5180,19 +5295,6 @@ Analysiere die Eingabe und liefere nur das JSON.
         .trim() || "—";
     }
 
-    function addWrappedPdfField(doc, label, value, x, y, maxWidth) {
-      const labelText = normalizeTextForPdf(label);
-      const bodyText = normalizeTextForPdf(value);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text(labelText, x, y);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      const lines = doc.splitTextToSize(bodyText, maxWidth);
-      doc.text(lines, x, y + 5);
-      return y + 7 + (lines.length * 4.3);
-    }
-
     function exportKreuzenPdf() {
       if (!appState.errorBlocks.length) {
         setKreuzenStatus("Es gibt keine Fehlerblöcke zum Exportieren.", "error");
@@ -5202,60 +5304,58 @@ Analysiere die Eingabe und liefere nur das JSON.
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 14;
-        const contentWidth = pageWidth - (margin * 2);
-        let y = 16;
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
-        doc.text("Kreuzen Fehlerliste", margin, y);
+        doc.text("Kreuzen Fehlerliste", 14, 16);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        y += 6;
-        doc.text(normalizeTextForPdf(`Strukturierter Export der Fehlerblöcke - Modell: ${getCurrentChatModel()}`), margin, y);
-        y += 10;
+        doc.text(normalizeTextForPdf(`Strukturierter Export der Fehlerblöcke - Modell: ${getCurrentChatModel()}`), 14, 22);
 
-        appState.errorBlocks.forEach((block, index) => {
-          const fields = [
-            ["Frage", block.frage],
-            ["Fehlerart", fehlerartLabel(block.fehlerart || "L1")],
-            ["Konzept erklärt", block.konzept_erklaert],
-            ["Merksatz", block.merksatz],
-            ["Originaleingabe", block.sourceText || "—"]
+        const rows = appState.errorBlocks.map((block, index) => {
+          return [
+            String(index + 1),
+            normalizeTextForPdf(block.frage),
+            normalizeTextForPdf(fehlerartLabel(block.fehlerart || "L1")),
+            normalizeTextForPdf(block.konzept_erklaert),
+            normalizeTextForPdf(block.merksatz)
           ];
-          const estimatedLines = fields.reduce((sum, [, value]) => {
-            return sum + doc.splitTextToSize(normalizeTextForPdf(value), contentWidth).length + 1;
-          }, 2);
-          const estimatedHeight = Math.max(28, estimatedLines * 4.5);
+        });
 
-          if (y + estimatedHeight > pageHeight - margin) {
-            doc.addPage();
-            y = margin;
-          }
-
-          const blockTop = y;
-          doc.setFillColor(240, 253, 250);
-          doc.setDrawColor(204, 251, 241);
-          doc.roundedRect(margin - 2, blockTop - 5, contentWidth + 4, estimatedHeight, 2, 2, "FD");
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          doc.setTextColor(15, 118, 110);
-          doc.text(`Block ${index + 1}`, margin, y);
-          doc.setTextColor(20, 20, 20);
-          y += 7;
-
-          fields.forEach(([label, value]) => {
-            if (y > pageHeight - 24) {
-              doc.addPage();
-              y = margin;
-            }
-            y = addWrappedPdfField(doc, label, value, margin, y, contentWidth);
-          });
-          y += 7;
+        doc.autoTable({
+          startY: 28,
+          head: [["#", "Frage", "Fehlerart", "Konzept Erklärt", "Merksatz"]],
+          body: rows,
+          styles: {
+            font: "helvetica",
+            fontSize: 8,
+            cellPadding: 2,
+            overflow: "linebreak",
+            valign: "top",
+            lineColor: [229, 231, 235],
+            lineWidth: 0.1,
+            minCellHeight: 8
+          },
+          headStyles: {
+            fillColor: [20, 184, 166],
+            textColor: 20,
+            fontStyle: "bold"
+          },
+          alternateRowStyles: {
+            fillColor: [240, 253, 250]
+          },
+          bodyStyles: {
+            textColor: 20
+          },
+          columnStyles: {
+            0: { cellWidth: 8, halign: "center" },
+            1: { cellWidth: 45 },
+            2: { cellWidth: 28 },
+            3: { cellWidth: 70 },
+            4: { cellWidth: 35 }
+          },
+          margin: { left: 10, right: 10 }
         });
 
         doc.save("kreuzen_fehlerliste.pdf");
@@ -5473,10 +5573,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
+
+    longGenerateQuestionsEnabledCheckbox.addEventListener("change", applyModeUI);
 
     hideQuestionAudioButtonCheckbox.addEventListener("change", () => {
       if (hideQuestionAudioButtonCheckbox.checked && recordingQuestionId) {
@@ -5613,6 +5715,17 @@ Analysiere die Eingabe und liefere nur das JSON.
       if (e.target === longSeekBackdrop) closeLongSeekModal();
     });
 
+    longAudioQuestionsBtn.addEventListener("click", openLongQuestionsModal);
+    longQuestionsCloseBtn.addEventListener("click", closeLongQuestionsModal);
+    longQuestionsCancelBtn.addEventListener("click", closeLongQuestionsModal);
+    longQuestionsGenerateBtn.addEventListener("click", generateQuestionsFromLongAudioSelection);
+    longQuestionsBackdrop.addEventListener("click", (e) => {
+      if (e.target === longQuestionsBackdrop) closeLongQuestionsModal();
+    });
+    [longQuestionsBeforeRange, longQuestionsAfterRange].forEach(input => {
+      input.addEventListener("input", updateLongQuestionsPreview);
+    });
+
     [longSeekHoursInput, longSeekMinutesInput, longSeekSecondsInput].forEach(input => {
       input.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" || e.isComposing) return;
@@ -5745,6 +5858,10 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       if (e.key === "Escape" && !longSeekBackdrop.classList.contains("hidden")) {
         closeLongSeekModal();
+        return;
+      }
+      if (e.key === "Escape" && !longQuestionsBackdrop.classList.contains("hidden")) {
+        closeLongQuestionsModal();
         return;
       }
 
