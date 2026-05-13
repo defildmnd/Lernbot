@@ -1463,6 +1463,7 @@ Vorgaben:
     let longAudioShowFullPreview = false;
     let longAudioTextBlocksExpanded = false;
     let longLastHighlightRender = 0;
+    let longLastPlaybackSave = 0;
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -2295,7 +2296,11 @@ Vorgaben:
         id: longAudioSession.id || uid(),
         stopped: longAudioSession.stopped === true,
         manualStop: true,
-        currentIndex: 0,
+        currentIndex: Number.isFinite(longAudioSession.currentIndex) ? longAudioSession.currentIndex : 0,
+        currentTime: Number.isFinite(longAudioPlayer.currentTime) ? longAudioPlayer.currentTime : (Number(longAudioSession.currentTime) || 0),
+        currentSentenceIndex: Number.isFinite(longAudioSession.currentSentenceIndex) ? longAudioSession.currentSentenceIndex : 0,
+        currentSentenceText: String(longAudioSession.currentSentenceText || ""),
+        fullText: longAudioTextInput.value,
         useEditorial: longAudioSession.useEditorial === true,
         chunks: longAudioSession.chunks.map((chunk, idx) => ({
           index: idx,
@@ -2341,7 +2346,11 @@ Vorgaben:
         id: stored.id || uid(),
         stopped: true,
         manualStop: true,
-        currentIndex: 0,
+        currentIndex: Number.isFinite(Number(stored.currentIndex)) ? Number(stored.currentIndex) : 0,
+        currentTime: Number.isFinite(Number(stored.currentTime)) ? Number(stored.currentTime) : 0,
+        currentSentenceIndex: Number.isFinite(Number(stored.currentSentenceIndex)) ? Number(stored.currentSentenceIndex) : 0,
+        currentSentenceText: String(stored.currentSentenceText || ""),
+        fullText: String(stored.fullText || ""),
         useEditorial: stored.useEditorial === true,
         chunks: stored.chunks.map((chunk, idx) => ({
           index: idx,
@@ -3000,9 +3009,20 @@ Vorgaben:
       return 0;
     }
 
+    function estimateLongAudioTotalDuration() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return 0;
+      const readyChunks = longAudioSession.chunks.filter(chunk => chunk.status === "ready" && getReadyLongAudioDuration(chunk) > 0);
+      if (!readyChunks.length || readyChunks.length === longAudioSession.chunks.length) return 0;
+      const readyDuration = readyChunks.reduce((sum, chunk) => sum + getReadyLongAudioDuration(chunk), 0);
+      const readyWords = readyChunks.reduce((sum, chunk) => sum + (Number(chunk.wordCount) || countWordsFromText(chunk.text || chunk.originalText || "")), 0);
+      const totalWords = longAudioSession.chunks.reduce((sum, chunk) => sum + (Number(chunk.wordCount) || countWordsFromText(chunk.text || chunk.originalText || "")), 0);
+      if (!readyDuration || !readyWords || !totalWords) return 0;
+      return Math.max(readyDuration, (readyDuration / readyWords) * totalWords);
+    }
+
     function getLongAudioProgress() {
       if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) {
-        return { elapsed: 0, total: 0, readyCount: 0, totalCount: 0 };
+        return { elapsed: 0, total: 0, estimatedTotal: 0, readyCount: 0, totalCount: 0 };
       }
 
       let elapsed = 0;
@@ -3028,7 +3048,7 @@ Vorgaben:
         }
       }
 
-      return { elapsed, total, readyCount, totalCount: longAudioSession.chunks.length };
+      return { elapsed, total, estimatedTotal: estimateLongAudioTotalDuration(), readyCount, totalCount: longAudioSession.chunks.length };
     }
 
     function updateLongAudioProgress() {
@@ -3044,7 +3064,8 @@ Vorgaben:
       const percent = clamp((progress.elapsed / progress.total) * 100, 0, 100);
       longAudioProgressPanel.classList.remove("hidden");
       longAudioProgressFill.style.width = `${percent}%`;
-      longAudioProgressTime.textContent = `${formatAudioTime(progress.elapsed)} / ${formatAudioTime(progress.total)}`;
+      const estimateLabel = progress.estimatedTotal ? ` (ca. ${formatAudioTime(progress.estimatedTotal)} hochgerechnet)` : "";
+      longAudioProgressTime.textContent = `${formatAudioTime(progress.elapsed)} / ${formatAudioTime(progress.total)}${estimateLabel}`;
       longAudioProgressInfo.textContent = `${progress.readyCount}/${progress.totalCount} Audio-Blöcke verfügbar`;
     }
 
@@ -3058,6 +3079,21 @@ Vorgaben:
       if (longAudioTextBlocksExpanded) {
         renderLongAudioSegments();
       }
+    }
+
+    function saveLongAudioPlaybackProgress(force = false) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return;
+      const now = Date.now();
+      if (!force && now - longLastPlaybackSave < 3000) return;
+      longLastPlaybackSave = now;
+      longAudioSession.currentTime = Number.isFinite(longAudioPlayer.currentTime) ? longAudioPlayer.currentTime : 0;
+      longAudioSession.fullText = longAudioTextInput.value;
+      const sentenceInfo = getCurrentLongAudioSentenceSelection(0, 0);
+      if (sentenceInfo) {
+        longAudioSession.currentSentenceIndex = sentenceInfo.activeIndex;
+        longAudioSession.currentSentenceText = sentenceInfo.text;
+      }
+      saveState();
     }
 
     function splitTextIntoSentences(text) {
@@ -3105,6 +3141,48 @@ Vorgaben:
         end,
         text: sentences.slice(start, end + 1).join(" ")
       };
+    }
+
+    function rebuildLongAudioFromSavedSentence() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return false;
+      const startChunkIndex = clamp(Number(longAudioSession.currentIndex) || 0, 0, longAudioSession.chunks.length - 1);
+      const startSentenceIndex = Math.max(0, Number(longAudioSession.currentSentenceIndex) || 0);
+      const remainingParts = [];
+
+      longAudioSession.chunks.slice(startChunkIndex).forEach((chunk, relativeIndex) => {
+        const chunkText = String(chunk.text || chunk.originalText || "").trim();
+        if (!chunkText) return;
+        if (relativeIndex === 0) {
+          const sentences = splitTextIntoSentences(chunkText);
+          remainingParts.push((sentences.length ? sentences.slice(startSentenceIndex) : [chunkText]).join(" "));
+        } else {
+          remainingParts.push(chunkText);
+        }
+      });
+
+      const remainingText = remainingParts.join(" ").replace(/\s+/g, " ").trim();
+      if (!remainingText) return false;
+      const chunks = splitLongTextIntoChunks(remainingText, getLongChunkLimit());
+      if (!chunks.length) return false;
+      longAudioSession = {
+        id: uid(),
+        stopped: false,
+        manualStop: false,
+        currentIndex: 0,
+        currentTime: 0,
+        currentSentenceIndex: 0,
+        currentSentenceText: "",
+        fullText: longAudioTextInput.value,
+        useEditorial: longAudioSession.useEditorial === true,
+        chunks
+      };
+      longAudioPlayer.pause();
+      longAudioPlayer.removeAttribute("src");
+      longAudioPlayer.load();
+      longAudioPlayer.classList.add("hidden");
+      saveState();
+      renderLongAudioSegments();
+      return true;
     }
 
     function updateLongQuestionsPreview() {
@@ -3174,8 +3252,10 @@ Vorgaben:
           const wasPlaying = !longAudioPlayer.paused;
           await playLongChunkSequentially(i, { autoPlay: wasPlaying, resetTime: true });
           longAudioPlayer.currentTime = clamp(target - cursor, 0, duration);
+          longAudioSession.currentTime = longAudioPlayer.currentTime;
           updateLongAudioProgress();
           renderLongAudioSegments();
+          saveLongAudioPlaybackProgress(true);
           setLongStatus(`Zu ${formatAudioTime(target)} gesprungen.\nBlock ${i + 1}/${longAudioSession.chunks.length}`, "ok");
           return;
         }
@@ -3211,12 +3291,14 @@ Vorgaben:
       if (firstChunk && firstChunk.status === "ready") {
         updateLongMainAudioForChunk(longAudioSession, 0);
         longAudioPlayer.currentTime = 0;
+        longAudioSession.currentTime = 0;
       } else {
         longAudioPlayer.removeAttribute("src");
         longAudioPlayer.load();
       }
 
       refreshLongAudioPlaybackUI(true);
+      saveLongAudioPlaybackProgress(true);
       saveState();
       setLongStatus("Wiedergabe gestoppt und auf Anfang gesetzt.", "info");
     }
@@ -3273,6 +3355,12 @@ Vorgaben:
       longDownloadLink.download = chunk.fileName || getLongChunkFileName(index);
       longDownloadLink.textContent = `Audio herunterladen (${longDownloadLink.download})`;
       longDownloadLink.classList.remove("hidden");
+      if (Number.isFinite(Number(session.currentTime)) && index === session.currentIndex) {
+        longAudioPlayer.addEventListener("loadedmetadata", () => {
+          const duration = Number.isFinite(longAudioPlayer.duration) ? longAudioPlayer.duration : 0;
+          longAudioPlayer.currentTime = clamp(Number(session.currentTime) || 0, 0, duration || Number.MAX_SAFE_INTEGER);
+        }, { once: true });
+      }
       updateLongAudioProgress();
       renderLongAudioSegments();
     }
@@ -3342,6 +3430,7 @@ Vorgaben:
         }
         chunk.status = "error";
         chunk.error = err.message || "Unbekannter Fehler";
+        saveLongAudioPlaybackProgress(true);
         saveState();
         renderLongAudioSegments();
         throw err;
@@ -3377,6 +3466,7 @@ Vorgaben:
 
       if (options.resetTime !== false) {
         longAudioPlayer.currentTime = 0;
+        longAudioSession.currentTime = 0;
       }
 
       if (options.autoPlay !== false) {
@@ -3384,6 +3474,7 @@ Vorgaben:
       }
 
       refreshLongAudioPlaybackUI(true);
+      saveLongAudioPlaybackProgress(true);
       setLongStatus(`Wiedergabe Block ${index + 1}/${longAudioSession.chunks.length}\n${chunk.wordCount} Wörter`, "info");
     }
 
@@ -3403,6 +3494,7 @@ Vorgaben:
       }
 
       if (nextChunk.status === "error") {
+        saveLongAudioPlaybackProgress(true);
         setLongStatus(`Wiedergabe angehalten. Audio-Block ${index + 1} konnte nicht erzeugt werden.`, "error");
         return;
       }
@@ -5582,6 +5674,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     window.addEventListener("pagehide", () => {
+      saveLongAudioPlaybackProgress(true);
       if (permanentSaveEnabled.checked) {
         syncMainToStartup();
         forceSaveState();
@@ -5675,6 +5768,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         longAudioPlayer.pause();
         pauseLongSegmentAudios();
         if (longAudioSession) longAudioSession.manualStop = false;
+        saveLongAudioPlaybackProgress(true);
         setLongStatus("Wiedergabe pausiert.", "info");
       }
     });
@@ -5704,6 +5798,18 @@ Analysiere die Eingabe und liefere nur das JSON.
 
       if (currentChunk.status === "ready") {
         await playLongChunkSequentially(longAudioSession.currentIndex, { autoPlay: true, resetTime: false });
+        return;
+      }
+
+      if (rebuildLongAudioFromSavedSentence()) {
+        setLongStatus("Audio-Blöcke werden ab dem zuletzt gespeicherten Satz neu erzeugt ...", "info");
+        await generateLongChunkForSession(longAudioSession, 0);
+        if (!longAudioSession || longAudioSession.stopped) return;
+        updateLongMainAudioForChunk(longAudioSession, 0);
+        if (longAutoPlayCheckbox.checked) {
+          try { await longAudioPlayer.play(); } catch {}
+        }
+        void startLongChunkGenerationQueue(longAudioSession, 1);
         return;
       }
 
@@ -5966,6 +6072,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     longAudioPlayer.addEventListener("ended", () => {
       if (!longAudioSession || longAudioSession.manualStop) return;
+      saveLongAudioPlaybackProgress(true);
       const nextIndex = longAudioSession.currentIndex + 1;
       if (nextIndex >= longAudioSession.chunks.length) {
         updateLongAudioProgress();
@@ -5982,6 +6089,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     longAudioPlayer.addEventListener("timeupdate", () => {
       refreshLongAudioPlaybackUI(false);
+      saveLongAudioPlaybackProgress(false);
     });
 
     longAudioPlayer.addEventListener("loadedmetadata", () => {
@@ -5990,6 +6098,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         currentChunk.duration = longAudioPlayer.duration;
       }
       refreshLongAudioPlaybackUI(true);
+      saveLongAudioPlaybackProgress(true);
     });
 
     loadState();
