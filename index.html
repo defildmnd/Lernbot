@@ -209,6 +209,7 @@
     .level-pill.l3{ background:#fee2e2; color:#b91c1c; }
     .level-pill.l4{ background:#fef3c7; color:#b45309; }
     .feedback{ padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:var(--card-2); }
+    .feedback.explanation{ background:var(--session-soft); border-color:var(--session-accent); }
     .feedback-title{ font-size:12px; font-weight:800; margin-bottom:6px; }
     .feedback ul{ margin:0; padding-left:16px; line-height:1.5; font-size:13px; }
     .feedback-grid, .error-field-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
@@ -454,6 +455,142 @@
       .theme-switch, .pomodoro-btn{ font-size:13px; }
       .kreuzen-layout{ grid-template-columns:420px minmax(0, 1fr); align-items:start; }
     }
+
+    @media (min-width: 1280px) {
+      html, body{ height:100%; }
+      body{ overflow:hidden; }
+      .app{
+        max-width:none;
+        height:100vh;
+        padding:78px 28px 22px 76px;
+        transition:padding-left .28s cubic-bezier(.2,.75,.2,1);
+      }
+      body.sessions-open .app{ padding-left:344px; }
+      .floating-controls{
+        left:18px;
+        transition:left .28s cubic-bezier(.2,.75,.2,1);
+      }
+      body.sessions-open .floating-controls{ left:326px; }
+      body.sessions-open .theme-switch,
+      body.sessions-open .settings-btn,
+      body.sessions-open .mode-toggle-btn{ display:inline-flex; }
+      body.sessions-open .pomodoro-btn{ display:block; }
+      .session-backdrop{ display:none; }
+      .session-drawer{
+        width:304px;
+        padding:74px 14px 18px;
+        transform:translateX(calc(-100% + 10px));
+        box-shadow:16px 0 40px rgba(15,23,42,.12);
+        transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease;
+      }
+      [data-theme="dark"] .session-drawer{ box-shadow:16px 0 40px rgba(0,0,0,.34); }
+      body.sessions-open .session-drawer{ transform:translateX(0); }
+      .session-card{
+        grid-template-columns:24px minmax(0, 1fr) auto 34px;
+        border-radius:14px;
+        padding:8px;
+        gap:8px;
+      }
+      .session-title{ font-size:13px; }
+      .session-metrics{ gap:4px; }
+      .metric-bubble{ width:28px; height:28px; font-size:10px; }
+      .session-edit-btn{ width:32px; height:32px; min-width:32px; }
+
+      .mode-section{
+        height:calc(100vh - 100px);
+        min-height:0;
+      }
+      .row,
+      .kreuzen-layout,
+      .long-layout{
+        display:grid;
+        grid-template-columns:minmax(390px, 1fr) minmax(0, 1fr);
+        gap:0;
+        height:100%;
+        min-height:0;
+        align-items:stretch;
+      }
+      .col{
+        width:auto;
+        min-width:0;
+        min-height:0;
+        gap:0;
+      }
+      .col-left,
+      .col-right{
+        width:auto;
+        min-width:0;
+        flex:initial;
+      }
+      .col-left{
+        padding-right:24px;
+        border-right:1px solid var(--line);
+      }
+      .col-right{
+        padding-left:24px;
+        overflow:hidden;
+      }
+      .row > .col-left > .card,
+      .kreuzen-layout > .sticky-tools,
+      .long-workspace{
+        height:100%;
+        min-height:0;
+        display:flex;
+        flex-direction:column;
+        overflow-y:auto;
+        overscroll-behavior:contain;
+        scrollbar-gutter:stable;
+      }
+      .row > .col-right > .card,
+      .kreuzen-layout > .card:not(.sticky-tools),
+      .long-output{
+        height:100%;
+        min-height:0;
+        overflow-y:auto;
+        overscroll-behavior:contain;
+        scroll-behavior:smooth;
+      }
+      .kreuzen-layout > .sticky-tools,
+      .long-workspace{
+        padding-right:24px;
+        border-right:1px solid var(--line);
+      }
+      .kreuzen-layout > .card:not(.sticky-tools),
+      .long-output{ padding-left:24px; }
+      .sticky-tools{ position:static; top:auto; }
+      #lModeSection > .card{
+        height:100%;
+        overflow:hidden;
+      }
+      .card{
+        border-radius:14px;
+        transition:box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+      }
+      .row > .col-left .group:has(> textarea),
+      .sticky-tools .group:has(> textarea),
+      .long-workspace .group:has(> textarea){
+        flex:1 1 auto;
+        min-height:0;
+        display:flex;
+        flex-direction:column;
+      }
+      .row > .col-left .group:has(> textarea) textarea,
+      .sticky-tools .group:has(> textarea) textarea,
+      .long-workspace .group:has(> textarea) textarea{
+        height:100%;
+        min-height:120px;
+      }
+      .question-list,
+      .error-block-list,
+      .segment-list{ padding-bottom:18px; }
+      .legal-footer{
+        position:fixed;
+        right:28px;
+        bottom:8px;
+        z-index:900;
+        margin:0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -669,6 +806,17 @@
                   <label for="speed">Geschwindigkeit</label>
                   <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
                 </div>
+                <div class="group">
+                  <label for="pomodoroMinutes">Pomodoro Fokusdauer (Minuten)</label>
+                  <input id="pomodoroMinutes" type="number" min="1" max="240" step="1" value="50" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="pomodoroOvertimeMinutes">Pomodoro Überziehungszeit (Minuten)</label>
+                  <input id="pomodoroOvertimeMinutes" type="number" min="1" max="120" step="1" value="10" />
+                </div>
               </div>
 
               <div class="inline-checks">
@@ -676,6 +824,7 @@
                 <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
                 <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
                 <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
+                <label><input type="checkbox" id="generateExplanations" /> Erklärungen generieren</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
@@ -709,7 +858,7 @@
               <button id="stopBtn" class="secondary" type="button">Stop</button>
               <button id="generateQuestionsBtn" class="blue" type="button">Fragen generieren</button>
               <button id="clearAllBtn" class="danger" type="button">Clear</button>
-              <button id="copyBtn" class="ghost" type="button">Text kopieren</button>
+              <button id="copyBtn" class="ghost" type="button">Anki generieren</button>
               <label class="file-btn" for="fileInput">.txt laden</label>
               <button id="repeatFlaggedBtn" class="secondary hidden" type="button">Flaggen wiederholen</button>
               <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
@@ -789,89 +938,95 @@
 
     <div id="lModeSection" class="mode-section hidden">
       <div class="card">
-        <div class="top">
-          <div>
-            <h2>Lang-Audio-Modus</h2>
-            <p class="subtitle">Langer Text wird in Audio-Blöcke aufgeteilt. Optional wird jeder Block vorab redaktioniert, damit er flüssiger klingt.</p>
-          </div>
-          <div class="badge mode-l-badge">L-Modus</div>
-        </div>
-
-        <div id="longSettingsPanel">
-          <div class="grid-2">
-            <div class="group">
-              <label for="apiKeyEditorial">API Key · Redaktion optional (aktives Sprachmodell)</label>
-              <input id="apiKeyEditorial" type="password" placeholder="Optional: separater Key für den Redaktionsschritt" />
+        <div class="long-layout">
+          <div class="long-workspace">
+            <div class="top">
+              <div>
+                <h2>Lang-Audio-Modus</h2>
+                <p class="subtitle">Langer Text wird in Audio-Blöcke aufgeteilt. Optional wird jeder Block vorab redaktioniert, damit er flüssiger klingt.</p>
+              </div>
+              <div class="badge mode-l-badge">L-Modus</div>
             </div>
-            <div class="group">
-              <label for="longChunkSize">Wörter pro Block</label>
-              <input id="longChunkSize" type="number" min="50" max="2000" step="1" value="515" />
+
+            <div id="longSettingsPanel">
+              <div class="grid-2">
+                <div class="group">
+                  <label for="apiKeyEditorial">API Key · Redaktion optional (aktives Sprachmodell)</label>
+                  <input id="apiKeyEditorial" type="password" placeholder="Optional: separater Key für den Redaktionsschritt" />
+                </div>
+                <div class="group">
+                  <label for="longChunkSize">Wörter pro Block</label>
+                  <input id="longChunkSize" type="number" min="50" max="2000" step="1" value="515" />
+                </div>
+              </div>
+
+              <div class="inline-checks">
+                <label><input type="checkbox" id="longEnableEditorial" /> Blöcke vor TTS redaktionieren (aktives Sprachmodell)</label>
+                <label><input type="checkbox" id="longAutoPlay" checked /> Blöcke automatisch abspielen</label>
+                <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
+                <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
+                <label><input type="checkbox" id="longGenerateQuestionsEnabled" /> Aus Audio Fragen generieren</label>
+              </div>
+
+              <div class="note" style="margin-top:10px;">
+                Stimme, Format und Geschwindigkeit werden aus den gemeinsamen Einstellungen übernommen.
+              </div>
             </div>
+
+            <div class="group" style="margin-top:14px;">
+              <label for="longAudioText">Text für Lang-Audio</label>
+              <textarea id="longAudioText" placeholder="Hier langen Text einfügen..."></textarea>
+              <div class="meta">
+                <span id="longCharCount">0 Zeichen</span>
+                <span id="longWordCount">0 Wörter</span>
+                <span id="longLineCount">0 Zeilen</span>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button id="longGenerateBtn" type="button">Lang-Audio erzeugen</button>
+              <button id="longPauseBtn" class="secondary" type="button">Pause</button>
+              <button id="longResumeBtn" class="secondary" type="button">Weiter</button>
+              <button id="longStopBtn" class="danger" type="button">Stop</button>
+              <button id="longClearBtn" class="danger" type="button">Clear</button>
+              <button id="longAudioQuestionsBtn" class="blue hidden" type="button">Aus Audio Fragen generieren</button>
+              <button id="longCopyBtn" class="ghost" type="button">Text kopieren</button>
+              <label class="file-btn" for="longFileInput">.txt laden</label>
+              <input id="longFileInput" type="file" accept=".txt,text/plain" class="hidden" />
+            </div>
+
+            <div id="longStatus" class="status">Bereit.</div>
+            <div id="longAudioProgressPanel" class="audio-progress-panel panel-slim hidden">
+              <div class="audio-progress-track" aria-label="Lang-Audio Fortschritt" title="Klicken, um zu einer Zeit zu springen">
+                <div id="longAudioProgressFill" class="audio-progress-fill"></div>
+              </div>
+              <div class="audio-progress-meta">
+                <span id="longAudioProgressTime">00:00 / 00:00</span>
+                <span id="longAudioProgressInfo">Noch keine Audio-Zeit verfügbar.</span>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button id="longRewind15Btn" class="ghost audio-jump-btn" type="button">-30 Sekunden</button>
+              <button id="longForward15Btn" class="ghost audio-jump-btn" type="button">+30 Sekunden</button>
+            </div>
+            <audio id="longAudioPlayer" controls class="hidden"></audio>
+            <a id="longDownloadLink" class="download-link hidden">Audio herunterladen</a>
           </div>
 
-          <div class="inline-checks">
-            <label><input type="checkbox" id="longEnableEditorial" /> Blöcke vor TTS redaktionieren (aktives Sprachmodell)</label>
-            <label><input type="checkbox" id="longAutoPlay" checked /> Blöcke automatisch abspielen</label>
-            <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
-            <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
-            <label><input type="checkbox" id="longGenerateQuestionsEnabled" /> Aus Audio Fragen generieren</label>
-          </div>
-
-          <div class="note" style="margin-top:10px;">
-            Stimme, Format und Geschwindigkeit werden aus den gemeinsamen Einstellungen übernommen.
-          </div>
-        </div>
-
-        <div class="group" style="margin-top:14px;">
-          <label for="longAudioText">Text für Lang-Audio</label>
-          <textarea id="longAudioText" placeholder="Hier langen Text einfügen..."></textarea>
-          <div class="meta">
-            <span id="longCharCount">0 Zeichen</span>
-            <span id="longWordCount">0 Wörter</span>
-            <span id="longLineCount">0 Zeilen</span>
+          <div class="long-output">
+            <div id="longQueueMeta" class="panel-slim hidden"></div>
+            <div id="longPreviewPanel" class="panel-slim hidden" style="margin-top:10px;">
+              <div class="segment-label">Redaktionierter Gesamttext</div>
+              <div id="longPreviewContent" class="preview-text"></div>
+              <div class="btn-row" style="margin-top:8px;">
+                <button id="longTogglePreviewBtn" class="ghost" type="button">Volltext anzeigen</button>
+                <button id="longCopyEditedBtn" class="ghost hidden" type="button">Redaktionierten Text kopieren</button>
+              </div>
+            </div>
+            <div id="longSegmentsContainer" class="segment-list"></div>
+            <div id="longEmptySegments" class="empty">Noch keine Audio-Blöcke vorhanden.</div>
           </div>
         </div>
-
-        <div class="btn-row">
-          <button id="longGenerateBtn" type="button">Lang-Audio erzeugen</button>
-          <button id="longPauseBtn" class="secondary" type="button">Pause</button>
-          <button id="longResumeBtn" class="secondary" type="button">Weiter</button>
-          <button id="longStopBtn" class="danger" type="button">Stop</button>
-          <button id="longClearBtn" class="danger" type="button">Clear</button>
-          <button id="longAudioQuestionsBtn" class="blue hidden" type="button">Aus Audio Fragen generieren</button>
-          <button id="longCopyBtn" class="ghost" type="button">Text kopieren</button>
-          <label class="file-btn" for="longFileInput">.txt laden</label>
-          <input id="longFileInput" type="file" accept=".txt,text/plain" class="hidden" />
-        </div>
-
-        <div id="longStatus" class="status">Bereit.</div>
-        <div id="longAudioProgressPanel" class="audio-progress-panel panel-slim hidden">
-          <div class="audio-progress-track" aria-label="Lang-Audio Fortschritt" title="Klicken, um zu einer Zeit zu springen">
-            <div id="longAudioProgressFill" class="audio-progress-fill"></div>
-          </div>
-          <div class="audio-progress-meta">
-            <span id="longAudioProgressTime">00:00 / 00:00</span>
-            <span id="longAudioProgressInfo">Noch keine Audio-Zeit verfügbar.</span>
-          </div>
-        </div>
-        <div class="btn-row">
-          <button id="longRewind15Btn" class="ghost audio-jump-btn" type="button">-30 Sekunden</button>
-          <button id="longForward15Btn" class="ghost audio-jump-btn" type="button">+30 Sekunden</button>
-        </div>
-        <audio id="longAudioPlayer" controls class="hidden"></audio>
-        <a id="longDownloadLink" class="download-link hidden">Audio herunterladen</a>
-
-        <div id="longQueueMeta" class="panel-slim hidden"></div>
-        <div id="longPreviewPanel" class="panel-slim hidden" style="margin-top:10px;">
-          <div class="segment-label">Redaktionierter Gesamttext</div>
-          <div id="longPreviewContent" class="preview-text"></div>
-          <div class="btn-row" style="margin-top:8px;">
-            <button id="longTogglePreviewBtn" class="ghost" type="button">Volltext anzeigen</button>
-            <button id="longCopyEditedBtn" class="ghost hidden" type="button">Redaktionierten Text kopieren</button>
-          </div>
-        </div>
-        <div id="longSegmentsContainer" class="segment-list"></div>
-        <div id="longEmptySegments" class="empty">Noch keine Audio-Blöcke vorhanden.</div>
       </div>
     </div>
 
@@ -1284,6 +1439,8 @@ Vorgaben:
     const voiceInput = document.getElementById("voice");
     const formatInput = document.getElementById("format");
     const speedInput = document.getElementById("speed");
+    const pomodoroMinutesInput = document.getElementById("pomodoroMinutes");
+    const pomodoroOvertimeMinutesInput = document.getElementById("pomodoroOvertimeMinutes");
     const questionCountInput = document.getElementById("questionCount");
     const textInput = document.getElementById("text");
 
@@ -1291,6 +1448,7 @@ Vorgaben:
     const autoPlayCheckbox = document.getElementById("autoPlay");
     const autoDownloadCheckbox = document.getElementById("autoDownload");
     const generateExpectedAnswersCheckbox = document.getElementById("generateExpectedAnswers");
+    const generateExplanationsCheckbox = document.getElementById("generateExplanations");
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
@@ -1431,11 +1589,11 @@ Vorgaben:
     let editingSessionId = null;
     let learningSessionsReady = false;
 
-    const POMODORO_START_SECONDS = 50 * 60;
-    const POMODORO_OVERTIME_LIMIT_SECONDS = 10 * 60;
-
     let pomodoroState = "paused";
-    let pomodoroSeconds = POMODORO_START_SECONDS;
+    let pomodoroSeconds = 50 * 60;
+    let pomodoroStartedAt = 0;
+    let pomodoroEndsAt = 0;
+    let pomodoroOvertimeStartedAt = 0;
     let pomodoroInterval = null;
     let mediaRecorder = null;
     let mediaStream = null;
@@ -1650,6 +1808,7 @@ Vorgaben:
       const rawResult = safeItem.result && typeof safeItem.result === "object" ? safeItem.result : null;
       const expectedAnswer = String(safeItem.expectedAnswer ?? "").trim();
       const evaluationGuide = String(safeItem.evaluationGuide ?? safeItem.hiddenEvaluationGuide ?? "").trim();
+      const explanation = String(safeItem.explanation ?? safeItem.answerExplanation ?? "").trim();
 
       return {
         id: String(safeItem.id || uid()),
@@ -1665,6 +1824,7 @@ Vorgaben:
         open: typeof safeItem.open === "boolean" ? safeItem.open : idx === 0,
         expectedAnswer,
         evaluationGuide,
+        explanation,
         expectedOpen: safeItem.expectedOpen === true,
         questionType: safeItem.questionType === "integration" ? "integration" : "standard"
       };
@@ -1679,6 +1839,7 @@ Vorgaben:
         open: options.open ?? idx === 0,
         expectedAnswer: String(options.expectedAnswer || "").trim(),
         evaluationGuide: String(options.evaluationGuide || "").trim(),
+        explanation: String(options.explanation || "").trim(),
         expectedOpen: false,
         flagged: options.flagged === true,
         questionType: options.questionType === "integration" ? "integration" : "standard"
@@ -1703,6 +1864,7 @@ Vorgaben:
         questions: GPT54_MINI_MODEL,
         integrationQuestions: GPT54_MINI_MODEL,
         expectedAnswers: GPT54_MODEL,
+        explanations: GPT54_MODEL,
         evaluation: generateExpectedAnswersCheckbox.checked ? DEFAULT_CHAT_MODEL : GPT54_MODEL,
         plausibilityCheck: GPT54_MINI_MODEL
       };
@@ -1979,7 +2141,15 @@ Vorgaben:
     function buildLearningSessionPayload() {
       return {
         activeSessionId: activeLearningSessionId,
-        sessions: learningSessions.map(({ snapshot, ...session }) => session)
+        sessions: learningSessions.map(session => ({
+          id: session.id,
+          name: session.name,
+          understanding: session.understanding,
+          percent: session.percent,
+          date: session.date,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt
+        }))
       };
     }
 
@@ -2386,6 +2556,8 @@ Vorgaben:
         voice: voiceInput.value,
         format: formatInput.value,
         speed: speedInput.value,
+        pomodoroMinutes: pomodoroMinutesInput.value,
+        pomodoroOvertimeMinutes: pomodoroOvertimeMinutesInput.value,
         questionCount: questionCountInput.value,
         text: textInput.value,
         longAudioText: longAudioTextInput.value,
@@ -2402,6 +2574,7 @@ Vorgaben:
         autoPlay: autoPlayCheckbox.checked,
         autoDownload: autoDownloadCheckbox.checked,
         generateExpectedAnswers: generateExpectedAnswersCheckbox.checked,
+        generateExplanations: generateExplanationsCheckbox.checked,
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
@@ -2466,6 +2639,8 @@ Vorgaben:
         voiceInput.value = data.voice || "alloy";
         formatInput.value = data.format || "mp3";
         speedInput.value = data.speed || "1.0";
+        pomodoroMinutesInput.value = data.pomodoroMinutes || "50";
+        pomodoroOvertimeMinutesInput.value = data.pomodoroOvertimeMinutes || "10";
         questionCountInput.value = data.questionCount || "";
         textInput.value = data.text || "";
         longAudioTextInput.value = data.longAudioText || "";
@@ -2483,6 +2658,7 @@ Vorgaben:
         longAutoDownloadCheckbox.checked = data.longAutoDownload === true;
         longHighlightCurrentTextCheckbox.checked = data.longHighlightCurrentText === true;
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
+        generateExplanationsCheckbox.checked = data.generateExplanations === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
@@ -2575,6 +2751,49 @@ Vorgaben:
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    function sanitizeFileName(value) {
+      return String(value || "Lernsession")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\s+/g, "_")
+        .slice(0, 80) || "Lernsession";
+    }
+
+    function ankiField(value) {
+      return String(value || "")
+        .replace(/\r\n?/g, "\n")
+        .replace(/\t/g, " ")
+        .replace(/\n/g, "<br>");
+    }
+
+    function exportQuestionsToAnki() {
+      const questions = appState.questions.filter(q => String(q.question || "").trim());
+      if (!questions.length) {
+        setStatus("Es gibt keine sichtbaren Fragen für Anki.", "error");
+        return;
+      }
+
+      const activeSession = learningSessions.find(session => session.id === activeLearningSessionId);
+      const sessionName = activeSession?.name || "Lernsession";
+      const rows = questions.map((q, idx) => {
+        const typeLabel = q.questionType === "integration" ? "Integrationsfrage" : "Frage";
+        const front = `<b>${typeLabel} ${idx + 1}</b><br>${ankiField(q.question)}`;
+        const expected = q.expectedAnswer ? ankiField(q.expectedAnswer) : "—";
+        const explanation = q.explanation
+          ? `<hr><div style="color:#0f766e;"><b>Erklärung</b><br>${ankiField(q.explanation)}</div>`
+          : "";
+        const back = `<b>Erwartete Antwort</b><br>${expected}${explanation}`;
+        const tags = q.questionType === "integration" ? "Lernbot Integration" : "Lernbot";
+        return [front, back, tags].join("\t");
+      });
+
+      const blob = new Blob([rows.join("\n")], { type: "text/tab-separated-values;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, `${sanitizeFileName(sessionName)}_anki.tsv`);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setStatus(`Anki Export erstellt: ${questions.length} Karten.`, "ok");
     }
 
     function decodePercentEncodedText(text) {
@@ -3750,11 +3969,21 @@ Zusatzregel zur Nutzereingabe:
       setLongStatus("Text und Lang-Audio wurden vollständig zurückgesetzt.", "ok");
     }
 
+    function getPomodoroStartSeconds() {
+      const minutes = Number(pomodoroMinutesInput.value);
+      return clamp(Number.isFinite(minutes) ? Math.round(minutes) : 50, 1, 240) * 60;
+    }
+
+    function getPomodoroOvertimeLimitSeconds() {
+      const minutes = Number(pomodoroOvertimeMinutesInput.value);
+      return clamp(Number.isFinite(minutes) ? Math.round(minutes) : 10, 1, 120) * 60;
+    }
+
     function formatPomodoroTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
-      if (pomodoroState === "paused" && totalSeconds === POMODORO_START_SECONDS) {
-        return "50";
+      if (pomodoroState === "paused" && totalSeconds === getPomodoroStartSeconds()) {
+        return String(Math.round(totalSeconds / 60));
       }
       return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
     }
@@ -3775,22 +4004,25 @@ Zusatzregel zur Nutzereingabe:
     function resetPomodoro() {
       stopPomodoroInterval();
       pomodoroState = "paused";
-      pomodoroSeconds = POMODORO_START_SECONDS;
+      pomodoroStartedAt = 0;
+      pomodoroEndsAt = 0;
+      pomodoroOvertimeStartedAt = 0;
+      pomodoroSeconds = getPomodoroStartSeconds();
       renderPomodoro();
     }
 
     function tickPomodoro() {
+      const now = Date.now();
       if (pomodoroState === "running") {
-        if (pomodoroSeconds > 0) {
-          pomodoroSeconds -= 1;
-          if (pomodoroSeconds === 0) {
-            pomodoroState = "overtime";
-          }
+        pomodoroSeconds = Math.max(0, Math.ceil((pomodoroEndsAt - now) / 1000));
+        if (pomodoroSeconds === 0) {
+          pomodoroState = "overtime";
+          pomodoroOvertimeStartedAt = now;
         }
       } else if (pomodoroState === "overtime") {
-        if (pomodoroSeconds < POMODORO_OVERTIME_LIMIT_SECONDS) {
-          pomodoroSeconds += 1;
-        } else {
+        pomodoroSeconds = Math.floor((now - pomodoroOvertimeStartedAt) / 1000);
+        if (pomodoroSeconds >= getPomodoroOvertimeLimitSeconds()) {
+          pomodoroSeconds = getPomodoroOvertimeLimitSeconds();
           stopPomodoroInterval();
         }
       }
@@ -3800,7 +4032,10 @@ Zusatzregel zur Nutzereingabe:
     function startPomodoro() {
       stopPomodoroInterval();
       pomodoroState = "running";
-      pomodoroSeconds = POMODORO_START_SECONDS;
+      pomodoroSeconds = getPomodoroStartSeconds();
+      pomodoroStartedAt = Date.now();
+      pomodoroEndsAt = pomodoroStartedAt + (pomodoroSeconds * 1000);
+      pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
     }
@@ -4074,6 +4309,54 @@ Erstelle zu jeder Frage den Erwartungshorizont.
       }, idx)).filter(Boolean);
     }
 
+    async function generateExplanationsForQuestions(questions, originalText) {
+      if (!questions.length) return questions;
+      const numberedQuestions = questions.map((q, idx) => {
+        const expected = q.expectedAnswer ? `\n   Erwartungshorizont: ${q.expectedAnswer}` : "";
+        return `${idx + 1}. ${q.question}${expected}`;
+      }).join("\n");
+
+      const systemPrompt = `
+Du bist ein medizinischer Erklär-Coach.
+Erstelle zu jeder Frage eine kurze, verständliche Erklärung der Antwort auf Basis des Originaltexts und des Erwartungshorizonts.
+Regeln:
+- Nutze das Modellwissen nur, um die Erklärung verständlich zu machen; widersprich nicht dem Originaltext.
+- Die Erklärung ist nur Lernhilfe und darf nicht als Bewertungsgrundlage formuliert werden.
+- 2 bis 5 klare Sätze pro Frage.
+- Keine neuen Prüfungsfragen, kein JSON außerhalb des Schemas.
+Gib ausschließlich valides JSON zurück:
+{
+  "explanations": [
+    "Erklärung zu Frage 1"
+  ]
+}
+      `.trim();
+
+      const userPrompt = `
+Originaltext:
+"""${originalText}"""
+
+Fragen und Erwartungshorizonte:
+${numberedQuestions}
+
+Erstelle die Erklärungen.
+      `.trim();
+
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "explanations" });
+      const parsed = tryParseJSON(raw);
+      const explanations = parsed && Array.isArray(parsed.explanations)
+        ? parsed.explanations.map(item => String(item || "").trim())
+        : [];
+      if (!explanations.length) {
+        throw new Error("Erklärungen konnten nicht als JSON gelesen werden.");
+      }
+
+      return questions.map((question, idx) => normalizeQuestionItem({
+        ...question,
+        explanation: explanations[idx] || question.explanation || ""
+      }, idx)).filter(Boolean);
+    }
+
     async function generateIntegrationQuestions(questions, originalText) {
       if (!questions.length) return [];
 
@@ -4133,6 +4416,7 @@ Erzeuge daraus Integrationsfragen.
             ...q,
             expectedAnswer: enriched[idx]?.expectedAnswer || q.expectedAnswer,
             evaluationGuide: enriched[idx]?.evaluationGuide || q.evaluationGuide || "",
+            explanation: enriched[idx]?.explanation || q.explanation || "",
             questionType: "integration",
             open: false
           }, idx)).filter(Boolean);
@@ -4166,8 +4450,9 @@ Erzeuge daraus Integrationsfragen.
       }
 
       const withExpectedAnswers = generateExpectedAnswersCheckbox.checked;
+      const withExplanations = generateExplanationsCheckbox.checked;
       const withIntegrationQuestions = generateIntegrationQuestionsCheckbox.checked;
-      const totalSteps = 1 + Number(withExpectedAnswers) + Number(withIntegrationQuestions);
+      const totalSteps = 1 + Number(withExpectedAnswers) + Number(withExplanations) + Number(withIntegrationQuestions);
       let step = 1;
 
       generateQuestionsBtn.disabled = true;
@@ -4189,11 +4474,23 @@ Erzeuge daraus Integrationsfragen.
           newQuestions = await generateExpectedAnswersForQuestions(newQuestions, text);
         }
 
+        if (withExplanations) {
+          step += 1;
+          setStatus(`Schritt ${step}/${totalSteps}: Erklärungen werden generiert ...`, "info");
+          if (!newQuestions.some(q => q.expectedAnswer)) {
+            newQuestions = await generateExpectedAnswersForQuestions(newQuestions, text);
+          }
+          newQuestions = await generateExplanationsForQuestions(newQuestions, text);
+        }
+
         let integrationQuestions = [];
         if (withIntegrationQuestions) {
           step += 1;
           setStatus(`Schritt ${step}/${totalSteps}: Integrationsfragen werden generiert ...`, "info");
           integrationQuestions = await generateIntegrationQuestions(newQuestions, text);
+          if (withExplanations) {
+            integrationQuestions = await generateExplanationsForQuestions(integrationQuestions, text);
+          }
         }
 
         const persistentQuestions = appState.questions
@@ -5147,6 +5444,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         const result = q.result || null;
         const isIntegration = q.questionType === "integration";
         const hasExpectedAnswer = !!String(q.expectedAnswer || "").trim();
+        const hasExplanation = !!String(q.explanation || "").trim();
         const isRecording = recordingQuestionId === q.id;
         const isTranscribing = transcribingQuestionId === q.id;
         const isEvaluating = evaluatingQuestionIds.has(q.id);
@@ -5228,6 +5526,12 @@ Analysiere die Eingabe und liefere nur das JSON.
               <div class="feedback ${q.expectedOpen ? "" : "hidden"}">
                 <div class="feedback-title">Erwartungshorizont</div>
                 <div class="error-field-value">${escapeHtml(q.expectedAnswer)}</div>
+                ${hasExplanation ? `
+                  <div class="feedback explanation" style="margin-top:10px;">
+                    <div class="feedback-title">Erklärung</div>
+                    <div class="error-field-value">${escapeHtml(q.explanation)}</div>
+                  </div>
+                ` : ""}
               </div>
             ` : ""}
 
@@ -5471,6 +5775,10 @@ Analysiere die Eingabe und liefere nur das JSON.
         lines.push(`${typeLabel} ${i + 1}: ${q.question}`);
         if (q.expectedAnswer) {
           lines.push(`Erwartungshorizont: ${q.expectedAnswer}`);
+          if (q.explanation) {
+            lines.push("");
+            lines.push(`Erklärung: ${q.explanation}`);
+          }
         } else {
           lines.push("Erwartungshorizont: —");
         }
@@ -5556,14 +5864,16 @@ Analysiere die Eingabe und liefere nur das JSON.
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+        const activeSession = learningSessions.find(session => session.id === activeLearningSessionId);
+        const sessionName = activeSession?.name || "Lernsession";
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
-        doc.text("Kreuzen Fehlerliste", 14, 16);
+        doc.text(normalizeTextForPdf(sessionName), 14, 16);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        doc.text(normalizeTextForPdf(`Strukturierter Export der Fehlerblöcke - Modell: ${getCurrentChatModel()}`), 14, 22);
+        doc.text("Kreuzen Fehlerliste", 14, 22);
 
         const rows = appState.errorBlocks.map((block, index) => {
           return [
@@ -5610,7 +5920,7 @@ Analysiere die Eingabe und liefere nur das JSON.
           margin: { left: 10, right: 10 }
         });
 
-        doc.save("kreuzen_fehlerliste.pdf");
+        doc.save(`${sanitizeFileName(sessionName)}_kreuzen_fehlerliste.pdf`);
         setKreuzenStatus("PDF Export erstellt.", "ok");
       } catch (err) {
         console.error(err);
@@ -5826,9 +6136,15 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
+    });
+
+    [pomodoroMinutesInput, pomodoroOvertimeMinutesInput].forEach(input => {
+      input.addEventListener("change", () => {
+        if (pomodoroState === "paused") resetPomodoro();
+      });
     });
 
     longGenerateQuestionsEnabledCheckbox.addEventListener("change", applyModeUI);
@@ -6008,19 +6324,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       void seekLongAudioBy(30);
     });
 
-    copyBtn.addEventListener("click", async () => {
-      const text = textInput.value;
-      if (!text) {
-        setStatus("Kein Text zum Kopieren vorhanden.", "error");
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus("Text kopiert.", "ok");
-      } catch {
-        setStatus("Kopieren fehlgeschlagen.", "error");
-      }
-    });
+    copyBtn.addEventListener("click", exportQuestionsToAnki);
 
     longCopyBtn.addEventListener("click", async () => {
       const text = decodePercentEncodedText(longAudioTextInput.value);
