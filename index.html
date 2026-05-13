@@ -686,6 +686,7 @@
                 <label><input type="checkbox" id="enablePlausibilityCheck" checked /> Zweitmeinung bei Zusatzinfos</label>
                 <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
+                <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
                 <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
                 <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
               </div>
@@ -1300,6 +1301,7 @@ Vorgaben:
     const enablePlausibilityCheckCheckbox = document.getElementById("enablePlausibilityCheck");
     const audioFeedbackCheckbox = document.getElementById("audioFeedback");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
+    const ignoreSpellingErrorsCheckbox = document.getElementById("ignoreSpellingErrors");
     const permanentSaveEnabled = document.getElementById("permanentSaveEnabled");
     const permanentSaveBtn = document.getElementById("permanentSaveBtn");
     const toggleAdvancedBtn = document.getElementById("toggleAdvancedBtn");
@@ -1647,6 +1649,7 @@ Vorgaben:
 
       const rawResult = safeItem.result && typeof safeItem.result === "object" ? safeItem.result : null;
       const expectedAnswer = String(safeItem.expectedAnswer ?? "").trim();
+      const evaluationGuide = String(safeItem.evaluationGuide ?? safeItem.hiddenEvaluationGuide ?? "").trim();
 
       return {
         id: String(safeItem.id || uid()),
@@ -1661,6 +1664,7 @@ Vorgaben:
         } : null,
         open: typeof safeItem.open === "boolean" ? safeItem.open : idx === 0,
         expectedAnswer,
+        evaluationGuide,
         expectedOpen: safeItem.expectedOpen === true,
         questionType: safeItem.questionType === "integration" ? "integration" : "standard"
       };
@@ -1674,6 +1678,7 @@ Vorgaben:
         result: options.result || null,
         open: options.open ?? idx === 0,
         expectedAnswer: String(options.expectedAnswer || "").trim(),
+        evaluationGuide: String(options.evaluationGuide || "").trim(),
         expectedOpen: false,
         flagged: options.flagged === true,
         questionType: options.questionType === "integration" ? "integration" : "standard"
@@ -2407,6 +2412,7 @@ Vorgaben:
         enablePlausibilityCheck: enablePlausibilityCheckCheckbox.checked,
         audioFeedback: audioFeedbackCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
+        ignoreSpellingErrors: ignoreSpellingErrorsCheckbox.checked,
         saveSettings: saveSettingsCheckbox.checked,
         permanentSaveEnabled: permanentSaveEnabled.checked,
         advancedOpen: !advancedPanel.classList.contains("collapsed"),
@@ -2487,6 +2493,7 @@ Vorgaben:
         enablePlausibilityCheckCheckbox.checked = data.enablePlausibilityCheck !== false;
         audioFeedbackCheckbox.checked = data.audioFeedback === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
+        ignoreSpellingErrorsCheckbox.checked = data.ignoreSpellingErrors === true;
         saveSettingsCheckbox.checked = data.saveSettings !== false;
         permanentSaveEnabled.checked = data.permanentSaveEnabled === true;
 
@@ -2711,6 +2718,14 @@ Vorgaben:
       return "";
     }
 
+    function withSpellingTolerancePrompt(systemPrompt) {
+      if (!ignoreSpellingErrorsCheckbox.checked) return systemPrompt;
+      return `${systemPrompt}
+
+Zusatzregel zur Nutzereingabe:
+- Ignoriere schlechte Rechtschreibung, Tippfehler, fehlende Groß-/Kleinschreibung und kleinere Grammatikfehler. Erkenne die wahrscheinlich gemeinten medizinischen Begriffe aus dem Kontext und bewerte oder verarbeite den Inhalt nicht schlechter wegen Schreibfehlern. Korrigiere Fachbegriffe still, ohne dich über die Rechtschreibung zu äußern.`;
+    }
+
     function normalizeLongAudioEditedText(text) {
       return String(text || "")
         .replace(/\r\n?/g, "\n")
@@ -2774,7 +2789,7 @@ Vorgaben:
           model,
           temperature: 0,
           messages: [
-            { role: "system", content: LONG_AUDIO_EDITOR_SYSTEM_PROMPT },
+            { role: "system", content: withSpellingTolerancePrompt(LONG_AUDIO_EDITOR_SYSTEM_PROMPT) },
             { role: "user", content: userPrompt }
           ]
         })
@@ -3812,7 +3827,7 @@ Vorgaben:
           body: JSON.stringify({
             model,
             messages: [
-              { role: "system", content: systemPrompt },
+              { role: "system", content: withSpellingTolerancePrompt(systemPrompt) },
               { role: "user", content: userPrompt }
             ],
             temperature: 0.3
@@ -3989,16 +4004,25 @@ Erzeuge nur die Fragen als JSON.
 
       const systemPrompt = `
 Du bist ein medizinischer Prüfungs-Coach.
-Erstelle für jede Frage einen kompakten Erwartungshorizont (1-4 Kernpunkte).
+Erstelle für jede Frage einen kompakten sichtbaren Erwartungshorizont (1-4 Kernpunkte) und zusätzlich einen versteckten Bewertungsleitfaden.
 Regeln:
 - Präzise, prüfungsorientiert, ohne Fließtext.
 - Jede Antwort muss nur die notwendigen Kerninhalte enthalten.
 - Reihenfolge muss exakt der Frage-Reihenfolge entsprechen.
+- Bei Zahlenwerten, Einheiten, Grenzwerten, Formeln, Enzymen, Namen, Reihenfolgen und Klassifikationen muss der Erwartungshorizont den exakten Wert oder Begriff enthalten.
+- Der versteckte Bewertungsleitfaden soll ausführlicher sein und festlegen:
+  1. welche exakten Details zwingend stimmen müssen,
+  2. welche Synonyme oder alternativen Formulierungen zulässig sind,
+  3. welche nah klingenden, aber falschen Antworten abzuwerten sind,
+  4. wie streng bei Zahlenwerten, Einheiten und Mechanismen bewertet werden muss.
+- Beispiel: Wenn der exakte Wert 0,81 erwartet wird, darf 0,7 nicht als richtig gelten, auch wenn es thematisch ähnlich klingt.
 Gib ausschließlich valides JSON zurück:
 {
   "expected_answers": [
-    "Erwartung zu Frage 1",
-    "Erwartung zu Frage 2"
+    {
+      "expected_answer": "Sichtbarer Erwartungshorizont zu Frage 1",
+      "evaluation_guide": "Versteckter Bewertungsleitfaden zu Frage 1"
+    }
   ]
 }
       `.trim();
@@ -4017,12 +4041,24 @@ Erstelle zu jeder Frage den Erwartungshorizont.
       const parsed = tryParseJSON(raw);
 
       let expectedAnswers = [];
+      let evaluationGuides = [];
       if (parsed && Array.isArray(parsed.expected_answers)) {
-        expectedAnswers = parsed.expected_answers.map(item => String(item || "").trim());
+        expectedAnswers = parsed.expected_answers.map(item => {
+          if (typeof item === "string") return item.trim();
+          return String(item?.expected_answer ?? item?.erwartungshorizont ?? "").trim();
+        });
+        evaluationGuides = parsed.expected_answers.map(item => {
+          if (typeof item === "string") return "";
+          return String(item?.evaluation_guide ?? item?.bewertungsleitfaden ?? item?.hidden_prompt ?? "").trim();
+        });
       } else if (parsed && Array.isArray(parsed.erwartungshorizonte)) {
         expectedAnswers = parsed.erwartungshorizonte.map(item => {
           if (typeof item === "string") return item.trim();
           return String(item?.expected_answer ?? item?.erwartungshorizont ?? "").trim();
+        });
+        evaluationGuides = parsed.erwartungshorizonte.map(item => {
+          if (typeof item === "string") return "";
+          return String(item?.evaluation_guide ?? item?.bewertungsleitfaden ?? item?.hidden_prompt ?? "").trim();
         });
       }
 
@@ -4033,6 +4069,7 @@ Erstelle zu jeder Frage den Erwartungshorizont.
       return questions.map((question, idx) => normalizeQuestionItem({
         ...question,
         expectedAnswer: expectedAnswers[idx] || "",
+        evaluationGuide: evaluationGuides[idx] || "",
         expectedOpen: false
       }, idx)).filter(Boolean);
     }
@@ -4092,12 +4129,13 @@ Erzeuge daraus Integrationsfragen.
 
       if (integrationQuestions.some(q => !q.expectedAnswer)) {
         const enriched = await generateExpectedAnswersForQuestions(integrationQuestions, originalText);
-        integrationQuestions = integrationQuestions.map((q, idx) => normalizeQuestionItem({
-          ...q,
-          expectedAnswer: enriched[idx]?.expectedAnswer || q.expectedAnswer,
-          questionType: "integration",
-          open: false
-        }, idx)).filter(Boolean);
+          integrationQuestions = integrationQuestions.map((q, idx) => normalizeQuestionItem({
+            ...q,
+            expectedAnswer: enriched[idx]?.expectedAnswer || q.expectedAnswer,
+            evaluationGuide: enriched[idx]?.evaluationGuide || q.evaluationGuide || "",
+            questionType: "integration",
+            open: false
+          }, idx)).filter(Boolean);
       }
 
       return integrationQuestions.map((item, idx) => normalizeQuestionItem({
@@ -4618,6 +4656,69 @@ Prüfe diese Zusatzinformationen auf Plausibilität.
       };
     }
 
+    async function auditExtremeEvaluation({ question, originalText, referenceLabel, referenceText, expectedAnswer, evaluationGuide, answer, initialScore, richtig, falschFehlt }) {
+      const model = GPT54_MINI_MODEL;
+      if (!getActiveChatApiKey(model)) return null;
+
+      const systemPrompt = `
+Du bist ein unabhängiger medizinischer Prüfungs-Auditor.
+Prüfe eine bereits vorgenommene Bewertung unvoreingenommen und besonders streng bei exakten Details.
+
+Regeln:
+- Nutze medizinisches Allgemeinwissen, den Originaltext, die Frage, den Erwartungshorizont und den versteckten Bewertungsleitfaden.
+- Bei Zahlenwerten, Einheiten, Grenzwerten, Reihenfolgen, Enzymnamen, RQ-Werten, Klassifikationen und Wirkmechanismen zählen exakte Abweichungen als Fehler.
+- Thematische Nähe reicht nicht aus, wenn die Frage ein präzises Detail abfragt.
+- Wenn der Erwartungshorizont selbst offensichtlich unpräzise oder medizinisch falsch wirkt, korrigiere die Bewertung anhand von Originaltext und medizinischem Wissen.
+- Überschreibe den Score nur, wenn die Erstbewertung klar zu gut oder klar zu schlecht ist.
+
+Gib ausschließlich valides JSON zurück:
+{
+  "override": true,
+  "score": 0,
+  "richtig": ["Punkt 1"],
+  "falsch_fehlt": ["Punkt 1"],
+  "reason": "Kurze Begründung."
+}
+      `.trim();
+
+      const userPrompt = `
+Originaltext:
+"""${originalText || "-"}"""
+
+${referenceLabel}:
+"""${referenceText || "-"}"""
+
+Sichtbarer Erwartungshorizont:
+"""${expectedAnswer || "-"}"""
+
+Versteckter Bewertungsleitfaden:
+"""${evaluationGuide || "-"}"""
+
+Frage:
+"""${question.question}"""
+
+Nutzerantwort:
+"""${answer}"""
+
+Erstbewertung:
+Score: ${initialScore}
+Richtig: ${richtig.join("; ") || "-"}
+Falsch/Fehlt: ${falschFehlt.join("; ") || "-"}
+
+Prüfe, ob die Erstbewertung bei einem extremen Score medizinisch robust ist.
+      `.trim();
+
+      const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "plausibilityCheck" });
+      const parsed = tryParseJSON(raw);
+      if (!parsed || parsed.override !== true) return null;
+      return {
+        score: clamp(Number(parsed.score) || 0, 0, 100),
+        richtig: Array.isArray(parsed.richtig) ? parsed.richtig.slice(0, 4).map(String) : richtig,
+        falschFehlt: Array.isArray(parsed.falsch_fehlt) ? parsed.falsch_fehlt.slice(0, 4).map(String) : falschFehlt,
+        reason: String(parsed.reason || "").trim()
+      };
+    }
+
     async function evaluateQuestion(questionId) {
       if (evaluatingQuestionIds.has(questionId)) return;
       evaluatingQuestionIds.add(questionId);
@@ -4643,6 +4744,7 @@ Prüfe diese Zusatzinformationen auf Plausibilität.
       const originalText = textInput.value.trim();
       const chatModel = getAutoChatModelForTask("evaluation");
       const expectedAnswer = String(question?.expectedAnswer || "").trim();
+      const evaluationGuide = String(question?.evaluationGuide || "").trim();
       const useExpectedAnswer = !!expectedAnswer;
       const referenceText = useExpectedAnswer ? expectedAnswer : originalText;
       const referenceLabel = useExpectedAnswer ? "Erwartungshorizont" : "Originaltext";
@@ -4682,11 +4784,17 @@ Du bist ein "Active-Recall Medizin Agent" und bewertest Antworten streng, kurz u
 
 SCORING-REGEL:
 Bewerte zuerst, ob die im Erwartungshorizont oder Originaltext relevanten Kerninhalte genannt wurden.
+Wenn ein versteckter Bewertungsleitfaden vorhanden ist, hat er Vorrang für Bewertungsstrenge, zulässige Synonyme, exakte Details und typische Fallen. Der Nutzer sieht diesen Leitfaden nicht.
 Zusätzliche Informationen, die nicht explizit im Erwartungshorizont stehen, dürfen nicht automatisch als falsch gewertet werden.
 Wenn Zusatzinformationen harmlos, randständig oder nur anders formuliert sind, ignoriere sie ohne separaten Plausibilitätscheck.
 Wenn Zusatzinformationen offensichtlich falsch, widersprüchlich oder medizinisch riskant sind, behandle sie direkt nach den Scoring-Kriterien als Fehler.
 Markiere einen separaten Plausibilitätscheck nur dann als nötig, wenn die Antwort signifikant über den Erwartungshorizont hinausgeht UND die Zusatzinformation fachlich grundsätzlich plausibel klingt, aber anhand des Erwartungshorizonts allein nicht sicher einzuordnen ist.
 Wenn Antworten über den Erwartungshorizont hinausgehen, prüfe Synonyme und äquivalente Begriffe sorgfältig, bevor du etwas als Zusatzinformation markierst.
+PRÄZISIONSREGEL:
+- Bei Fragen nach exakten Zahlenwerten, RQ-Werten, Einheiten, Grenzwerten, Enzymen, Namen, Reihenfolgen, Formeln oder Klassifikationen ist eine fast passende Antwort nicht automatisch richtig.
+- Ein anderer Zahlenwert ist falsch, außer Bewertungsleitfaden oder Originaltext erlauben explizit einen Bereich oder eine Rundung.
+- Wenn der Erwartungshorizont "0,81" verlangt, darf "0,7" nicht als richtig bewertet werden.
+- Allgemeines medizinisches Wissen darf genutzt werden, um offensichtlich falsche Gleichsetzungen zu erkennen.
 
 0% = komplett falsch oder gefährlich = Kernaussagen falsch, widersprechen gesichertem Wissen, potenziell medizinisch riskant, keine brauchbaren richtigen Inhalte
 10% = fast vollständig falsch = minimale thematische Überschneidung, aber Kernaussagen falsch, starke Konzeptfehler und Halluzinationen
@@ -4717,13 +4825,16 @@ Gib ausschließlich valides JSON zurück in genau diesem Format:
 ${referenceLabel}:
 """${referenceText}"""
 
+Versteckter Bewertungsleitfaden:
+"""${evaluationGuide || "-"}"""
+
 Frage:
 """${question.question}"""
 
 Nutzerantwort:
 """${question.answer}"""
 
-Bewerte die Antwort anhand des ${referenceLabel}. Wenn der ${referenceLabel} ein Erwartungshorizont ist, prüfe zuerst nur die erwarteten Kerninhalte. Setze "plausibilitaetscheck_noetig" nur auf true, wenn signifikante, fachlich plausibel klingende Zusatzinformationen ohne Gesamttext nicht sicher beurteilt werden können.
+Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsleitfadens. Wenn der ${referenceLabel} ein Erwartungshorizont ist, prüfe zuerst nur die erwarteten Kerninhalte. Bei präzisen Detailfragen müssen Zahlenwerte, Einheiten, Namen und Mechanismen exakt passen. Setze "plausibilitaetscheck_noetig" nur auf true, wenn signifikante, fachlich plausibel klingende Zusatzinformationen ohne Gesamttext nicht sicher beurteilt werden können.
       `.trim();
 
       try {
@@ -4771,6 +4882,28 @@ Bewerte die Antwort anhand des ${referenceLabel}. Wenn der ${referenceLabel} ein
             } else {
               falschFehlt.push(label);
             }
+          }
+        }
+
+        if (enablePlausibilityCheckCheckbox.checked && (score >= 90 || score <= 20)) {
+          setStatus(`Extreme Bewertung wird gegengeprüft ...\nModell: ${GPT54_MINI_MODEL}`, "info");
+          const audit = await auditExtremeEvaluation({
+            question,
+            originalText,
+            referenceLabel,
+            referenceText,
+            expectedAnswer,
+            evaluationGuide,
+            answer: question.answer,
+            initialScore: score,
+            richtig,
+            falschFehlt
+          });
+          if (audit) {
+            score = audit.score;
+            richtig.splice(0, richtig.length, ...audit.richtig);
+            falschFehlt.splice(0, falschFehlt.length, ...audit.falschFehlt);
+            plausibilityNote = audit.reason || plausibilityNote;
           }
         }
 
@@ -4957,6 +5090,13 @@ Analysiere die Eingabe und liefere nur das JSON.
       const question = appState.questions.find(q => q.id === questionId);
       if (!question) return;
       question.flagged = !question.flagged;
+      if (question.flagged) {
+        question.open = false;
+        question.expectedOpen = false;
+        if (oralExamActiveQuestionId === questionId) {
+          stopOralExamPlayback();
+        }
+      }
       saveState();
       renderQuestions();
     }
@@ -5686,7 +5826,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
