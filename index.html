@@ -338,6 +338,265 @@
     .modal-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
     .legal-footer{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin:18px 0 4px; color:var(--muted); font-size:12px; }
     .legal-footer button{ width:auto; min-width:0; padding:0; border:0; background:transparent; color:var(--muted); box-shadow:none; font-size:12px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+    body.logged-out .floating-controls,
+    body.logged-out .session-backdrop,
+    body.logged-out .session-drawer,
+    body.logged-out .app{ display:none; }
+    .landing-page{
+      position:relative;
+      min-height:100vh;
+      overflow:hidden;
+      background:#f7fbff;
+      color:#102033;
+      isolation:isolate;
+    }
+    .landing-canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:-3;
+      background:#f7fbff;
+    }
+    .landing-shade{
+      position:absolute;
+      inset:0;
+      z-index:-2;
+      background:linear-gradient(90deg, rgba(247,251,255,.96) 0%, rgba(247,251,255,.86) 48%, rgba(247,251,255,.52) 100%);
+    }
+    .landing-page::after{
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height:32%;
+      z-index:-1;
+      background:linear-gradient(180deg, rgba(247,251,255,0), #f7fbff 88%);
+      pointer-events:none;
+    }
+    .landing-nav{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      width:min(1160px, calc(100% - 32px));
+      margin:0 auto;
+      padding:18px 0;
+    }
+    .landing-brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      font-size:18px;
+      color:#0f172a;
+    }
+    .landing-brand-mark{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      background:#0f766e;
+      color:#fff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 12px 30px rgba(15,118,110,.22);
+    }
+    .landing-nav button,
+    .landing-actions button{
+      width:auto;
+      border-radius:999px;
+      padding:12px 16px;
+      min-width:0;
+      box-shadow:0 14px 34px rgba(15,23,42,.12);
+    }
+    .landing-login-top{
+      background:#102033;
+      color:#fff;
+      border:1px solid rgba(16,32,51,.12);
+    }
+    .landing-hero{
+      position:relative;
+      z-index:2;
+      width:min(1160px, calc(100% - 32px));
+      min-height:calc(100vh - 72px);
+      margin:0 auto;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:40px 0 86px;
+    }
+    .landing-copy{
+      width:min(760px, 100%);
+    }
+    .landing-kicker{
+      margin:0 0 16px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      color:#0f766e;
+      font-size:13px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:0;
+    }
+    .landing-kicker::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:#f97316;
+      box-shadow:0 0 0 6px rgba(249,115,22,.14);
+    }
+    .landing-copy h1{
+      margin:0;
+      color:#0f172a;
+      font-size:42px;
+      line-height:1.02;
+      letter-spacing:0;
+    }
+    .landing-lead{
+      margin:18px 0 0;
+      max-width:650px;
+      color:#334155;
+      font-size:18px;
+      line-height:1.6;
+    }
+    .landing-actions{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px;
+      margin-top:28px;
+    }
+    .landing-primary{
+      background:#0f766e;
+      color:#fff;
+      border:1px solid transparent;
+    }
+    .landing-oauth{
+      background:#fff;
+      color:#102033;
+      border:1px solid rgba(15,23,42,.12);
+    }
+    .landing-create{
+      background:#2563eb;
+      color:#fff;
+      border:1px solid transparent;
+    }
+    .landing-points{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      max-width:840px;
+      margin-top:34px;
+    }
+    .landing-point{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:14px 16px;
+      border:1px solid rgba(15,23,42,.10);
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      box-shadow:0 18px 46px rgba(15,23,42,.08);
+      backdrop-filter:blur(16px);
+    }
+    .landing-point strong{
+      display:block;
+      color:#102033;
+      font-size:14px;
+      margin-bottom:3px;
+    }
+    .landing-point span{
+      color:#475569;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .landing-point .landing-point-dot{
+      flex:0 0 30px;
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:900;
+      font-size:13px;
+    }
+    .landing-point:nth-child(1) .landing-point-dot{ background:#0f766e; }
+    .landing-point:nth-child(2) .landing-point-dot{ background:#f97316; }
+    .landing-point:nth-child(3) .landing-point-dot{ background:#2563eb; }
+    .landing-product-glance{
+      display:none;
+      position:absolute;
+      right:0;
+      bottom:54px;
+      width:360px;
+      padding:18px;
+      border-radius:24px;
+      border:1px solid rgba(15,23,42,.10);
+      background:rgba(255,255,255,.62);
+      box-shadow:0 24px 70px rgba(15,23,42,.16);
+      backdrop-filter:blur(18px);
+    }
+    .landing-window-bar{
+      display:flex;
+      gap:6px;
+      margin-bottom:14px;
+    }
+    .landing-window-bar span{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:#cbd5e1;
+    }
+    .landing-window-bar span:nth-child(1){ background:#fb7185; }
+    .landing-window-bar span:nth-child(2){ background:#fbbf24; }
+    .landing-window-bar span:nth-child(3){ background:#34d399; }
+    .landing-mini-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .landing-mini-cell{
+      min-height:74px;
+      border-radius:16px;
+      background:#fff;
+      border:1px solid rgba(15,23,42,.08);
+      padding:12px;
+    }
+    .landing-mini-cell b{
+      display:block;
+      margin-bottom:8px;
+      color:#102033;
+      font-size:12px;
+    }
+    .landing-mini-line{
+      height:8px;
+      border-radius:999px;
+      background:#dbeafe;
+      margin-bottom:7px;
+    }
+    .landing-mini-line.short{ width:58%; background:#ccfbf1; }
+    .landing-mini-line.warm{ width:74%; background:#fed7aa; }
+    .settings-head-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .logout-btn{
+      width:auto;
+      min-width:0;
+      border-radius:999px;
+      padding:10px 14px;
+      background:#102033;
+      color:#fff;
+      border:1px solid transparent;
+    }
     .legal-text{ display:grid; gap:12px; color:var(--text); font-size:13px; line-height:1.6; }
     .legal-text h3{ margin:4px 0 0; font-size:14px; }
     .legal-text p{ margin:0; }
@@ -412,6 +671,9 @@
       .floating-controls{ width:auto; }
       .settings-segment{ grid-template-columns:1fr 1fr 1fr; }
       .session-drawer{ padding-left:22px; padding-right:22px; }
+      .landing-copy h1{ font-size:64px; }
+      .landing-lead{ font-size:20px; }
+      .landing-points{ grid-template-columns:1fr 1fr 1fr; }
     }
 
     @media (min-width: 1024px) {
@@ -459,6 +721,7 @@
     @media (min-width: 1280px) {
       html, body{ height:100%; }
       body{ overflow:hidden; }
+      body.logged-out{ overflow:auto; }
       .app{
         max-width:none;
         height:100vh;
@@ -590,10 +853,92 @@
         z-index:900;
         margin:0;
       }
+      .landing-product-glance{ display:block; }
     }
   </style>
 </head>
 <body>
+  <section class="landing-page hidden" id="landingPage" aria-label="Lernbot Startseite">
+    <canvas class="landing-canvas" id="landingCanvas" aria-hidden="true"></canvas>
+    <div class="landing-shade" aria-hidden="true"></div>
+
+    <nav class="landing-nav">
+      <div class="landing-brand">
+        <span class="landing-brand-mark">L</span>
+        <span>Lernbot</span>
+      </div>
+      <button class="landing-login-top" id="landingLoginTopBtn" type="button">Anmelden</button>
+    </nav>
+
+    <div class="landing-hero">
+      <div class="landing-copy">
+        <p class="landing-kicker">Demo-Zugang für fokussiertes Lernen</p>
+        <h1>Lernbot</h1>
+        <p class="landing-lead">
+          Verwandle Skripte, Audio und Kreuzen-Fehler in eine klare Lernroutine mit Vorlesen,
+          Active Recall, Erwartungshorizonten und wiederholbaren Lernsessions.
+        </p>
+
+        <div class="landing-actions">
+          <button class="landing-primary" id="landingDemoLoginBtn" type="button">Mit Demo anmelden</button>
+          <button class="landing-oauth" id="landingGoogleBtn" type="button">Mit Google fortfahren</button>
+          <button class="landing-oauth" id="landingAppleBtn" type="button">Mit Apple fortfahren</button>
+          <button class="landing-create" id="landingCreateAccountBtn" type="button">Neuen Account erstellen</button>
+        </div>
+
+        <div class="landing-points">
+          <div class="landing-point">
+            <span class="landing-point-dot">1</span>
+            <div>
+              <strong>Aus Stoff wird Prüfungstraining</strong>
+              <span>Fragen, Antworten und Erwartungshorizonte entstehen direkt aus deinem Lerntext.</span>
+            </div>
+          </div>
+          <div class="landing-point">
+            <span class="landing-point-dot">2</span>
+            <div>
+              <strong>Kreuzen-Fehler werden greifbar</strong>
+              <span>Fehlerarten, Konzepte und Merksätze bleiben als strukturierte Lernblöcke erhalten.</span>
+            </div>
+          </div>
+          <div class="landing-point">
+            <span class="landing-point-dot">3</span>
+            <div>
+              <strong>Privat und lokal gedacht</strong>
+              <span>Sessions, Fortschritt und Keys werden lokal auf deinem Gerät gespeichert.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-product-glance" aria-hidden="true">
+        <div class="landing-window-bar"><span></span><span></span><span></span></div>
+        <div class="landing-mini-grid">
+          <div class="landing-mini-cell">
+            <b>Active Recall</b>
+            <div class="landing-mini-line"></div>
+            <div class="landing-mini-line short"></div>
+          </div>
+          <div class="landing-mini-cell">
+            <b>Audio</b>
+            <div class="landing-mini-line warm"></div>
+            <div class="landing-mini-line short"></div>
+          </div>
+          <div class="landing-mini-cell">
+            <b>Kreuzen</b>
+            <div class="landing-mini-line short"></div>
+            <div class="landing-mini-line"></div>
+          </div>
+          <div class="landing-mini-cell">
+            <b>Lernsessions</b>
+            <div class="landing-mini-line warm"></div>
+            <div class="landing-mini-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="floating-controls">
     <button class="session-menu-btn" id="sessionMenuBtn" type="button" title="Lernsessions" aria-label="Lernsessions öffnen">
       <span></span>
@@ -1091,7 +1436,10 @@
           <h2>Einstellungen</h2>
           <p class="subtitle">Gemeinsame Einstellungen für T-Modus, Kreuzen-Modus und Lang-Audio.</p>
         </div>
-        <button id="closeSettingsBtn" class="ghost modal-close" type="button">✕</button>
+        <div class="settings-head-actions">
+          <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+          <button id="closeSettingsBtn" class="ghost modal-close" type="button">✕</button>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -1333,6 +1681,7 @@
     const SESSION_STORAGE_KEY = "med_tts_learning_sessions_v1";
     const SESSION_DATA_PREFIX = "med_tts_learning_session_data_v1_";
     const PENDING_SESSION_EDIT_KEY = "med_tts_pending_session_edit_v1";
+    const AUTH_STORAGE_KEY = "med_tts_demo_auth_v1";
     const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
     const DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini";
     const GPT54_MODEL = "openai/gpt-5.4";
@@ -1364,6 +1713,14 @@ Vorgaben:
 - Gib ausschliesslich den ueberarbeiteten Text aus.
 - Pruefe vor der Ausgabe still: keine Dopplungen, keine fremden Inhalte aus anderen Bloecken, keine ausgelassenen relevanten Inhalte, keine kaputten Satzanschluesse.
 - Prinzip: Text rein, Text raus.`;
+
+    const landingPage = document.getElementById("landingPage");
+    const landingCanvas = document.getElementById("landingCanvas");
+    const landingLoginTopBtn = document.getElementById("landingLoginTopBtn");
+    const landingDemoLoginBtn = document.getElementById("landingDemoLoginBtn");
+    const landingGoogleBtn = document.getElementById("landingGoogleBtn");
+    const landingAppleBtn = document.getElementById("landingAppleBtn");
+    const landingCreateAccountBtn = document.getElementById("landingCreateAccountBtn");
 
     const sessionMenuBtn = document.getElementById("sessionMenuBtn");
     const sessionBackdrop = document.getElementById("sessionBackdrop");
@@ -1466,6 +1823,7 @@ Vorgaben:
     const advancedPanel = document.getElementById("advancedPanel");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
     const cancelSettingsBtn = document.getElementById("cancelSettingsBtn");
     const settingsSaveBtn = document.getElementById("settingsSaveBtn");
     const settingsClearApiBtn = document.getElementById("settingsClearApiBtn");
@@ -1624,6 +1982,8 @@ Vorgaben:
     let longAudioTextBlocksExpanded = false;
     let longLastHighlightRender = 0;
     let longLastPlaybackSave = 0;
+    let landingCanvasFrame = null;
+    let landingSceneItems = [];
 
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
@@ -1638,6 +1998,151 @@ Vorgaben:
     function setLongStatus(message, type = "info") {
       longStatusEl.textContent = message;
       longStatusEl.className = "status " + type;
+    }
+
+    function isDemoLoggedIn() {
+      return localStorage.getItem(AUTH_STORAGE_KEY) === "1";
+    }
+
+    function drawLandingRoundRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function resizeLandingCanvas() {
+      if (!landingCanvas) return;
+      const rect = landingPage.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      landingCanvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      landingCanvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      landingCanvas.style.width = `${rect.width}px`;
+      landingCanvas.style.height = `${rect.height}px`;
+      const colors = ["#0f766e", "#2563eb", "#f97316", "#db2777", "#14b8a6"];
+      landingSceneItems = Array.from({ length: 22 }, (_, index) => ({
+        x: (index * 97) % Math.max(rect.width, 1),
+        y: (index * 61) % Math.max(rect.height, 1),
+        vx: ((index % 5) - 2) * .12,
+        vy: (((index + 2) % 5) - 2) * .10,
+        size: 18 + (index % 6) * 7,
+        color: colors[index % colors.length],
+        phase: index * .7
+      }));
+    }
+
+    function renderLandingCanvas(time = 0) {
+      if (!landingCanvas || landingPage.classList.contains("hidden")) {
+        landingCanvasFrame = null;
+        return;
+      }
+      const ctx = landingCanvas.getContext("2d");
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = landingCanvas.width / ratio;
+      const height = landingCanvas.height / ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "#f7fbff";
+      ctx.fillRect(0, 0, width, height);
+
+      landingSceneItems.forEach((item, index) => {
+        item.x = (item.x + item.vx + width) % width;
+        item.y = (item.y + item.vy + height) % height;
+        const bob = Math.sin(time / 900 + item.phase) * 8;
+        ctx.globalAlpha = .13;
+        ctx.fillStyle = item.color;
+        ctx.beginPath();
+        ctx.arc(item.x, item.y + bob, item.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (index % 3 === 0) {
+          ctx.globalAlpha = .16;
+          ctx.strokeStyle = item.color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(item.x, item.y + bob);
+          ctx.lineTo((item.x + 150) % width, (item.y + 90 + bob) % height);
+          ctx.stroke();
+        }
+      });
+
+      const panelX = Math.max(300, width - 520);
+      const panelY = Math.max(120, height * .18);
+      ctx.globalAlpha = .74;
+      ctx.fillStyle = "#ffffff";
+      drawLandingRoundRect(ctx, panelX, panelY, 360, 230, 24);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#102033";
+      ctx.font = "700 15px Inter, Arial, sans-serif";
+      ctx.fillText("Lernsession heute", panelX + 24, panelY + 36);
+      const bars = [
+        ["#0f766e", 260],
+        ["#2563eb", 210],
+        ["#f97316", 280],
+        ["#14b8a6", 170]
+      ];
+      bars.forEach((bar, index) => {
+        const y = panelY + 64 + index * 36;
+        ctx.globalAlpha = .12;
+        ctx.fillStyle = bar[0];
+        drawLandingRoundRect(ctx, panelX + 24, y, 292, 14, 7);
+        ctx.fill();
+        ctx.globalAlpha = .72;
+        ctx.fillStyle = bar[0];
+        drawLandingRoundRect(ctx, panelX + 24, y, bar[1], 14, 7);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      landingCanvasFrame = requestAnimationFrame(renderLandingCanvas);
+    }
+
+    function startLandingCanvas() {
+      if (!landingCanvas || landingCanvasFrame) return;
+      resizeLandingCanvas();
+      landingCanvasFrame = requestAnimationFrame(renderLandingCanvas);
+    }
+
+    function stopLandingCanvas() {
+      if (landingCanvasFrame) {
+        cancelAnimationFrame(landingCanvasFrame);
+        landingCanvasFrame = null;
+      }
+    }
+
+    function applyAuthUI() {
+      const loggedIn = isDemoLoggedIn();
+      document.body.classList.toggle("logged-out", !loggedIn);
+      landingPage.classList.toggle("hidden", loggedIn);
+      landingPage.setAttribute("aria-hidden", loggedIn ? "true" : "false");
+      logoutBtn.classList.toggle("hidden", !loggedIn);
+      if (loggedIn) {
+        stopLandingCanvas();
+      } else {
+        document.body.classList.remove("sessions-open");
+        settingsModalBackdrop.classList.add("hidden");
+        startLandingCanvas();
+      }
+    }
+
+    function loginDemoAccount(source = "Demo") {
+      localStorage.setItem(AUTH_STORAGE_KEY, "1");
+      applyAuthUI();
+      setStatus(`${source}: Demo-Login aktiv.`, "ok");
+    }
+
+    function logoutDemoAccount() {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      applyAuthUI();
     }
 
     function beginLoading(message = "Antwort wird geladen") {
@@ -6019,6 +6524,22 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveState();
     });
 
+    [
+      [landingLoginTopBtn, "Anmelden"],
+      [landingDemoLoginBtn, "Demo"],
+      [landingGoogleBtn, "Google"],
+      [landingAppleBtn, "Apple"],
+      [landingCreateAccountBtn, "Neuer Account"]
+    ].forEach(([button, source]) => {
+      button.addEventListener("click", () => loginDemoAccount(source));
+    });
+    logoutBtn.addEventListener("click", logoutDemoAccount);
+    window.addEventListener("resize", () => {
+      if (!landingPage.classList.contains("hidden")) {
+        resizeLandingCanvas();
+      }
+    });
+
     settingsBtn.addEventListener("click", openSettingsModal);
     closeSettingsBtn.addEventListener("click", closeSettingsModal);
     cancelSettingsBtn.addEventListener("click", closeSettingsModal);
@@ -6547,6 +7068,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     loadState();
     mountGlobalSettingsPanels();
+    applyAuthUI();
     updateStats();
     updateLongStats();
     renderQuestions();
