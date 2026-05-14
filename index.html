@@ -855,6 +855,132 @@
       }
       .landing-product-glance{ display:block; }
     }
+
+    body.force-desktop-mode:not(.logged-out){
+      min-width:1280px;
+      overflow:auto;
+    }
+    body.force-desktop-mode:not(.logged-out) .app{
+      max-width:none;
+      width:1280px;
+      min-width:1280px;
+      min-height:100vh;
+      height:100vh;
+      padding:78px 28px 22px 76px;
+      transition:padding-left .28s cubic-bezier(.2,.75,.2,1);
+    }
+    body.force-desktop-mode.sessions-open:not(.logged-out) .app{ padding-left:344px; }
+    body.force-desktop-mode:not(.logged-out) .floating-controls{
+      left:18px;
+      transition:left .28s cubic-bezier(.2,.75,.2,1);
+    }
+    body.force-desktop-mode.sessions-open:not(.logged-out) .floating-controls{ left:326px; }
+    body.force-desktop-mode.sessions-open:not(.logged-out) .theme-switch,
+    body.force-desktop-mode.sessions-open:not(.logged-out) .settings-btn,
+    body.force-desktop-mode.sessions-open:not(.logged-out) .mode-toggle-btn{ display:inline-flex; }
+    body.force-desktop-mode.sessions-open:not(.logged-out) .pomodoro-btn{ display:block; }
+    body.force-desktop-mode:not(.logged-out) .session-backdrop{ display:none; }
+    body.force-desktop-mode:not(.logged-out) .session-drawer{
+      width:304px;
+      padding:74px 14px 18px;
+      transform:translateX(calc(-100% + 10px));
+      box-shadow:16px 0 40px rgba(15,23,42,.12);
+      transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease;
+    }
+    body.force-desktop-mode.sessions-open:not(.logged-out) .session-drawer{ transform:translateX(0); }
+    body.force-desktop-mode:not(.logged-out) .session-card{
+      grid-template-columns:24px minmax(0, 1fr) auto 34px;
+      border-radius:14px;
+      padding:8px;
+      gap:8px;
+    }
+    body.force-desktop-mode:not(.logged-out) .mode-section{
+      height:calc(100vh - 100px);
+      min-height:0;
+    }
+    body.force-desktop-mode:not(.logged-out) .row,
+    body.force-desktop-mode:not(.logged-out) .kreuzen-layout,
+    body.force-desktop-mode:not(.logged-out) .long-layout{
+      display:grid;
+      grid-template-columns:minmax(390px, 1fr) minmax(0, 1fr);
+      gap:0;
+      height:100%;
+      min-height:0;
+      align-items:stretch;
+    }
+    body.force-desktop-mode:not(.logged-out) .col{
+      width:auto;
+      min-width:0;
+      min-height:0;
+      gap:0;
+    }
+    body.force-desktop-mode:not(.logged-out) .col-left,
+    body.force-desktop-mode:not(.logged-out) .col-right{
+      width:auto;
+      min-width:0;
+      flex:initial;
+    }
+    body.force-desktop-mode:not(.logged-out) .col-left{
+      padding-right:24px;
+      border-right:1px solid var(--line);
+    }
+    body.force-desktop-mode:not(.logged-out) .col-right{
+      padding-left:24px;
+      overflow:hidden;
+    }
+    body.force-desktop-mode:not(.logged-out) .row > .col-left > .card,
+    body.force-desktop-mode:not(.logged-out) .kreuzen-layout > .sticky-tools,
+    body.force-desktop-mode:not(.logged-out) .long-workspace{
+      height:100%;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      overflow-y:auto;
+      overscroll-behavior:contain;
+      scrollbar-gutter:stable;
+    }
+    body.force-desktop-mode:not(.logged-out) .row > .col-right > .card,
+    body.force-desktop-mode:not(.logged-out) .kreuzen-layout > .card:not(.sticky-tools),
+    body.force-desktop-mode:not(.logged-out) .long-output{
+      height:100%;
+      min-height:0;
+      overflow-y:auto;
+      overscroll-behavior:contain;
+      scroll-behavior:smooth;
+    }
+    body.force-desktop-mode:not(.logged-out) .kreuzen-layout > .sticky-tools,
+    body.force-desktop-mode:not(.logged-out) .long-workspace{
+      padding-right:24px;
+      border-right:1px solid var(--line);
+    }
+    body.force-desktop-mode:not(.logged-out) .kreuzen-layout > .card:not(.sticky-tools),
+    body.force-desktop-mode:not(.logged-out) .long-output{ padding-left:24px; }
+    body.force-desktop-mode:not(.logged-out) .sticky-tools{ position:static; top:auto; }
+    body.force-desktop-mode:not(.logged-out) #lModeSection > .card{
+      height:100%;
+      overflow:hidden;
+    }
+    body.force-desktop-mode:not(.logged-out) .row > .col-left .group:has(> textarea),
+    body.force-desktop-mode:not(.logged-out) .sticky-tools .group:has(> textarea),
+    body.force-desktop-mode:not(.logged-out) .long-workspace .group:has(> textarea){
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+    body.force-desktop-mode:not(.logged-out) .row > .col-left .group:has(> textarea) textarea,
+    body.force-desktop-mode:not(.logged-out) .sticky-tools .group:has(> textarea) textarea,
+    body.force-desktop-mode:not(.logged-out) .long-workspace .group:has(> textarea) textarea{
+      height:100%;
+      min-height:120px;
+    }
+    body.force-desktop-mode:not(.logged-out) .legal-footer{
+      position:fixed;
+      right:28px;
+      bottom:8px;
+      z-index:900;
+      margin:0;
+    }
   </style>
 </head>
 <body>
@@ -1181,6 +1307,7 @@
                 <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
+                <label><input type="checkbox" id="forceDesktopMode" /> Desktop-Modus auch mobil aktivieren</label>
                 <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
                 <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
               </div>
@@ -1817,6 +1944,7 @@ Vorgaben:
     const audioFeedbackCheckbox = document.getElementById("audioFeedback");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const ignoreSpellingErrorsCheckbox = document.getElementById("ignoreSpellingErrors");
+    const forceDesktopModeCheckbox = document.getElementById("forceDesktopMode");
     const permanentSaveEnabled = document.getElementById("permanentSaveEnabled");
     const permanentSaveBtn = document.getElementById("permanentSaveBtn");
     const toggleAdvancedBtn = document.getElementById("toggleAdvancedBtn");
@@ -2549,6 +2677,10 @@ Vorgaben:
       longAudioQuestionsBtn.classList.toggle("hidden", !longGenerateQuestionsEnabledCheckbox.checked);
     }
 
+    function applyDesktopModeUI() {
+      document.body.classList.toggle("force-desktop-mode", forceDesktopModeCheckbox.checked);
+    }
+
     const learningSessionRepository = {
       async load() {
         try {
@@ -3091,6 +3223,7 @@ Vorgaben:
         audioFeedback: audioFeedbackCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         ignoreSpellingErrors: ignoreSpellingErrorsCheckbox.checked,
+        forceDesktopMode: forceDesktopModeCheckbox.checked,
         saveSettings: saveSettingsCheckbox.checked,
         permanentSaveEnabled: permanentSaveEnabled.checked,
         advancedOpen: !advancedPanel.classList.contains("collapsed"),
@@ -3125,6 +3258,7 @@ Vorgaben:
           updateApiBadge();
           updateLongStats();
           renderLongAudioSegments();
+          applyDesktopModeUI();
           applyModeUI();
           return;
         }
@@ -3175,6 +3309,7 @@ Vorgaben:
         audioFeedbackCheckbox.checked = data.audioFeedback === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         ignoreSpellingErrorsCheckbox.checked = data.ignoreSpellingErrors === true;
+        forceDesktopModeCheckbox.checked = data.forceDesktopMode === true;
         saveSettingsCheckbox.checked = data.saveSettings !== false;
         permanentSaveEnabled.checked = data.permanentSaveEnabled === true;
 
@@ -3211,6 +3346,7 @@ Vorgaben:
         renderLongAudioSegments();
         updateApiBadge();
         syncRepeatFlaggedButton();
+        applyDesktopModeUI();
         applyModeUI();
       } catch (e) {
         console.error("Fehler beim Laden des Zustands:", e);
@@ -6657,7 +6793,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -6669,6 +6805,10 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     longGenerateQuestionsEnabledCheckbox.addEventListener("change", applyModeUI);
+    forceDesktopModeCheckbox.addEventListener("change", () => {
+      applyDesktopModeUI();
+      saveState();
+    });
 
     hideQuestionAudioButtonCheckbox.addEventListener("change", () => {
       if (hideQuestionAudioButtonCheckbox.checked && recordingQuestionId) {
