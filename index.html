@@ -3502,7 +3502,7 @@ Vorgaben:
         "#notetype:Einfach",
         `#deck:${deckName}`,
         "#tags column:3",
-        `#columns:${["Frage", "Antwort", "Tags"].join("\t")}`
+        `#columns:${["Vorderseite", "Rückseite", "Tags"].join("\t")}`
       ];
       const rows = questions.map((q, idx) => {
         const typeLabel = q.questionType === "integration" ? "Integrationsfrage" : "Frage";
@@ -6701,7 +6701,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         "#notetype:Einfach",
         `#deck:${deckName}`,
         "#tags column:3",
-        `#columns:${["Frage", "Antwort", "Tags"].join("\t")}`
+        `#columns:${["Vorderseite", "Rückseite", "Tags"].join("\t")}`
       ];
 
       const blob = new Blob([[...header, ...rows].join("\n")], { type: "text/plain;charset=utf-8" });
