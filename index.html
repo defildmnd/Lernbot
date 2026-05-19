@@ -24,6 +24,7 @@
       --radius:18px;
       --timer-paused:#9ca3af;
       --timer-running:#16a34a;
+      --timer-break:#2563eb;
       --timer-overtime-a:#f59e0b;
       --timer-overtime-b:#22c55e;
       --mode-t:#f97316;
@@ -60,6 +61,7 @@
       --shadow:0 14px 40px rgba(0, 0, 0, 0.3);
       --timer-paused:#6b7280;
       --timer-running:#16a34a;
+      --timer-break:#2563eb;
       --timer-overtime-a:#f59e0b;
       --timer-overtime-b:#22c55e;
       --mode-t:#fb923c;
@@ -316,6 +318,7 @@
     .session-delete-confirm button{ width:auto; min-width:70px; }
     .pomodoro-btn.paused{ background:var(--timer-paused); color:#fff; }
     .pomodoro-btn.running{ background:var(--timer-running); color:#fff; }
+    .pomodoro-btn.break{ background:var(--timer-break); color:#fff; }
     .pomodoro-btn.overtime{ background:var(--timer-overtime-a); color:#fff; animation:pomodoroBlink 1s steps(1, end) infinite; }
     .mode-section{ display:block; }
     .mode-section.hidden{ display:none !important; }
@@ -1322,6 +1325,9 @@
                   <label for="pomodoroOvertimeMinutes">Pomodoro Überziehungszeit (Minuten)</label>
                   <input id="pomodoroOvertimeMinutes" type="number" min="1" max="120" step="1" value="10" />
                 </div>
+                  <label for="pomodoroBreakMinutes">Pomodoro Pausendauer (Minuten)</label>
+                  <input id="pomodoroBreakMinutes" type="number" min="1" max="120" step="1" value="10" />
+                </div>
               </div>
 
               <div class="inline-checks">
@@ -1332,6 +1338,7 @@
                 <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
+                <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
                 <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
                 <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
@@ -1969,6 +1976,7 @@ Vorgaben:
     const speedInput = document.getElementById("speed");
     const pomodoroMinutesInput = document.getElementById("pomodoroMinutes");
     const pomodoroOvertimeMinutesInput = document.getElementById("pomodoroOvertimeMinutes");
+    const pomodoroBreakMinutesInput = document.getElementById("pomodoroBreakMinutes");
     const questionCountInput = document.getElementById("questionCount");
     const textInput = document.getElementById("text");
 
@@ -1979,6 +1987,7 @@ Vorgaben:
     const generateExplanationsCheckbox = document.getElementById("generateExplanations");
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
+    const hideKreuzenBlockAnkiButtonCheckbox = document.getElementById("hideKreuzenBlockAnkiButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
     const autoFlagLowScoreCheckbox = document.getElementById("autoFlagLowScore");
     const autoUnflagHighScoreCheckbox = document.getElementById("autoUnflagHighScore");
@@ -3265,6 +3274,7 @@ Vorgaben:
         speed: speedInput.value,
         pomodoroMinutes: pomodoroMinutesInput.value,
         pomodoroOvertimeMinutes: pomodoroOvertimeMinutesInput.value,
+        pomodoroBreakMinutes: pomodoroBreakMinutesInput.value,
         questionCount: questionCountInput.value,
         text: textInput.value,
         longAudioText: longAudioTextInput.value,
@@ -3284,6 +3294,7 @@ Vorgaben:
         generateExplanations: generateExplanationsCheckbox.checked,
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
+        hideKreuzenBlockAnkiButton: hideKreuzenBlockAnkiButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
         autoFlagLowScore: autoFlagLowScoreCheckbox.checked,
         autoUnflagHighScore: autoUnflagHighScoreCheckbox.checked,
@@ -3352,6 +3363,7 @@ Vorgaben:
         speedInput.value = data.speed || "1.0";
         pomodoroMinutesInput.value = data.pomodoroMinutes || "50";
         pomodoroOvertimeMinutesInput.value = data.pomodoroOvertimeMinutes || "10";
+        pomodoroBreakMinutesInput.value = data.pomodoroBreakMinutes || "10";
         questionCountInput.value = data.questionCount || "";
         textInput.value = data.text || "";
         longAudioTextInput.value = data.longAudioText || "";
@@ -3372,6 +3384,7 @@ Vorgaben:
         generateExplanationsCheckbox.checked = data.generateExplanations === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
+        hideKreuzenBlockAnkiButtonCheckbox.checked = data.hideKreuzenBlockAnkiButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
         autoFlagLowScoreCheckbox.checked = data.autoFlagLowScore === true;
         autoUnflagHighScoreCheckbox.checked = data.autoUnflagHighScore === true;
@@ -3486,6 +3499,15 @@ Vorgaben:
         .trim();
     }
 
+    function ankiHtmlSection(title, value) {
+      return `
+        <div style="margin:0 0 14px 0;">
+          <div style="font-weight:800; margin-bottom:4px;">${escapeHtml(title)}</div>
+          <div>${escapeHtml(ankiPlainField(value || "—"))}</div>
+        </div>
+      `.replace(/\s+/g, " ").trim();
+    }
+
     function exportQuestionsToAnki() {
       const questions = appState.questions.filter(q => String(q.question || "").trim());
       if (!questions.length) {
@@ -3498,7 +3520,7 @@ Vorgaben:
       const deckName = sanitizeFileName(sessionName).replace(/_/g, " ");
       const header = [
         "#separator:tab",
-        "#html:false",
+        "#html:true",
         "#notetype:Einfach",
         `#deck:${deckName}`,
         "#tags column:3",
@@ -3506,13 +3528,19 @@ Vorgaben:
       ];
       const rows = questions.map((q, idx) => {
         const typeLabel = q.questionType === "integration" ? "Integrationsfrage" : "Frage";
-        const front = `${typeLabel} ${idx + 1}: ${ankiPlainField(q.question)}`;
-        const answerParts = [];
-        if (q.expectedAnswer) answerParts.push(`Antwort: ${ankiPlainField(q.expectedAnswer)}`);
-        else if (q.answer) answerParts.push(`Antwort: ${ankiPlainField(q.answer)}`);
-        else answerParts.push("Antwort: —");
-        if (q.explanation) answerParts.push(`Zusatzinfo: ${ankiPlainField(q.explanation)}`);
-        const back = answerParts.join(" | ");
+        const front = `
+          <div style="text-align:left; line-height:1.35;">
+            <div style="font-size:.82em; font-weight:800; opacity:.72; margin-bottom:8px;">${escapeHtml(`${typeLabel} ${idx + 1}`)}</div>
+            <div>${escapeHtml(ankiPlainField(q.question))}</div>
+          </div>
+        `.replace(/\s+/g, " ").trim();
+        const answerText = q.expectedAnswer || q.answer || "—";
+        const back = `
+          <div style="text-align:left; line-height:1.45;">
+            ${ankiHtmlSection("Antwort", answerText)}
+            ${q.explanation ? ankiHtmlSection("Zusatzinfo", q.explanation) : ""}
+          </div>
+        `.replace(/\s+/g, " ").trim();
         const tags = q.questionType === "integration" ? "Lernbot Integration" : "Lernbot";
         return [front, back, tags].join("\t");
       });
@@ -4707,6 +4735,11 @@ Zusatzregel zur Nutzereingabe:
       return clamp(Number.isFinite(minutes) ? Math.round(minutes) : 10, 1, 120) * 60;
     }
 
+    function getPomodoroBreakSeconds() {
+      const minutes = Number(pomodoroBreakMinutesInput.value);
+      return clamp(Number.isFinite(minutes) ? Math.round(minutes) : 10, 1, 120) * 60;
+    }
+
     function formatPomodoroTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
@@ -4717,7 +4750,7 @@ Zusatzregel zur Nutzereingabe:
     }
 
     function renderPomodoro() {
-      pomodoroBtn.classList.remove("paused", "running", "overtime");
+      pomodoroBtn.classList.remove("paused", "running", "break", "overtime");
       pomodoroBtn.classList.add(pomodoroState);
       pomodoroBtn.textContent = formatPomodoroTime(pomodoroSeconds);
     }
@@ -4747,6 +4780,12 @@ Zusatzregel zur Nutzereingabe:
           pomodoroState = "overtime";
           pomodoroOvertimeStartedAt = now;
         }
+      } else if (pomodoroState === "break") {
+        pomodoroSeconds = Math.max(0, Math.ceil((pomodoroEndsAt - now) / 1000));
+        if (pomodoroSeconds === 0) {
+          pomodoroState = "overtime";
+          pomodoroOvertimeStartedAt = now;
+        }
       } else if (pomodoroState === "overtime") {
         pomodoroSeconds = Math.floor((now - pomodoroOvertimeStartedAt) / 1000);
         if (pomodoroSeconds >= getPomodoroOvertimeLimitSeconds()) {
@@ -4766,6 +4805,27 @@ Zusatzregel zur Nutzereingabe:
       pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
+    }
+
+    function startPomodoroBreak() {
+      stopPomodoroInterval();
+      pomodoroState = "break";
+      pomodoroSeconds = getPomodoroBreakSeconds();
+      pomodoroStartedAt = Date.now();
+      pomodoroEndsAt = pomodoroStartedAt + (pomodoroSeconds * 1000);
+      pomodoroOvertimeStartedAt = 0;
+      renderPomodoro();
+      pomodoroInterval = setInterval(tickPomodoro, 1000);
+    }
+
+    function handlePomodoroClick() {
+      if (pomodoroState === "paused") {
+        startPomodoro();
+      } else if (pomodoroState === "running") {
+        startPomodoroBreak();
+      } else {
+        resetPomodoro();
+      }
     }
 
     async function fetchJsonChat({systemPrompt, userPrompt, task = ""}) {
@@ -6426,6 +6486,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
 
       emptyErrorBlocks.classList.add("hidden");
+      const showBlockAnkiButton = !hideKreuzenBlockAnkiButtonCheckbox.checked;
 
       appState.errorBlocks.forEach((block, idx) => {
         const levelClass = String(block.fehlerart || "L1").toLowerCase();
@@ -6443,7 +6504,7 @@ Analysiere die Eingabe und liefere nur das JSON.
               <button class="ghost" type="button" data-toggle-error="${block.id}">
                 ${block.open === false ? "Öffnen" : "Einklappen"}
               </button>
-              <button class="ghost" type="button" data-anki-error="${block.id}">Anki</button>
+              ${showBlockAnkiButton ? `<button class="ghost" type="button" data-anki-error="${block.id}">Anki</button>` : ""}
               <button class="blue" type="button" data-edit-error="${block.id}">✎</button>
               <button class="danger" type="button" data-delete-error="${block.id}">Löschen</button>
             </div>
@@ -6669,22 +6730,15 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function buildKreuzenAnkiRows(blocks) {
-      const section = (title, value) => `
-        <div style="margin:0 0 14px 0;">
-          <div style="font-weight:800; margin-bottom:4px;">${escapeHtml(title)}</div>
-          <div>${escapeHtml(ankiPlainField(value || "—"))}</div>
-        </div>
-      `.replace(/\s+/g, " ").trim();
-
       return blocks
         .filter(block => String(block?.frage || "").trim())
         .map((block, index) => {
           const front = escapeHtml(`Frage ${index + 1}: ${ankiPlainField(block.frage)}`);
           const back = `
             <div style="text-align:left; line-height:1.45;">
-              ${section("Fehlerart", fehlerartLabel(block.fehlerart || "L1"))}
-              ${section("Konzept erklärt", block.konzept_erklaert || "—")}
-              ${section("Merksatz", block.merksatz || "—")}
+              ${ankiHtmlSection("Fehlerart", fehlerartLabel(block.fehlerart || "L1"))}
+              ${ankiHtmlSection("Konzept erklärt", block.konzept_erklaert || "—")}
+              ${ankiHtmlSection("Merksatz", block.merksatz || "—")}
             </div>
           `.replace(/\s+/g, " ").trim();
           const tags = ["Lernbot", "Kreuzen", String(block.fehlerart || "L1").toUpperCase()].join(" ");
@@ -6901,13 +6955,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveState();
     });
 
-    pomodoroBtn.addEventListener("click", () => {
-      if (pomodoroState === "paused") {
-        startPomodoro();
-      } else {
-        resetPomodoro();
-      }
-    });
+    pomodoroBtn.addEventListener("click", handlePomodoroClick);
 
     modeToggleBtn.addEventListener("click", () => {
       appState.mode = appState.mode === "T" ? "K" : (appState.mode === "K" ? "L" : "T");
@@ -7048,12 +7096,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
 
-    [pomodoroMinutesInput, pomodoroOvertimeMinutesInput].forEach(input => {
+    [pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput].forEach(input => {
       input.addEventListener("change", () => {
         if (pomodoroState === "paused") resetPomodoro();
       });
@@ -7071,6 +7119,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
       renderQuestions();
     });
+    hideKreuzenBlockAnkiButtonCheckbox.addEventListener("change", renderErrorBlocks);
 
     longHighlightCurrentTextCheckbox.addEventListener("change", () => {
       refreshLongAudioPlaybackUI(true);
