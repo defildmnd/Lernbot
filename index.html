@@ -79,7 +79,7 @@
     }
 
     *{ box-sizing:border-box; }
-    html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family:Inter, Arial, sans-serif; overflow-x:hidden; }
+    html,body{ margin:0; padding:0; min-height:100%; background:var(--bg); color:var(--text); font-family:Inter, Arial, sans-serif; overflow-x:hidden; }
     body{ min-width:100%; }
     .app{ width:100%; max-width:1500px; margin:0 auto; padding:82px 10px 20px; }
     .row{ display:flex; flex-direction:column; gap:16px; align-items:stretch; }
@@ -132,6 +132,15 @@
     .meta{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; color:var(--muted); font-size:12px; }
     .inline-checks{ display:flex; flex-direction:column; gap:10px; font-size:13px; margin-top:8px; }
     .inline-checks label{ display:flex; align-items:center; gap:8px; margin:0; font-weight:500; }
+    .inline-select{
+      display:grid;
+      grid-template-columns:minmax(130px, auto) minmax(130px, 1fr);
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+    }
+    .inline-select span{ font-weight:700; }
+    .inline-select select{ padding:8px 10px; border-radius:12px; font-size:13px; }
     audio{ width:100%; margin-top:12px; }
     .download-link{ display:inline-block; margin-top:10px; text-decoration:none; font-weight:700; color:var(--text); font-size:13px; }
     .note{ font-size:11px; color:var(--muted); line-height:1.6; }
@@ -251,17 +260,23 @@
       z-index:1500;
       width:min(560px, 100vw);
       height:100vh;
+      height:100svh;
+      height:100dvh;
       background:linear-gradient(145deg, var(--card), var(--session-soft-2));
       border-right:1px solid var(--line);
       box-shadow:26px 0 70px rgba(15,23,42,.18);
       transform:translateX(-104%);
-      transition:transform .28s cubic-bezier(.2,.75,.2,1);
+      transition:transform .28s cubic-bezier(.2,.75,.2,1), visibility 0s linear .28s;
       padding:74px 16px 18px;
       overflow:auto;
+      visibility:hidden;
+      pointer-events:none;
+      will-change:transform;
+      backface-visibility:hidden;
     }
     [data-theme="dark"] .session-drawer{ box-shadow:26px 0 70px rgba(0,0,0,.42); }
     body.sessions-open .session-backdrop{ opacity:1; pointer-events:auto; }
-    body.sessions-open .session-drawer{ transform:translateX(0); }
+    body.sessions-open .session-drawer{ transform:translateX(0); visibility:visible; pointer-events:auto; transition-delay:0s; }
     .session-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
     .session-head h2{ margin:0; font-size:22px; }
     .session-add-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--session-accent); color:#fff; font-size:22px; line-height:1; box-shadow:0 12px 30px rgba(15,118,110,.18); }
@@ -345,31 +360,40 @@
     .landing-page{
       position:relative;
       min-height:100vh;
+      min-height:100svh;
+      min-height:100dvh;
       overflow:hidden;
       background:#f7fbff;
       color:#102033;
       isolation:isolate;
+      z-index:0;
+      transform:translateZ(0);
     }
     .landing-canvas{
       position:absolute;
       inset:0;
       width:100%;
       height:100%;
-      z-index:-3;
+      z-index:0;
       background:#f7fbff;
+      display:block;
+      pointer-events:none;
+      transform:translateZ(0);
+      backface-visibility:hidden;
     }
     .landing-shade{
       position:absolute;
       inset:0;
-      z-index:-2;
+      z-index:1;
       background:linear-gradient(90deg, rgba(247,251,255,.96) 0%, rgba(247,251,255,.86) 48%, rgba(247,251,255,.52) 100%);
+      pointer-events:none;
     }
     .landing-page::after{
       content:"";
       position:absolute;
       inset:auto 0 0 0;
       height:32%;
-      z-index:-1;
+      z-index:1;
       background:linear-gradient(180deg, rgba(247,251,255,0), #f7fbff 88%);
       pointer-events:none;
     }
@@ -725,6 +749,8 @@
       .app{
         max-width:none;
         height:100vh;
+        height:100svh;
+        height:100dvh;
         padding:78px 28px 22px 76px;
         transition:padding-left .28s cubic-bezier(.2,.75,.2,1);
       }
@@ -744,7 +770,7 @@
         padding:74px 14px 18px;
         transform:translateX(calc(-100% + 10px));
         box-shadow:16px 0 40px rgba(15,23,42,.12);
-        transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease;
+        transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease, visibility 0s linear .28s;
       }
       [data-theme="dark"] .session-drawer{ box-shadow:16px 0 40px rgba(0,0,0,.34); }
       body.sessions-open .session-drawer{ transform:translateX(0); }
@@ -761,6 +787,8 @@
 
       .mode-section{
         height:calc(100vh - 100px);
+        height:calc(100svh - 100px);
+        height:calc(100dvh - 100px);
         min-height:0;
       }
       .row,
@@ -866,6 +894,10 @@
       min-width:1280px;
       min-height:100vh;
       height:100vh;
+      min-height:100svh;
+      height:100svh;
+      min-height:100dvh;
+      height:100dvh;
       padding:78px 28px 22px 76px;
       transition:padding-left .28s cubic-bezier(.2,.75,.2,1);
     }
@@ -885,7 +917,7 @@
       padding:74px 14px 18px;
       transform:translateX(calc(-100% + 10px));
       box-shadow:16px 0 40px rgba(15,23,42,.12);
-      transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease;
+      transition:transform .28s cubic-bezier(.2,.75,.2,1), box-shadow .28s ease, visibility 0s linear .28s;
     }
     body.force-desktop-mode.sessions-open:not(.logged-out) .session-drawer{ transform:translateX(0); }
     body.force-desktop-mode:not(.logged-out) .session-card{
@@ -896,6 +928,8 @@
     }
     body.force-desktop-mode:not(.logged-out) .mode-section{
       height:calc(100vh - 100px);
+      height:calc(100svh - 100px);
+      height:calc(100dvh - 100px);
       min-height:0;
     }
     body.force-desktop-mode:not(.logged-out) .row,
@@ -1295,7 +1329,7 @@
                 <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
                 <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
                 <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
-                <label><input type="checkbox" id="generateExplanations" /> Erklärungen generieren</label>
+                <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
@@ -1303,7 +1337,15 @@
                 <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
                 <label><input type="checkbox" id="oralExamMode" /> Oral examination mode</label>
                 <label><input type="checkbox" id="autoModelSwitch" /> Automatischer Modell Switch</label>
-                <label><input type="checkbox" id="enablePlausibilityCheck" checked /> Zweitmeinung bei Zusatzinfos</label>
+                <label><input type="checkbox" id="usePremiumModels" checked /> Premium-Modelle verwenden</label>
+                <div class="inline-select">
+                  <span>Zweitmeinung</span>
+                  <select id="secondOpinionSensitivity">
+                    <option value="off">Aus</option>
+                    <option value="medium" selected>Mittel</option>
+                    <option value="high">Hoch</option>
+                  </select>
+                </div>
                 <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
@@ -1380,7 +1422,9 @@
 
           <div class="btn-row">
             <button id="analyzeKreuzenBtn" class="turquoise" type="button">Senden</button>
+            <button id="generateKreuzenQuestionsBtn" class="blue" type="button">Fragen generieren</button>
             <button id="addManualBtn" class="blue" type="button">Hinzufügen</button>
+            <button id="exportKreuzenAnkiBtn" class="ghost" type="button">Anki Export</button>
             <button id="exportKreuzenPdfBtn" class="secondary" type="button">PDF Export</button>
             <button id="exportKreuzenTxtBtn" class="secondary" type="button">TXT Export</button>
             <button id="clearKreuzenBtn" class="danger" type="button">Clear</button>
@@ -1940,11 +1984,12 @@ Vorgaben:
     const autoUnflagHighScoreCheckbox = document.getElementById("autoUnflagHighScore");
     const oralExamModeCheckbox = document.getElementById("oralExamMode");
     const autoModelSwitchCheckbox = document.getElementById("autoModelSwitch");
-    const enablePlausibilityCheckCheckbox = document.getElementById("enablePlausibilityCheck");
+    const secondOpinionSensitivityInput = document.getElementById("secondOpinionSensitivity");
     const audioFeedbackCheckbox = document.getElementById("audioFeedback");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const ignoreSpellingErrorsCheckbox = document.getElementById("ignoreSpellingErrors");
     const forceDesktopModeCheckbox = document.getElementById("forceDesktopMode");
+    const usePremiumModelsCheckbox = document.getElementById("usePremiumModels");
     const permanentSaveEnabled = document.getElementById("permanentSaveEnabled");
     const permanentSaveBtn = document.getElementById("permanentSaveBtn");
     const toggleAdvancedBtn = document.getElementById("toggleAdvancedBtn");
@@ -1985,8 +2030,10 @@ Vorgaben:
 
     const kreuzenInput = document.getElementById("kreuzenInput");
     const analyzeKreuzenBtn = document.getElementById("analyzeKreuzenBtn");
+    const generateKreuzenQuestionsBtn = document.getElementById("generateKreuzenQuestionsBtn");
     const addManualBtn = document.getElementById("addManualBtn");
     const openManualBtnTop = document.getElementById("openManualBtnTop");
+    const exportKreuzenAnkiBtn = document.getElementById("exportKreuzenAnkiBtn");
     const exportKreuzenPdfBtn = document.getElementById("exportKreuzenPdfBtn");
     const exportKreuzenTxtBtn = document.getElementById("exportKreuzenTxtBtn");
     const clearKreuzenBtn = document.getElementById("clearKreuzenBtn");
@@ -2489,17 +2536,40 @@ Vorgaben:
       return normalizeChatModel(chatModelInput.value);
     }
 
+    function normalizeSecondOpinionSensitivity(value) {
+      const normalized = String(value || "").trim();
+      if (["off", "medium", "high"].includes(normalized)) return normalized;
+      return "medium";
+    }
+
+    function getSecondOpinionSensitivity() {
+      return normalizeSecondOpinionSensitivity(secondOpinionSensitivityInput.value);
+    }
+
     function getAutoChatModelForTask(task) {
       if (!autoModelSwitchCheckbox.checked) return getCurrentChatModel();
+      if (usePremiumModelsCheckbox.checked) {
+        const premiumMap = {
+          longEditorial: GPT54_MINI_MODEL,
+          kreuzen: GPT54_MODEL,
+          questions: GPT54_MINI_MODEL,
+          integrationQuestions: GPT54_MODEL,
+          expectedAnswers: GPT54_MODEL,
+          explanations: GPT54_MODEL,
+          evaluation: generateExpectedAnswersCheckbox.checked ? GPT54_MINI_MODEL : GPT54_MODEL,
+          plausibilityCheck: GPT54_MINI_MODEL
+        };
+        return normalizeChatModel(premiumMap[task] || GPT54_MINI_MODEL);
+      }
       const map = {
-        longEditorial: GPT54_MINI_MODEL,
-        kreuzen: GPT54_MODEL,
-        questions: GPT54_MINI_MODEL,
-        integrationQuestions: GPT54_MINI_MODEL,
-        expectedAnswers: GPT54_MODEL,
-        explanations: GPT54_MODEL,
-        evaluation: generateExpectedAnswersCheckbox.checked ? DEFAULT_CHAT_MODEL : GPT54_MODEL,
-        plausibilityCheck: GPT54_MINI_MODEL
+        longEditorial: DEFAULT_CHAT_MODEL,
+        kreuzen: DEFAULT_CHAT_MODEL,
+        questions: DEFAULT_CHAT_MODEL,
+        integrationQuestions: DEFAULT_CHAT_MODEL,
+        expectedAnswers: DEFAULT_CHAT_MODEL,
+        explanations: DEFAULT_CHAT_MODEL,
+        evaluation: DEFAULT_CHAT_MODEL,
+        plausibilityCheck: DEFAULT_CHAT_MODEL
       };
       return normalizeChatModel(map[task] || getCurrentChatModel());
     }
@@ -3219,7 +3289,9 @@ Vorgaben:
         autoUnflagHighScore: autoUnflagHighScoreCheckbox.checked,
         oralExamMode: oralExamModeCheckbox.checked,
         autoModelSwitch: autoModelSwitchCheckbox.checked,
-        enablePlausibilityCheck: enablePlausibilityCheckCheckbox.checked,
+        usePremiumModels: usePremiumModelsCheckbox.checked,
+        secondOpinionSensitivity: getSecondOpinionSensitivity(),
+        enablePlausibilityCheck: getSecondOpinionSensitivity() !== "off",
         audioFeedback: audioFeedbackCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         ignoreSpellingErrors: ignoreSpellingErrorsCheckbox.checked,
@@ -3305,7 +3377,10 @@ Vorgaben:
         autoUnflagHighScoreCheckbox.checked = data.autoUnflagHighScore === true;
         oralExamModeCheckbox.checked = data.oralExamMode === true;
         autoModelSwitchCheckbox.checked = data.autoModelSwitch === true;
-        enablePlausibilityCheckCheckbox.checked = data.enablePlausibilityCheck !== false;
+        usePremiumModelsCheckbox.checked = data.usePremiumModels !== false;
+        secondOpinionSensitivityInput.value = typeof data.secondOpinionSensitivity === "string"
+          ? normalizeSecondOpinionSensitivity(data.secondOpinionSensitivity)
+          : (data.enablePlausibilityCheck === false ? "off" : "medium");
         audioFeedbackCheckbox.checked = data.audioFeedback === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         ignoreSpellingErrorsCheckbox.checked = data.ignoreSpellingErrors === true;
@@ -3402,11 +3477,13 @@ Vorgaben:
         .slice(0, 80) || "Lernsession";
     }
 
-    function ankiField(value) {
+    function ankiPlainField(value) {
       return String(value || "")
         .replace(/\r\n?/g, "\n")
         .replace(/\t/g, " ")
-        .replace(/\n/g, "<br>");
+        .replace(/\n+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
     function exportQuestionsToAnki() {
@@ -3418,21 +3495,31 @@ Vorgaben:
 
       const activeSession = learningSessions.find(session => session.id === activeLearningSessionId);
       const sessionName = activeSession?.name || "Lernsession";
+      const deckName = sanitizeFileName(sessionName).replace(/_/g, " ");
+      const header = [
+        "#separator:tab",
+        "#html:false",
+        "#notetype:Einfach",
+        `#deck:${deckName}`,
+        "#tags column:3",
+        `#columns:${["Frage", "Antwort", "Tags"].join("\t")}`
+      ];
       const rows = questions.map((q, idx) => {
         const typeLabel = q.questionType === "integration" ? "Integrationsfrage" : "Frage";
-        const front = `<b>${typeLabel} ${idx + 1}</b><br>${ankiField(q.question)}`;
-        const expected = q.expectedAnswer ? ankiField(q.expectedAnswer) : "—";
-        const explanation = q.explanation
-          ? `<hr><div style="color:#0f766e;"><b>Erklärung</b><br>${ankiField(q.explanation)}</div>`
-          : "";
-        const back = `<b>Erwartete Antwort</b><br>${expected}${explanation}`;
+        const front = `${typeLabel} ${idx + 1}: ${ankiPlainField(q.question)}`;
+        const answerParts = [];
+        if (q.expectedAnswer) answerParts.push(`Antwort: ${ankiPlainField(q.expectedAnswer)}`);
+        else if (q.answer) answerParts.push(`Antwort: ${ankiPlainField(q.answer)}`);
+        else answerParts.push("Antwort: —");
+        if (q.explanation) answerParts.push(`Zusatzinfo: ${ankiPlainField(q.explanation)}`);
+        const back = answerParts.join(" | ");
         const tags = q.questionType === "integration" ? "Lernbot Integration" : "Lernbot";
         return [front, back, tags].join("\t");
       });
 
-      const blob = new Blob([rows.join("\n")], { type: "text/tab-separated-values;charset=utf-8" });
+      const blob = new Blob([[...header, ...rows].join("\n")], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      triggerDownload(url, `${sanitizeFileName(sessionName)}_anki.tsv`);
+      triggerDownload(url, `${sanitizeFileName(sessionName)}_anki.txt`);
       setTimeout(() => URL.revokeObjectURL(url), 1500);
       setStatus(`Anki Export erstellt: ${questions.length} Karten.`, "ok");
     }
@@ -4959,16 +5046,20 @@ Erstelle zu jeder Frage den Erwartungshorizont.
 
       const systemPrompt = `
 Du bist ein medizinischer Erklär-Coach.
-Erstelle zu jeder Frage eine kurze, verständliche Erklärung der Antwort auf Basis des Originaltexts und des Erwartungshorizonts.
+Erstelle zu jeder Frage kurze, verständliche Zusatzinfos, die den Erwartungshorizont erklären und fachlich einordnen.
 Regeln:
-- Nutze das Modellwissen nur, um die Erklärung verständlich zu machen; widersprich nicht dem Originaltext.
-- Die Erklärung ist nur Lernhilfe und darf nicht als Bewertungsgrundlage formuliert werden.
+- Gib NICHT einfach den Erwartungshorizont wieder und paraphrasiere ihn nicht Punkt für Punkt.
+- Wiederhole keine Formulierungen aus dem Erwartungshorizont, außer ein exakter Fachbegriff ist unvermeidbar.
+- Liefere ergänzendes Verständnis: Warum ist das so? Welcher Mechanismus steckt dahinter? Welche typische Verwechslung, klinische Bedeutung oder Eselsbrücke hilft?
+- Nutze den Originaltext als fachliche Grenze. Nutze Modellwissen nur zur verständlichen Einordnung; widersprich nicht dem Originaltext.
+- Die Zusatzinfo ist nur Lernhilfe und darf nicht als Bewertungsgrundlage formuliert werden.
 - 2 bis 5 klare Sätze pro Frage.
+- Wenn der Erwartungshorizont schon selbsterklärend ist, ergänze Kontext, Mechanismus oder Abgrenzung statt ihn umzuschreiben.
 - Keine neuen Prüfungsfragen, kein JSON außerhalb des Schemas.
 Gib ausschließlich valides JSON zurück:
 {
   "explanations": [
-    "Erklärung zu Frage 1"
+    "Erklärende Zusatzinfo zu Frage 1"
   ]
 }
       `.trim();
@@ -4980,7 +5071,7 @@ Originaltext:
 Fragen und Erwartungshorizonte:
 ${numberedQuestions}
 
-Erstelle die Erklärungen.
+Erstelle die Zusatzinfos. Prüfe vor der Ausgabe still, dass sie nicht nur den Erwartungshorizont wiederholen.
       `.trim();
 
       const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "explanations" });
@@ -4989,7 +5080,7 @@ Erstelle die Erklärungen.
         ? parsed.explanations.map(item => String(item || "").trim())
         : [];
       if (!explanations.length) {
-        throw new Error("Erklärungen konnten nicht als JSON gelesen werden.");
+        throw new Error("Zusatzinfos konnten nicht als JSON gelesen werden.");
       }
 
       return questions.map((question, idx) => normalizeQuestionItem({
@@ -5070,8 +5161,12 @@ Erzeuge daraus Integrationsfragen.
       }, idx)).filter(Boolean);
     }
 
-    async function generateQuestions() {
-      const text = textInput.value.trim();
+    async function generateQuestions(options = {}) {
+      const text = String(options.text ?? textInput.value).trim();
+      const replaceExisting = options.replaceExisting === true;
+      const sourceLabel = options.sourceLabel || "Text";
+      const triggerButton = options.triggerButton || generateQuestionsBtn;
+      const buttonsToDisable = Array.from(new Set([generateQuestionsBtn, triggerButton].filter(Boolean)));
       const chatModel = getAutoChatModelForTask("questions");
 
       if (!getActiveChatApiKey(chatModel)) {
@@ -5096,8 +5191,8 @@ Erzeuge daraus Integrationsfragen.
       const totalSteps = 1 + Number(withExpectedAnswers) + Number(withExplanations) + Number(withIntegrationQuestions);
       let step = 1;
 
-      generateQuestionsBtn.disabled = true;
-      setStatus(`Schritt ${step}/${totalSteps}: Fragen werden generiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel(chatModel)}`, "info");
+      buttonsToDisable.forEach(btn => { btn.disabled = true; });
+      setStatus(`Schritt ${step}/${totalSteps}: Fragen werden aus ${sourceLabel} generiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel(chatModel)}`, "info");
 
       try {
         const rawQuestions = await generateBaseQuestionsOnly(text, count);
@@ -5117,7 +5212,7 @@ Erzeuge daraus Integrationsfragen.
 
         if (withExplanations) {
           step += 1;
-          setStatus(`Schritt ${step}/${totalSteps}: Erklärungen werden generiert ...`, "info");
+          setStatus(`Schritt ${step}/${totalSteps}: Zusatzinfos werden generiert ...`, "info");
           if (!newQuestions.some(q => q.expectedAnswer)) {
             newQuestions = await generateExpectedAnswersForQuestions(newQuestions, text);
           }
@@ -5134,10 +5229,12 @@ Erzeuge daraus Integrationsfragen.
           }
         }
 
-        const persistentQuestions = appState.questions
-          .filter(q => String(q.expectedAnswer || "").trim())
-          .map((item, idx) => normalizeQuestionItem(item, idx))
-          .filter(Boolean);
+        const persistentQuestions = replaceExisting
+          ? []
+          : appState.questions
+            .filter(q => String(q.expectedAnswer || "").trim())
+            .map((item, idx) => normalizeQuestionItem(item, idx))
+            .filter(Boolean);
 
         appState.questions = [...persistentQuestions, ...newQuestions, ...integrationQuestions]
           .map((item, idx) => normalizeQuestionItem(item, idx))
@@ -5148,7 +5245,7 @@ Erzeuge daraus Integrationsfragen.
 
         const expectedCount = appState.questions.filter(q => q.expectedAnswer).length;
         setStatus(
-          `Fragen erfolgreich generiert: ${newQuestions.length}\nIntegrationsfragen: ${integrationQuestions.length}\nErwartungshorizonte: ${expectedCount}\nChat-Modell: ${chatModel}`,
+          `Fragen erfolgreich aus ${sourceLabel} generiert: ${newQuestions.length}\nIntegrationsfragen: ${integrationQuestions.length}\nErwartungshorizonte: ${expectedCount}\nChat-Modell: ${chatModel}`,
           "ok"
         );
         if (oralExamModeCheckbox.checked) {
@@ -5159,8 +5256,52 @@ Erzeuge daraus Integrationsfragen.
         console.error(err);
         setStatus("Fehler bei der Fragengenerierung: " + err.message, "error");
       } finally {
-        generateQuestionsBtn.disabled = false;
+        buttonsToDisable.forEach(btn => { btn.disabled = false; });
       }
+    }
+
+    function buildKreuzenQuestionSource() {
+      const blocks = appState.errorBlocks.filter(block => String(block?.frage || "").trim());
+      if (!blocks.length) return "";
+
+      const lines = [
+        "Quelle: Fehlerblöcke aus dem Kreuzen-Modus.",
+        "Auftrag für die Fragengenerierung: Nutze ausschließlich die folgenden Fehlerblöcke als Wissensbasis. Erzeuge Fragen, die Konzept, Fehlerart, Merksatz und typische Verwechslung aktiv abfragen.",
+        ""
+      ];
+
+      blocks.forEach((block, idx) => {
+        lines.push(`Fehlerblock ${idx + 1}`);
+        lines.push(`Frage: ${block.frage || "—"}`);
+        lines.push(`Fehlerart: ${fehlerartLabel(block.fehlerart || "L1")}`);
+        lines.push(`Konzept erklärt: ${block.konzept_erklaert || "—"}`);
+        lines.push(`Merksatz: ${block.merksatz || "—"}`);
+        if (block.sourceText) lines.push(`Originaleingabe: ${block.sourceText}`);
+        lines.push("");
+      });
+
+      return lines.join("\n").trim();
+    }
+
+    async function generateQuestionsFromKreuzenBlocks() {
+      const sourceText = buildKreuzenQuestionSource();
+      if (!sourceText) {
+        setKreuzenStatus("Es gibt keine Fehlerblöcke mit Frage für die Fragengenerierung.", "error");
+        return;
+      }
+
+      textInput.value = sourceText;
+      updateStats();
+      appState.mode = "T";
+      applyModeUI();
+      saveState();
+      setKreuzenStatus("Fehlerblöcke übernommen. Fragen werden im T-Modus generiert ...", "info");
+      await generateQuestions({
+        text: sourceText,
+        replaceExisting: true,
+        sourceLabel: "Fehlerblöcken",
+        triggerButton: generateKreuzenQuestionsBtn
+      });
     }
 
     function isSpeechInputSupported() {
@@ -5800,43 +5941,85 @@ Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsl
         const richtig = Array.isArray(parsed.richtig) ? parsed.richtig.slice(0, 4).map(String) : [];
         const falschFehlt = Array.isArray(parsed.falsch_fehlt) ? parsed.falsch_fehlt.slice(0, 4).map(String) : [];
         let plausibilityNote = "";
+        const secondOpinionSensitivity = getSecondOpinionSensitivity();
+        const shouldCheckAdditionalInfo = (
+          secondOpinionSensitivity !== "off" &&
+          useExpectedAnswer &&
+          originalText &&
+          goesBeyondExpected &&
+          needsPlausibilityCheck
+        );
+        const shouldAuditExtremeScore = (
+          secondOpinionSensitivity === "high" &&
+          (score >= 90 || score <= 20)
+        );
 
-        if (enablePlausibilityCheckCheckbox.checked && useExpectedAnswer && originalText && goesBeyondExpected && needsPlausibilityCheck) {
-          setStatus(`Zusatzinformationen werden geprüft ...\nModell: ${GPT54_MINI_MODEL}`, "info");
-          const plausibility = await checkAdditionalAnswerPlausibility({
-            question,
-            originalText,
-            expectedAnswer,
-            answer: question.answer,
-            extraClaims
-          });
-          score = clamp(score + plausibility.scoreAdjustment, 0, 100);
-          plausibilityNote = plausibility.statement;
+        if (shouldCheckAdditionalInfo || shouldAuditExtremeScore) {
+          const additionalInfoModel = getAutoChatModelForTask("plausibilityCheck");
+          const auditModel = GPT54_MINI_MODEL;
+          if (shouldCheckAdditionalInfo && shouldAuditExtremeScore) {
+            const modelLabel = additionalInfoModel === auditModel ? auditModel : `${additionalInfoModel} + ${auditModel}`;
+            setStatus(`Zweitmeinungen werden parallel geprüft ...\nModelle: ${modelLabel}`, "info");
+          } else if (shouldCheckAdditionalInfo) {
+            setStatus(`Zusatzinformationen werden geprüft ...\nModell: ${additionalInfoModel}`, "info");
+          } else {
+            setStatus(`Extreme Bewertung wird gegengeprüft ...\nModell: ${auditModel}`, "info");
+          }
 
-          if (plausibility.statement) {
-            const label = `Zusatzcheck (${plausibility.scoreAdjustment >= 0 ? "+" : ""}${plausibility.scoreAdjustment}%): ${plausibility.statement}`;
-            if (plausibility.plausible) {
-              richtig.push(label);
-            } else {
-              falschFehlt.push(label);
+          const secondOpinionChecks = [];
+          if (shouldCheckAdditionalInfo) {
+            secondOpinionChecks.push(
+              checkAdditionalAnswerPlausibility({
+                question,
+                originalText,
+                expectedAnswer,
+                answer: question.answer,
+                extraClaims
+              }).then(value => ({ type: "additionalInfo", value }))
+            );
+          }
+          if (shouldAuditExtremeScore) {
+            secondOpinionChecks.push(
+              auditExtremeEvaluation({
+                question,
+                originalText,
+                referenceLabel,
+                referenceText,
+                expectedAnswer,
+                evaluationGuide,
+                answer: question.answer,
+                initialScore: score,
+                richtig,
+                falschFehlt
+              }).then(value => ({ type: "extremeAudit", value }))
+            );
+          }
+
+          const secondOpinionResults = await Promise.allSettled(secondOpinionChecks);
+          if (evaluationGeneration !== actionCancelGeneration) return;
+          const rejectedCheck = secondOpinionResults.find(result => result.status === "rejected");
+          if (rejectedCheck) throw rejectedCheck.reason;
+
+          const fulfilledChecks = secondOpinionResults
+            .filter(result => result.status === "fulfilled")
+            .map(result => result.value);
+          const additionalInfoResult = fulfilledChecks.find(result => result.type === "additionalInfo")?.value;
+          const audit = fulfilledChecks.find(result => result.type === "extremeAudit")?.value;
+
+          if (additionalInfoResult) {
+            score = clamp(score + additionalInfoResult.scoreAdjustment, 0, 100);
+            plausibilityNote = additionalInfoResult.statement;
+
+            if (additionalInfoResult.statement) {
+              const label = `Zusatzcheck (${additionalInfoResult.scoreAdjustment >= 0 ? "+" : ""}${additionalInfoResult.scoreAdjustment}%): ${additionalInfoResult.statement}`;
+              if (additionalInfoResult.plausible) {
+                richtig.push(label);
+              } else {
+                falschFehlt.push(label);
+              }
             }
           }
-        }
 
-        if (enablePlausibilityCheckCheckbox.checked && (score >= 90 || score <= 20)) {
-          setStatus(`Extreme Bewertung wird gegengeprüft ...\nModell: ${GPT54_MINI_MODEL}`, "info");
-          const audit = await auditExtremeEvaluation({
-            question,
-            originalText,
-            referenceLabel,
-            referenceText,
-            expectedAnswer,
-            evaluationGuide,
-            answer: question.answer,
-            initialScore: score,
-            richtig,
-            falschFehlt
-          });
           if (audit) {
             score = audit.score;
             richtig.splice(0, richtig.length, ...audit.richtig);
@@ -6169,7 +6352,7 @@ Analysiere die Eingabe und liefere nur das JSON.
                 <div class="error-field-value">${escapeHtml(q.expectedAnswer)}</div>
                 ${hasExplanation ? `
                   <div class="feedback explanation" style="margin-top:10px;">
-                    <div class="feedback-title">Erklärung</div>
+                    <div class="feedback-title">Zusatzinfo</div>
                     <div class="error-field-value">${escapeHtml(q.explanation)}</div>
                   </div>
                 ` : ""}
@@ -6260,6 +6443,7 @@ Analysiere die Eingabe und liefere nur das JSON.
               <button class="ghost" type="button" data-toggle-error="${block.id}">
                 ${block.open === false ? "Öffnen" : "Einklappen"}
               </button>
+              <button class="ghost" type="button" data-anki-error="${block.id}">Anki</button>
               <button class="blue" type="button" data-edit-error="${block.id}">✎</button>
               <button class="danger" type="button" data-delete-error="${block.id}">Löschen</button>
             </div>
@@ -6303,6 +6487,10 @@ Analysiere die Eingabe und liefere nur das JSON.
 
       errorBlocksContainer.querySelectorAll("[data-edit-error]").forEach(btn => {
         btn.addEventListener("click", () => openEditModal(btn.dataset.editError));
+      });
+
+      errorBlocksContainer.querySelectorAll("[data-anki-error]").forEach(btn => {
+        btn.addEventListener("click", () => exportSingleErrorBlockToAnki(btn.dataset.ankiError));
       });
 
       errorBlocksContainer.querySelectorAll("[data-delete-error]").forEach(btn => {
@@ -6418,7 +6606,7 @@ Analysiere die Eingabe und liefere nur das JSON.
           lines.push(`Erwartungshorizont: ${q.expectedAnswer}`);
           if (q.explanation) {
             lines.push("");
-            lines.push(`Erklärung: ${q.explanation}`);
+            lines.push(`Zusatzinfo: ${q.explanation}`);
           }
         } else {
           lines.push("Erwartungshorizont: —");
@@ -6478,6 +6666,66 @@ Analysiere die Eingabe und liefere nur das JSON.
       setTimeout(() => URL.revokeObjectURL(url), 1500);
 
       setKreuzenStatus("TXT Export erstellt.", "ok");
+    }
+
+    function buildKreuzenAnkiRows(blocks) {
+      return blocks
+        .filter(block => String(block?.frage || "").trim())
+        .map((block, index) => {
+          const front = `Frage ${index + 1}: ${ankiPlainField(block.frage)}`;
+          const backParts = [
+            `Fehlerart: ${ankiPlainField(fehlerartLabel(block.fehlerart || "L1"))}`,
+            `Konzept erklärt: ${ankiPlainField(block.konzept_erklaert || "—")}`,
+            `Merksatz: ${ankiPlainField(block.merksatz || "—")}`
+          ];
+          if (block.sourceText) backParts.push(`Originaleingabe: ${ankiPlainField(block.sourceText)}`);
+          const back = backParts.join(" | ");
+          const tags = ["Lernbot", "Kreuzen", String(block.fehlerart || "L1").toUpperCase()].join(" ");
+          return [front, back, tags].join("\t");
+        });
+    }
+
+    function exportKreuzenBlocksToAnki(blocks, filenameSuffix = "kreuzen_anki") {
+      const rows = buildKreuzenAnkiRows(blocks);
+      if (!rows.length) {
+        setKreuzenStatus("Es gibt keine Fehlerblöcke mit Frage für Anki.", "error");
+        return;
+      }
+
+      const activeSession = learningSessions.find(session => session.id === activeLearningSessionId);
+      const sessionName = activeSession?.name || "Lernsession";
+      const deckName = `${sanitizeFileName(sessionName).replace(/_/g, " ")} Kreuzen`;
+      const header = [
+        "#separator:tab",
+        "#html:false",
+        "#notetype:Einfach",
+        `#deck:${deckName}`,
+        "#tags column:3",
+        `#columns:${["Frage", "Antwort", "Tags"].join("\t")}`
+      ];
+
+      const blob = new Blob([[...header, ...rows].join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, `${sanitizeFileName(sessionName)}_${filenameSuffix}.txt`);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setKreuzenStatus(`Anki Export erstellt: ${rows.length} Fehlerblock-Karte(n).`, "ok");
+    }
+
+    function exportKreuzenAnki() {
+      if (!appState.errorBlocks.length) {
+        setKreuzenStatus("Es gibt keine Fehlerblöcke für Anki.", "error");
+        return;
+      }
+      exportKreuzenBlocksToAnki(appState.errorBlocks);
+    }
+
+    function exportSingleErrorBlockToAnki(blockId) {
+      const block = appState.errorBlocks.find(item => item.id === blockId);
+      if (!block) {
+        setKreuzenStatus("Fehlerblock nicht gefunden.", "error");
+        return;
+      }
+      exportKreuzenBlocksToAnki([block], "kreuzen_block_anki");
     }
 
     function normalizeTextForPdf(value) {
@@ -6793,7 +7041,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, enablePlausibilityCheckCheckbox, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7030,6 +7278,10 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     addManualBtn.addEventListener("click", () => openEditModal());
     openManualBtnTop.addEventListener("click", () => openEditModal());
+    generateKreuzenQuestionsBtn.addEventListener("click", () => {
+      void generateQuestionsFromKreuzenBlocks();
+    });
+    exportKreuzenAnkiBtn.addEventListener("click", exportKreuzenAnki);
     exportKreuzenTxtBtn.addEventListener("click", exportKreuzenTxt);
     exportKreuzenPdfBtn.addEventListener("click", exportKreuzenPdf);
     clearKreuzenBtn.addEventListener("click", () => openModeClearConfirm("Kreuzen-Modus", clearKreuzenAll));
