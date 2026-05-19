@@ -6669,17 +6669,24 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function buildKreuzenAnkiRows(blocks) {
+      const section = (title, value) => `
+        <div style="margin:0 0 14px 0;">
+          <div style="font-weight:800; margin-bottom:4px;">${escapeHtml(title)}</div>
+          <div>${escapeHtml(ankiPlainField(value || "—"))}</div>
+        </div>
+      `.replace(/\s+/g, " ").trim();
+
       return blocks
         .filter(block => String(block?.frage || "").trim())
         .map((block, index) => {
-          const front = `Frage ${index + 1}: ${ankiPlainField(block.frage)}`;
-          const backParts = [
-            `Fehlerart: ${ankiPlainField(fehlerartLabel(block.fehlerart || "L1"))}`,
-            `Konzept erklärt: ${ankiPlainField(block.konzept_erklaert || "—")}`,
-            `Merksatz: ${ankiPlainField(block.merksatz || "—")}`
-          ];
-          if (block.sourceText) backParts.push(`Originaleingabe: ${ankiPlainField(block.sourceText)}`);
-          const back = backParts.join(" | ");
+          const front = escapeHtml(`Frage ${index + 1}: ${ankiPlainField(block.frage)}`);
+          const back = `
+            <div style="text-align:left; line-height:1.45;">
+              ${section("Fehlerart", fehlerartLabel(block.fehlerart || "L1"))}
+              ${section("Konzept erklärt", block.konzept_erklaert || "—")}
+              ${section("Merksatz", block.merksatz || "—")}
+            </div>
+          `.replace(/\s+/g, " ").trim();
           const tags = ["Lernbot", "Kreuzen", String(block.fehlerart || "L1").toUpperCase()].join(" ");
           return [front, back, tags].join("\t");
         });
@@ -6697,7 +6704,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       const deckName = `${sanitizeFileName(sessionName).replace(/_/g, " ")} Kreuzen`;
       const header = [
         "#separator:tab",
-        "#html:false",
+        "#html:true",
         "#notetype:Einfach",
         `#deck:${deckName}`,
         "#tags column:3",
