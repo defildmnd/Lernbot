@@ -2570,19 +2570,19 @@ Vorgaben:
           expectedAnswers: GPT54_MODEL,
           explanations: GPT54_MODEL,
           evaluation: generateExpectedAnswersCheckbox.checked ? GPT54_MINI_MODEL : GPT54_MODEL,
-          plausibilityCheck: GPT54_MINI_MODEL
+          plausibilityCheck: GPT54_MODEL
         };
         return normalizeChatModel(premiumMap[task] || GPT54_MINI_MODEL);
       }
       const map = {
         longEditorial: DEFAULT_CHAT_MODEL,
         kreuzen: DEFAULT_CHAT_MODEL,
-        questions: DEFAULT_CHAT_MODEL,
+        questions: GPT54_MINI_MODEL,
         integrationQuestions: DEFAULT_CHAT_MODEL,
-        expectedAnswers: DEFAULT_CHAT_MODEL,
+        expectedAnswers: GPT54_MINI_MODEL,
         explanations: DEFAULT_CHAT_MODEL,
         evaluation: DEFAULT_CHAT_MODEL,
-        plausibilityCheck: DEFAULT_CHAT_MODEL
+        plausibilityCheck: GPT54_MINI_MODEL
       };
       return normalizeChatModel(map[task] || getCurrentChatModel());
     }
