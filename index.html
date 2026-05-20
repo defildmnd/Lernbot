@@ -127,6 +127,7 @@
     .file-btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:14px; background:var(--muted); color:var(--card); font-weight:700; cursor:pointer; font-size:14px; }
     .hidden{ display:none !important; }
     .collapsed{ display:none !important; }
+    #tModeSection #advancedPanel{ display:none !important; }
     .status{ margin-top:12px; min-height:40px; padding:10px 12px; border-radius:14px; background:var(--card-2); color:var(--text); font-size:13px; white-space:pre-wrap; line-height:1.5; border:1px solid transparent; }
     .status.ok{ background:var(--good-bg); color:var(--good-text); }
     .status.error{ background:var(--bad-bg); color:var(--bad-text); }
@@ -1226,141 +1227,6 @@
               <button id="toggleAdvancedBtn" class="toggle-btn" type="button">Erweiterte Einstellungen anzeigen</button>
             </div>
 
-            <div id="advancedPanel" class="collapsed">
-              <div class="grid-2">
-                <div class="group">
-                  <label for="apiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
-                  <input id="apiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
-                </div>
-
-                <div class="group">
-                  <label for="apiKeyChat">API Key · Standard-Chatmodell</label>
-                  <input id="apiKeyChat" type="password" placeholder="Key für aktuelles Standard-Chatmodell" />
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <div class="group">
-                  <label for="apiKeyGpt54">API Key · openai/gpt-5.4 (optional Override)</label>
-                  <input id="apiKeyGpt54" type="password" placeholder="Optional eigener Key nur für openai/gpt-5.4" />
-                </div>
-
-                <div class="group">
-                  <label for="apiKeyGpt54Mini">API Key · openai/gpt-5.4-mini (optional Override)</label>
-                  <input id="apiKeyGpt54Mini" type="password" placeholder="Optional eigener Key nur für openai/gpt-5.4-mini" />
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <div class="group">
-                  <label for="apiKeyTranscribe">API Key · openai/gpt-4o-transcribe (optional Override)</label>
-                  <input id="apiKeyTranscribe" type="password" placeholder="Optional eigener Key nur für openai/gpt-4o-transcribe" />
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <div class="group legacy-model-select">
-                  <label for="chatModel">Chat-Modell</label>
-                  <select id="chatModel">
-                    <option value="openai/gpt-4o-mini">openai/gpt-4o-mini</option>
-                    <option value="openai/gpt-5.4-mini">openai/gpt-5.4-mini</option>
-                    <option value="openai/gpt-5.4">openai/gpt-5.4</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid-4">
-                <div class="group">
-                  <label for="baseUrl">Base URL</label>
-                  <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
-                </div>
-
-                <div class="group">
-                  <label for="voice">Stimme</label>
-                  <select id="voice">
-                    <option value="alloy">alloy</option>
-                    <option value="ash">ash</option>
-                    <option value="ballad">ballad</option>
-                    <option value="coral">coral</option>
-                    <option value="echo">echo</option>
-                    <option value="fable">fable</option>
-                    <option value="nova">nova</option>
-                    <option value="onyx">onyx</option>
-                    <option value="sage">sage</option>
-                    <option value="shimmer">shimmer</option>
-                  </select>
-                </div>
-
-                <div class="group">
-                  <label for="questionCount">Anzahl Fragen</label>
-                  <input id="questionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
-                </div>
-
-                <div class="group">
-                  <label for="format">Format</label>
-                  <select id="format">
-                    <option value="mp3">mp3</option>
-                    <option value="opus">opus</option>
-                    <option value="aac">aac</option>
-                    <option value="flac">flac</option>
-                    <option value="wav">wav</option>
-                    <option value="pcm">pcm</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <div class="group">
-                  <label for="speed">Geschwindigkeit</label>
-                  <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
-                </div>
-                <div class="group">
-                  <label for="pomodoroMinutes">Pomodoro Fokusdauer (Minuten)</label>
-                  <input id="pomodoroMinutes" type="number" min="1" max="240" step="1" value="50" />
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <div class="group">
-                  <label for="pomodoroOvertimeMinutes">Pomodoro Überziehungszeit (Minuten)</label>
-                  <input id="pomodoroOvertimeMinutes" type="number" min="1" max="120" step="1" value="10" />
-                </div>
-                  <label for="pomodoroBreakMinutes">Pomodoro Pausendauer (Minuten)</label>
-                  <input id="pomodoroBreakMinutes" type="number" min="1" max="120" step="1" value="10" />
-                </div>
-              </div>
-
-              <div class="inline-checks">
-                <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
-                <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
-                <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
-                <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
-                <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
-                <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
-                <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
-                <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
-                <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
-                <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
-                <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
-                <label><input type="checkbox" id="oralExamMode" /> Oral examination mode</label>
-                <label><input type="checkbox" id="autoModelSwitch" /> Automatischer Modell Switch</label>
-                <label><input type="checkbox" id="usePremiumModels" checked /> Premium-Modelle verwenden</label>
-                <div class="inline-select">
-                  <span>Zweitmeinung</span>
-                  <select id="secondOpinionSensitivity">
-                    <option value="off">Aus</option>
-                    <option value="medium" selected>Mittel</option>
-                    <option value="high">Hoch</option>
-                  </select>
-                </div>
-                <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
-                <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
-                <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
-                <label><input type="checkbox" id="forceDesktopMode" /> Desktop-Modus auch mobil aktivieren</label>
-                <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
-                <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
-              </div>
-            </div>
 
             <div class="group" style="margin-top:14px;">
               <label for="text">Originaltext</label>
@@ -1631,7 +1497,145 @@
 
       <div class="settings-section">
         <h3>API, Sprache und Fragen</h3>
-        <div id="settingsAdvancedMount"></div>
+        <div id="settingsAdvancedMount">
+            <div id="advancedPanel" class="collapsed">
+              <div class="grid-2">
+                <div class="group">
+                  <label for="apiKeyTts">API Key · openai/gpt-4o-mini-tts-2025-12-15</label>
+                  <input id="apiKeyTts" type="password" placeholder="Key für openai/gpt-4o-mini-tts-2025-12-15" />
+                </div>
+
+                <div class="group">
+                  <label for="apiKeyChat">API Key · Standard-Chatmodell</label>
+                  <input id="apiKeyChat" type="password" placeholder="Key für aktuelles Standard-Chatmodell" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="apiKeyGpt54">API Key · openai/gpt-5.4 (optional Override)</label>
+                  <input id="apiKeyGpt54" type="password" placeholder="Optional eigener Key nur für openai/gpt-5.4" />
+                </div>
+
+                <div class="group">
+                  <label for="apiKeyGpt54Mini">API Key · openai/gpt-5.4-mini (optional Override)</label>
+                  <input id="apiKeyGpt54Mini" type="password" placeholder="Optional eigener Key nur für openai/gpt-5.4-mini" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="apiKeyTranscribe">API Key · openai/gpt-4o-transcribe (optional Override)</label>
+                  <input id="apiKeyTranscribe" type="password" placeholder="Optional eigener Key nur für openai/gpt-4o-transcribe" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group legacy-model-select">
+                  <label for="chatModel">Chat-Modell</label>
+                  <select id="chatModel">
+                    <option value="openai/gpt-4o-mini">openai/gpt-4o-mini</option>
+                    <option value="openai/gpt-5.4-mini">openai/gpt-5.4-mini</option>
+                    <option value="openai/gpt-5.4">openai/gpt-5.4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid-4">
+                <div class="group">
+                  <label for="baseUrl">Base URL</label>
+                  <input id="baseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+                </div>
+
+                <div class="group">
+                  <label for="voice">Stimme</label>
+                  <select id="voice">
+                    <option value="alloy">alloy</option>
+                    <option value="ash">ash</option>
+                    <option value="ballad">ballad</option>
+                    <option value="coral">coral</option>
+                    <option value="echo">echo</option>
+                    <option value="fable">fable</option>
+                    <option value="nova">nova</option>
+                    <option value="onyx">onyx</option>
+                    <option value="sage">sage</option>
+                    <option value="shimmer">shimmer</option>
+                  </select>
+                </div>
+
+                <div class="group">
+                  <label for="questionCount">Anzahl Fragen</label>
+                  <input id="questionCount" type="number" min="1" max="30" placeholder="z.B. 8" />
+                </div>
+
+                <div class="group">
+                  <label for="format">Format</label>
+                  <select id="format">
+                    <option value="mp3">mp3</option>
+                    <option value="opus">opus</option>
+                    <option value="aac">aac</option>
+                    <option value="flac">flac</option>
+                    <option value="wav">wav</option>
+                    <option value="pcm">pcm</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="speed">Geschwindigkeit</label>
+                  <input id="speed" type="number" min="0.25" max="4" step="0.05" value="1.0" />
+                </div>
+                <div class="group">
+                  <label for="pomodoroMinutes">Pomodoro Fokusdauer (Minuten)</label>
+                  <input id="pomodoroMinutes" type="number" min="1" max="240" step="1" value="50" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="pomodoroOvertimeMinutes">Pomodoro Überziehungszeit (Minuten)</label>
+                  <input id="pomodoroOvertimeMinutes" type="number" min="1" max="120" step="1" value="10" />
+                </div>
+                <div class="group">
+                  <label for="pomodoroBreakMinutes">Pomodoro Pausendauer (Minuten)</label>
+                  <input id="pomodoroBreakMinutes" type="number" min="1" max="120" step="1" value="10" />
+                </div>
+              </div>
+
+              <div class="inline-checks">
+                <label><input type="checkbox" id="saveSettings" checked /> Einstellungen lokal speichern</label>
+                <label><input type="checkbox" id="autoPlay" checked /> Audio automatisch abspielen</label>
+                <label><input type="checkbox" id="autoDownload" /> Audio automatisch herunterladen</label>
+                <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
+                <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
+                <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
+                <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
+                <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
+                <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
+                <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
+                <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
+                <label><input type="checkbox" id="oralExamMode" /> Oral examination mode</label>
+                <label><input type="checkbox" id="autoModelSwitch" /> Automatischer Modell Switch</label>
+                <label><input type="checkbox" id="usePremiumModels" checked /> Premium-Modelle verwenden</label>
+                <div class="inline-select">
+                  <span>Zweitmeinung</span>
+                  <select id="secondOpinionSensitivity">
+                    <option value="off">Aus</option>
+                    <option value="medium" selected>Mittel</option>
+                    <option value="high">Hoch</option>
+                  </select>
+                </div>
+                <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
+                <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
+                <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
+                <label><input type="checkbox" id="forceDesktopMode" /> Desktop-Modus auch mobil aktivieren</label>
+                <label><input type="checkbox" id="permanentSaveEnabled" /> Permanente Speicherung aktivieren</label>
+                <button id="permanentSaveBtn" class="success" type="button">Permanent speichern</button>
+              </div>
+            </div>
+
+        </div>
       </div>
 
       <div class="settings-section">
@@ -7514,8 +7518,8 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveLongAudioPlaybackProgress(true);
     });
 
-    loadState();
     mountGlobalSettingsPanels();
+    loadState();
     applyAuthUI();
     updateStats();
     updateLongStats();
