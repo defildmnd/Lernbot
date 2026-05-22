@@ -1126,7 +1126,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
-    <div class="session-version">Lernbot 8.2</div>
+    <div class="session-version">Lernbot 8.3</div>
   </aside>
 
   <div class="app">
@@ -6361,7 +6361,8 @@ Analysiere die Eingabe und liefere nur das JSON.
       flaggedQuestions.forEach(question => {
         question.answer = "";
         question.result = null;
-        question.open = true;
+        question.open = false;
+        question.expectedOpen = false;
       });
       appState.questions = flaggedQuestions;
       resetOralExamQuestionAudio(flaggedQuestions.map(q => q.id));
