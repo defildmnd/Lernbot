@@ -261,6 +261,9 @@
       top:0;
       left:0;
       z-index:1500;
+      display:flex;
+      flex-direction:column;
+      box-sizing:border-box;
       width:min(560px, 100vw);
       height:100vh;
       height:100svh;
@@ -283,7 +286,7 @@
     .session-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
     .session-head h2{ margin:0; font-size:22px; }
     .session-add-btn{ flex:0 0 42px; width:42px; height:42px; min-width:42px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--session-accent); color:#fff; font-size:22px; line-height:1; box-shadow:0 12px 30px rgba(15,118,110,.18); }
-    .session-list{ display:grid; gap:10px; }
+    .session-list{ display:grid; gap:10px; flex:0 0 auto; }
     .session-card{
       display:grid;
       grid-template-columns:28px minmax(0, 1fr) auto 38px;
@@ -314,6 +317,7 @@
     .metric-bubble:hover .metric-tooltip{ opacity:1; transform:translateX(-50%) translateY(0); }
     .session-edit-btn{ width:34px; height:34px; min-width:34px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--card); color:var(--text); border:1px solid var(--line); box-shadow:none; }
     .session-empty{ border:1px dashed var(--line); border-radius:18px; padding:18px; color:var(--muted); background:var(--card); text-align:center; font-size:13px; }
+    .session-version{ flex:0 0 auto; margin-top:auto; padding-top:18px; text-align:center; color:color-mix(in srgb, var(--muted) 82%, var(--text)); font-size:11px; font-weight:800; letter-spacing:.02em; }
     .session-delete-confirm{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--card-2); }
     .session-delete-confirm span{ flex:1 1 160px; font-size:12px; color:var(--muted); font-weight:700; }
     .session-delete-confirm button{ width:auto; min-width:70px; }
@@ -1122,6 +1126,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
+    <div class="session-version">Lernbot 8.2</div>
   </aside>
 
   <div class="app">
@@ -4819,8 +4824,7 @@ Zusatzregel zur Nutzereingabe:
       } else if (pomodoroState === "overtime") {
         pomodoroSeconds = Math.floor((now - pomodoroOvertimeStartedAt) / 1000);
         if (pomodoroSeconds >= getPomodoroOvertimeLimitSeconds()) {
-          pomodoroSeconds = getPomodoroOvertimeLimitSeconds();
-          stopPomodoroInterval();
+          restartPomodoroCycle();
         }
       }
       renderPomodoro();
@@ -4835,6 +4839,14 @@ Zusatzregel zur Nutzereingabe:
       pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
+    }
+
+    function restartPomodoroCycle() {
+      pomodoroState = "running";
+      pomodoroSeconds = getPomodoroStartSeconds();
+      pomodoroStartedAt = Date.now();
+      pomodoroEndsAt = pomodoroStartedAt + (pomodoroSeconds * 1000);
+      pomodoroOvertimeStartedAt = 0;
     }
 
     function startPomodoroBreak() {
