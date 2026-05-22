@@ -1347,6 +1347,10 @@
                   <label for="longChunkSize">Wörter pro Block</label>
                   <input id="longChunkSize" type="number" min="50" max="2000" step="1" value="515" />
                 </div>
+                <div class="group">
+                  <label for="longQuestionsRangeMax">Audio-Fragen: max. Sätze vor/nach aktueller Stelle</label>
+                  <input id="longQuestionsRangeMax" type="number" min="0" step="1" value="8" />
+                </div>
               </div>
 
               <div class="inline-checks">
@@ -1611,6 +1615,7 @@
                 <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
+                <label><input type="checkbox" id="revealQuestionInfoOnEvaluate" /> Beim Bewerten Erwartungshorizont/Zusatzinfo öffnen</label>
                 <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
                 <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
@@ -1991,6 +1996,7 @@ Vorgaben:
     const generateExplanationsCheckbox = document.getElementById("generateExplanations");
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
+    const revealQuestionInfoOnEvaluateCheckbox = document.getElementById("revealQuestionInfoOnEvaluate");
     const hideKreuzenBlockAnkiButtonCheckbox = document.getElementById("hideKreuzenBlockAnkiButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
     const autoFlagLowScoreCheckbox = document.getElementById("autoFlagLowScore");
@@ -2073,6 +2079,7 @@ Vorgaben:
     const longAutoPlayCheckbox = document.getElementById("longAutoPlay");
     const longAutoDownloadCheckbox = document.getElementById("longAutoDownload");
     const longHighlightCurrentTextCheckbox = document.getElementById("longHighlightCurrentText");
+    const longQuestionsRangeMaxInput = document.getElementById("longQuestionsRangeMax");
     const longAudioTextInput = document.getElementById("longAudioText");
     const longGenerateBtn = document.getElementById("longGenerateBtn");
     const longPauseBtn = document.getElementById("longPauseBtn");
@@ -3283,6 +3290,7 @@ Vorgaben:
         text: textInput.value,
         longAudioText: longAudioTextInput.value,
         longChunkSize: longChunkSizeInput.value,
+        longQuestionsRangeMax: longQuestionsRangeMaxInput.value,
         longEnableEditorial: longEnableEditorialCheckbox.checked,
         longGenerateQuestionsEnabled: longGenerateQuestionsEnabledCheckbox.checked,
         longAutoPlay: longAutoPlayCheckbox.checked,
@@ -3298,6 +3306,7 @@ Vorgaben:
         generateExplanations: generateExplanationsCheckbox.checked,
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
+        revealQuestionInfoOnEvaluate: revealQuestionInfoOnEvaluateCheckbox.checked,
         hideKreuzenBlockAnkiButton: hideKreuzenBlockAnkiButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
         autoFlagLowScore: autoFlagLowScoreCheckbox.checked,
@@ -3372,6 +3381,7 @@ Vorgaben:
         textInput.value = data.text || "";
         longAudioTextInput.value = data.longAudioText || "";
         longChunkSizeInput.value = data.longChunkSize || "515";
+        longQuestionsRangeMaxInput.value = data.longQuestionsRangeMax ?? "8";
         kreuzenInput.value = data.kreuzenInput || "";
         longAudioShowFullPreview = data.longAudioShowFullPreview === true;
         longAudioTextBlocksExpanded = data.longAudioTextBlocksExpanded === true;
@@ -3388,6 +3398,7 @@ Vorgaben:
         generateExplanationsCheckbox.checked = data.generateExplanations === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
+        revealQuestionInfoOnEvaluateCheckbox.checked = data.revealQuestionInfoOnEvaluate === true;
         hideKreuzenBlockAnkiButtonCheckbox.checked = data.hideKreuzenBlockAnkiButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
         autoFlagLowScoreCheckbox.checked = data.autoFlagLowScore === true;
@@ -4179,6 +4190,21 @@ Zusatzregel zur Nutzereingabe:
       return true;
     }
 
+    function getLongQuestionsRangeMax() {
+      const value = Number(longQuestionsRangeMaxInput.value);
+      if (!Number.isFinite(value) || value < 0) return 8;
+      return Math.floor(value);
+    }
+
+    function applyLongQuestionsRangeMax() {
+      const max = getLongQuestionsRangeMax();
+      [longQuestionsBeforeRange, longQuestionsAfterRange].forEach(input => {
+        input.max = String(max);
+        if (Number(input.value) > max) input.value = String(max);
+      });
+      updateLongQuestionsPreview();
+    }
+
     function updateLongQuestionsPreview() {
       const before = Number(longQuestionsBeforeRange.value) || 0;
       const after = Number(longQuestionsAfterRange.value) || 0;
@@ -4195,7 +4221,7 @@ Zusatzregel zur Nutzereingabe:
         setLongStatus("Noch kein Long-Audio vorhanden.", "error");
         return;
       }
-      updateLongQuestionsPreview();
+      applyLongQuestionsRangeMax();
       longQuestionsBackdrop.classList.remove("hidden");
     }
 
@@ -6247,6 +6273,9 @@ Analysiere die Eingabe und liefere nur das JSON.
       if (!question) return;
       const willOpen = !question.open;
       question.open = willOpen;
+      if (!willOpen) {
+        question.expectedOpen = false;
+      }
       saveState();
       renderQuestions();
       if (willOpen) {
@@ -6258,10 +6287,33 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     function toggleExpectedAnswer(questionId) {
       const question = appState.questions.find(q => q.id === questionId);
-      if (!question || !question.expectedAnswer) return;
+      if (!question || (!question.expectedAnswer && !question.explanation)) return;
       question.expectedOpen = !question.expectedOpen;
       saveState();
       renderQuestions();
+    }
+
+    function revealQuestionInfoForEvaluation(questionId) {
+      if (!revealQuestionInfoOnEvaluateCheckbox.checked) return false;
+      const question = appState.questions.find(q => q.id === questionId);
+      if (!question) return false;
+      const hasExpectedAnswer = !!String(question.expectedAnswer || "").trim();
+      const hasExplanation = !!String(question.explanation || "").trim();
+      if (!hasExpectedAnswer && !hasExplanation) return false;
+
+      const changed = question.open !== true || question.expectedOpen !== true;
+      question.open = true;
+      question.expectedOpen = true;
+      if (changed) {
+        saveState();
+        renderQuestions();
+      }
+      return changed;
+    }
+
+    function triggerQuestionEvaluation(questionId) {
+      revealQuestionInfoForEvaluation(questionId);
+      void evaluateQuestion(questionId);
     }
 
     function updateQuestionAnswer(questionId, value) {
@@ -6333,6 +6385,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         const isIntegration = q.questionType === "integration";
         const hasExpectedAnswer = !!String(q.expectedAnswer || "").trim();
         const hasExplanation = !!String(q.explanation || "").trim();
+        const hasQuestionInfo = hasExpectedAnswer || hasExplanation;
         const isRecording = recordingQuestionId === q.id;
         const isTranscribing = transcribingQuestionId === q.id;
         const isEvaluating = evaluatingQuestionIds.has(q.id);
@@ -6352,7 +6405,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         const audioDisabled = !speechSupported || isTranscribing || isBusyWithOtherQuestion;
         const audioButtonLabel = isRecording ? "Stop" : (isTranscribing ? "..." : "Audio");
         const audioButtonClass = isRecording ? "danger" : "ghost";
-        const showToolsRow = showQuestionAudioButton || hasExpectedAnswer;
+        const showToolsRow = showQuestionAudioButton || hasQuestionInfo;
         const card = document.createElement("div");
         card.className = `question-card ${isIntegration ? "integration" : ""}`.trim();
 
@@ -6395,12 +6448,12 @@ Analysiere die Eingabe und liefere nur das JSON.
                       ${audioButtonLabel}
                     </button>
                   ` : ""}
-                  ${hasExpectedAnswer ? `
+                  ${hasQuestionInfo ? `
                     <button
                       class="ghost mini-btn"
                       type="button"
                       data-hint-id="${q.id}"
-                      title="Erwartungshorizont anzeigen oder ausblenden"
+                      title="Erwartungshorizont und Zusatzinfo anzeigen oder ausblenden"
                     >
                       ?
                     </button>
@@ -6410,10 +6463,12 @@ Analysiere die Eingabe und liefere nur das JSON.
               <textarea id="answer-${q.id}" class="small-textarea" placeholder="Hier deine Antwort eingeben...">${escapeHtml(q.answer || "")}</textarea>
             </div>
 
-            ${hasExpectedAnswer ? `
+            ${hasQuestionInfo ? `
               <div class="feedback ${q.expectedOpen ? "" : "hidden"}">
-                <div class="feedback-title">Erwartungshorizont</div>
-                <div class="error-field-value">${escapeHtml(q.expectedAnswer)}</div>
+                ${hasExpectedAnswer ? `
+                  <div class="feedback-title">Erwartungshorizont</div>
+                  <div class="error-field-value">${escapeHtml(q.expectedAnswer)}</div>
+                ` : ""}
                 ${hasExplanation ? `
                   <div class="feedback explanation" style="margin-top:10px;">
                     <div class="feedback-title">Zusatzinfo</div>
@@ -6477,7 +6532,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       });
 
       questionsContainer.querySelectorAll("[data-eval-id]").forEach(btn => {
-        btn.addEventListener("click", () => evaluateQuestion(btn.dataset.evalId));
+        btn.addEventListener("click", () => triggerQuestionEvaluation(btn.dataset.evalId));
       });
     }
 
@@ -7100,7 +7155,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsRangeMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7276,6 +7331,8 @@ Analysiere die Eingabe und liefere nur das JSON.
     [longQuestionsBeforeRange, longQuestionsAfterRange].forEach(input => {
       input.addEventListener("input", updateLongQuestionsPreview);
     });
+    longQuestionsRangeMaxInput.addEventListener("input", applyLongQuestionsRangeMax);
+    longQuestionsRangeMaxInput.addEventListener("change", applyLongQuestionsRangeMax);
 
     [longSeekHoursInput, longSeekMinutesInput, longSeekSecondsInput].forEach(input => {
       input.addEventListener("keydown", (e) => {
