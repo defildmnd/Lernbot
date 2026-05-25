@@ -1126,7 +1126,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
-    <div class="session-version">Lernbot 8.5</div>
+    <div class="session-version">Lernbot 8.7</div>
   </aside>
 
   <div class="app">
@@ -1368,6 +1368,7 @@
                 <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
                 <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
                 <label><input type="checkbox" id="longGenerateQuestionsEnabled" /> Aus Audio Fragen generieren</label>
+                <label><input type="checkbox" id="longBufferedGeneration" /> Long-Audio Buffer aktivieren (nur 2 Blöcke voraus)</label>
               </div>
 
               <div class="note" style="margin-top:10px;">
@@ -2090,6 +2091,7 @@ Vorgaben:
     const longAutoPlayCheckbox = document.getElementById("longAutoPlay");
     const longAutoDownloadCheckbox = document.getElementById("longAutoDownload");
     const longHighlightCurrentTextCheckbox = document.getElementById("longHighlightCurrentText");
+    const longBufferedGenerationCheckbox = document.getElementById("longBufferedGeneration");
     const longQuestionsBeforeMaxInput = document.getElementById("longQuestionsBeforeMax");
     const longQuestionsAfterMaxInput = document.getElementById("longQuestionsAfterMax");
     const longAudioTextInput = document.getElementById("longAudioText");
@@ -2189,6 +2191,7 @@ Vorgaben:
     let longAudioTextBlocksExpanded = false;
     let longLastHighlightRender = 0;
     let longLastPlaybackSave = 0;
+    const LONG_AUDIO_BUFFER_AHEAD_COUNT = 2;
     let landingCanvasFrame = null;
     let landingSceneItems = [];
 
@@ -3325,6 +3328,7 @@ Vorgaben:
         longAutoPlay: longAutoPlayCheckbox.checked,
         longAutoDownload: longAutoDownloadCheckbox.checked,
         longHighlightCurrentText: longHighlightCurrentTextCheckbox.checked,
+        longBufferedGeneration: longBufferedGenerationCheckbox.checked,
         longAudioShowFullPreview,
         longAudioTextBlocksExpanded,
         longAudioSession: serializeLongAudioSession(),
@@ -3425,6 +3429,7 @@ Vorgaben:
         longAutoPlayCheckbox.checked = data.longAutoPlay !== false;
         longAutoDownloadCheckbox.checked = data.longAutoDownload === true;
         longHighlightCurrentTextCheckbox.checked = data.longHighlightCurrentText === true;
+        longBufferedGenerationCheckbox.checked = data.longBufferedGeneration === true;
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
         generateExplanationsCheckbox.checked = data.generateExplanations === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
@@ -4139,6 +4144,15 @@ Zusatzregel zur Nutzereingabe:
       return cleaned.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(item => item.trim()).filter(Boolean) || [cleaned];
     }
 
+    function getLongAudioChunkText(chunk) {
+      return String(chunk?.text || chunk?.originalText || "").replace(/\s+/g, " ").trim();
+    }
+
+    function getLongAudioChunkSentences(chunk) {
+      const chunkText = getLongAudioChunkText(chunk);
+      return splitTextIntoSentences(chunkText);
+    }
+
     function renderTextWithCurrentHighlight(text, chunk, idx) {
       const rawText = String(text || "");
       if (!longHighlightCurrentTextCheckbox.checked || !longAudioSession || idx !== longAudioSession.currentIndex || chunk.status !== "ready") {
@@ -4162,8 +4176,7 @@ Zusatzregel zur Nutzereingabe:
       if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return null;
       const chunk = longAudioSession.chunks[longAudioSession.currentIndex];
       if (!chunk) return null;
-      const chunkText = String(chunk.text || chunk.originalText || "").trim();
-      const sentences = splitTextIntoSentences(chunkText);
+      const sentences = getLongAudioChunkSentences(chunk);
       if (!sentences.length) return null;
       const duration = getReadyLongAudioDuration(chunk) || (Number.isFinite(longAudioPlayer.duration) ? longAudioPlayer.duration : 0);
       const activeIndex = duration
@@ -4180,18 +4193,95 @@ Zusatzregel zur Nutzereingabe:
       };
     }
 
-    function rebuildLongAudioFromSavedSentence() {
+    function getCurrentLongAudioSentencePosition() {
       if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return false;
-      const startChunkIndex = clamp(Number(longAudioSession.currentIndex) || 0, 0, longAudioSession.chunks.length - 1);
-      const startSentenceIndex = Math.max(0, Number(longAudioSession.currentSentenceIndex) || 0);
+      const selection = getCurrentLongAudioSentenceSelection(0, 0);
+      if (selection) {
+        return { chunkIndex: selection.chunkIndex, sentenceIndex: selection.activeIndex };
+      }
+      const chunkIndex = clamp(Number(longAudioSession.currentIndex) || 0, 0, longAudioSession.chunks.length - 1);
+      const sentences = getLongAudioChunkSentences(longAudioSession.chunks[chunkIndex]);
+      return {
+        chunkIndex,
+        sentenceIndex: clamp(Number(longAudioSession.currentSentenceIndex) || 0, 0, Math.max(0, sentences.length - 1))
+      };
+    }
+
+    function estimateLongAudioSentenceStep(secondsAbs, chunkIndex) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return 1;
+      const chunk = longAudioSession.chunks[chunkIndex];
+      const sentences = getLongAudioChunkSentences(chunk);
+      const duration = getReadyLongAudioDuration(chunk) || (Number.isFinite(longAudioPlayer.duration) ? longAudioPlayer.duration : 0);
+      if (duration > 0 && sentences.length > 0) {
+        return Math.max(1, Math.round((Math.abs(secondsAbs) / duration) * sentences.length));
+      }
+      return Math.max(1, Math.round(Math.abs(secondsAbs) / 12));
+    }
+
+    function shiftLongAudioSentencePosition(position, sentenceOffset) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length || !position) return null;
+      let chunkIndex = clamp(Number(position.chunkIndex) || 0, 0, longAudioSession.chunks.length - 1);
+      let sentenceIndex = Math.max(0, Number(position.sentenceIndex) || 0);
+      let remaining = Number(sentenceOffset) || 0;
+
+      while (remaining < 0) {
+        if (sentenceIndex + remaining >= 0) {
+          sentenceIndex += remaining;
+          remaining = 0;
+          break;
+        }
+        remaining += sentenceIndex + 1;
+        chunkIndex -= 1;
+        if (chunkIndex < 0) {
+          chunkIndex = 0;
+          sentenceIndex = 0;
+          remaining = 0;
+          break;
+        }
+        const previousSentences = getLongAudioChunkSentences(longAudioSession.chunks[chunkIndex]);
+        sentenceIndex = Math.max(0, previousSentences.length - 1);
+      }
+
+      while (remaining > 0) {
+        const sentences = getLongAudioChunkSentences(longAudioSession.chunks[chunkIndex]);
+        const lastIndex = Math.max(0, sentences.length - 1);
+        if (sentenceIndex + remaining <= lastIndex) {
+          sentenceIndex += remaining;
+          remaining = 0;
+          break;
+        }
+        remaining -= Math.max(1, lastIndex - sentenceIndex + 1);
+        chunkIndex += 1;
+        if (chunkIndex >= longAudioSession.chunks.length) {
+          chunkIndex = longAudioSession.chunks.length - 1;
+          const lastSentences = getLongAudioChunkSentences(longAudioSession.chunks[chunkIndex]);
+          sentenceIndex = Math.max(0, lastSentences.length - 1);
+          remaining = 0;
+          break;
+        }
+        sentenceIndex = 0;
+      }
+
+      const targetSentences = getLongAudioChunkSentences(longAudioSession.chunks[chunkIndex]);
+      return {
+        chunkIndex,
+        sentenceIndex: clamp(sentenceIndex, 0, Math.max(0, targetSentences.length - 1))
+      };
+    }
+
+    function rebuildLongAudioFromSentencePosition(startChunkIndex, startSentenceIndex) {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return false;
+      const sourceSession = longAudioSession;
+      const safeChunkIndex = clamp(Number(startChunkIndex) || 0, 0, sourceSession.chunks.length - 1);
+      const safeSentenceIndex = Math.max(0, Number(startSentenceIndex) || 0);
       const remainingParts = [];
 
-      longAudioSession.chunks.slice(startChunkIndex).forEach((chunk, relativeIndex) => {
-        const chunkText = String(chunk.text || chunk.originalText || "").trim();
+      sourceSession.chunks.slice(safeChunkIndex).forEach((chunk, relativeIndex) => {
+        const chunkText = getLongAudioChunkText(chunk);
         if (!chunkText) return;
         if (relativeIndex === 0) {
           const sentences = splitTextIntoSentences(chunkText);
-          remainingParts.push((sentences.length ? sentences.slice(startSentenceIndex) : [chunkText]).join(" "));
+          remainingParts.push((sentences.length ? sentences.slice(safeSentenceIndex) : [chunkText]).join(" "));
         } else {
           remainingParts.push(chunkText);
         }
@@ -4210,7 +4300,7 @@ Zusatzregel zur Nutzereingabe:
         currentSentenceIndex: 0,
         currentSentenceText: "",
         fullText: longAudioTextInput.value,
-        useEditorial: longAudioSession.useEditorial === true,
+        useEditorial: sourceSession.useEditorial === true,
         chunks
       };
       longAudioPlayer.pause();
@@ -4220,6 +4310,12 @@ Zusatzregel zur Nutzereingabe:
       saveState();
       renderLongAudioSegments();
       return true;
+    }
+
+    function rebuildLongAudioFromSavedSentence() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return false;
+      const position = getCurrentLongAudioSentencePosition();
+      return position ? rebuildLongAudioFromSentencePosition(position.chunkIndex, position.sentenceIndex) : false;
     }
 
     function getLongQuestionsRangeMax(input) {
@@ -4287,12 +4383,34 @@ Zusatzregel zur Nutzereingabe:
     async function seekLongAudioBy(secondsDelta) {
       if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return;
 
+      saveLongAudioPlaybackProgress(true);
       const progress = getLongAudioProgress();
-      await seekLongAudioTo(progress.elapsed + secondsDelta);
+      if (progress.total) {
+        const didSeek = await seekLongAudioTo(progress.elapsed + secondsDelta);
+        if (didSeek) return;
+      }
+
+      if (secondsDelta < 0) {
+        const currentPosition = getCurrentLongAudioSentencePosition();
+        const sentenceStep = estimateLongAudioSentenceStep(Math.abs(secondsDelta), currentPosition?.chunkIndex || 0);
+        const targetPosition = shiftLongAudioSentencePosition(currentPosition, -sentenceStep);
+        if (targetPosition && rebuildLongAudioFromSentencePosition(targetPosition.chunkIndex, targetPosition.sentenceIndex)) {
+          longAudioSession.manualStop = false;
+          setLongStatus(`Audio-Spur fehlt. Springe ca. ${Math.abs(secondsDelta)} Sekunden über Satzpositionen zurück und generiere ab dort neu ...`, "info");
+          await generateLongChunkForSession(longAudioSession, 0);
+          if (!longAudioSession || longAudioSession.stopped) return;
+          updateLongMainAudioForChunk(longAudioSession, 0);
+          await playLongChunkSequentially(0, { autoPlay: true, resetTime: true });
+          void startLongChunkGenerationQueue(longAudioSession, 1);
+          return;
+        }
+      }
+
+      setLongStatus("Noch keine robuste Audio-Position verfügbar.", "error");
     }
 
     async function seekLongAudioTo(targetSeconds) {
-      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return;
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return false;
 
       const progress = getLongAudioProgress();
       const target = clamp(Number(targetSeconds) || 0, 0, progress.total || 0);
@@ -4313,11 +4431,12 @@ Zusatzregel zur Nutzereingabe:
           renderLongAudioSegments();
           saveLongAudioPlaybackProgress(true);
           setLongStatus(`Zu ${formatAudioTime(target)} gesprungen.\nBlock ${i + 1}/${longAudioSession.chunks.length}`, "ok");
-          return;
+          return true;
         }
 
         cursor += duration;
       }
+      return false;
     }
 
     function openLongStopConfirm() {
@@ -4493,20 +4612,63 @@ Zusatzregel zur Nutzereingabe:
       }
     }
 
-    async function startLongChunkGenerationQueue(session, startIndex) {
-      for (let i = startIndex; i < session.chunks.length; i++) {
-        if (!longAudioSession || session.id !== longAudioSession.id || session.stopped) return;
-        try {
-          await generateLongChunkForSession(session, i);
-        } catch (err) {
-          if (!longAudioSession || session.id !== longAudioSession.id || session.stopped) return;
-          setLongStatus(`Fehler bei Audio-Block ${i + 1}: ${err.message}`, "error");
-          return;
-        }
-      }
+    function isLongAudioBufferEnabled() {
+      return longBufferedGenerationCheckbox.checked === true;
+    }
 
-      if (longAudioSession && session.id === longAudioSession.id && !session.stopped) {
-        setLongStatus(`Alle Audio-Blöcke wurden erzeugt.\nGesamt: ${session.chunks.length} Blöcke.`, "ok");
+    function getLongAudioBufferEndIndex(session, startIndex) {
+      if (!session || !Array.isArray(session.chunks) || !session.chunks.length) return -1;
+      if (!isLongAudioBufferEnabled()) return session.chunks.length - 1;
+      const currentIndex = clamp(Number(session.currentIndex) || 0, 0, session.chunks.length - 1);
+      const safeStartIndex = clamp(Number(startIndex) || 0, 0, session.chunks.length - 1);
+      return Math.min(session.chunks.length - 1, Math.max(safeStartIndex, currentIndex + LONG_AUDIO_BUFFER_AHEAD_COUNT));
+    }
+
+    function ensureLongAudioBufferAhead(session, startIndex = null) {
+      if (!isLongAudioBufferEnabled()) return;
+      if (!session || !Array.isArray(session.chunks) || !session.chunks.length || session.stopped) return;
+      const index = startIndex === null ? (Number(session.currentIndex) || 0) + 1 : Number(startIndex);
+      if (!Number.isFinite(index) || index >= session.chunks.length) return;
+      const safeIndex = clamp(Number.isFinite(index) ? Math.floor(index) : 0, 0, session.chunks.length - 1);
+      void startLongChunkGenerationQueue(session, safeIndex);
+    }
+
+    async function startLongChunkGenerationQueue(session, startIndex) {
+      if (!session || !Array.isArray(session.chunks) || !session.chunks.length) return;
+      if (session.generationQueueActive) return;
+      const requestedStartIndex = Number(startIndex);
+      if (!Number.isFinite(requestedStartIndex) || requestedStartIndex >= session.chunks.length) return;
+
+      session.generationQueueActive = true;
+      try {
+        let i = clamp(Math.floor(requestedStartIndex), 0, session.chunks.length - 1);
+        while (i < session.chunks.length) {
+          if (!longAudioSession || session.id !== longAudioSession.id || session.stopped) return;
+          const endIndex = getLongAudioBufferEndIndex(session, i);
+          if (endIndex < i) break;
+          try {
+            await generateLongChunkForSession(session, i);
+          } catch (err) {
+            if (!longAudioSession || session.id !== longAudioSession.id || session.stopped) return;
+            setLongStatus(`Fehler bei Audio-Block ${i + 1}: ${err.message}`, "error");
+            return;
+          }
+          i += 1;
+        }
+
+        if (longAudioSession && session.id === longAudioSession.id && !session.stopped) {
+          const allReady = session.chunks.every(chunk => chunk.status === "ready");
+          if (allReady) {
+            setLongStatus(`Alle Audio-Blöcke wurden erzeugt.\nGesamt: ${session.chunks.length} Blöcke.`, "ok");
+          } else if (isLongAudioBufferEnabled()) {
+            const readyAheadEnd = getLongAudioBufferEndIndex(session, (Number(session.currentIndex) || 0) + 1);
+            if (longAudioPlayer.paused) {
+              setLongStatus(`Audio-Buffer bereit.\nVorab geladen bis Block ${readyAheadEnd + 1}/${session.chunks.length}.`, "ok");
+            }
+          }
+        }
+      } finally {
+        session.generationQueueActive = false;
       }
     }
 
@@ -4532,6 +4694,7 @@ Zusatzregel zur Nutzereingabe:
       refreshLongAudioPlaybackUI(true);
       saveLongAudioPlaybackProgress(true);
       setLongStatus(`Wiedergabe Block ${index + 1}/${longAudioSession.chunks.length}\n${chunk.wordCount} Wörter`, "info");
+      ensureLongAudioBufferAhead(longAudioSession, index + 1);
     }
 
     function waitForLongNextChunkAndPlay(index) {
@@ -4555,6 +4718,7 @@ Zusatzregel zur Nutzereingabe:
         return;
       }
 
+      ensureLongAudioBufferAhead(longAudioSession, index);
       setLongStatus(`Warte auf Audio-Block ${index + 1}/${longAudioSession.chunks.length} ...`, "info");
       longAudioNextChunkTimer = setTimeout(() => waitForLongNextChunkAndPlay(index), 350);
     }
@@ -4630,6 +4794,7 @@ Zusatzregel zur Nutzereingabe:
           <span>${loadingCount} TTS aktiv</span>
           <span>${errorCount} Fehler</span>
           <span>Redaktion: ${longAudioSession.useEditorial ? "an" : "aus"}</span>
+          <span>Buffer: ${isLongAudioBufferEnabled() ? `an (+${LONG_AUDIO_BUFFER_AHEAD_COUNT})` : "aus"}</span>
           <span>Grenze: ${getLongChunkLimit()} Wörter/Block</span>
         </div>
         <div class="btn-row" style="margin-top:10px;">
@@ -4753,7 +4918,7 @@ Zusatzregel zur Nutzereingabe:
         longAudioShowFullPreview = false;
 
         setLongStatus(
-          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}`,
+          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}\nBuffer: ${isLongAudioBufferEnabled() ? `an, ${LONG_AUDIO_BUFFER_AHEAD_COUNT} Blöcke voraus` : "aus"}`,
           "info"
         );
         renderLongAudioSegments();
@@ -4767,7 +4932,9 @@ Zusatzregel zur Nutzereingabe:
         if (longAutoPlayCheckbox.checked) {
           await playLongChunkSequentially(0, { autoPlay: true, resetTime: true });
         } else {
-          setLongStatus("Erster Audio-Block erfolgreich erzeugt.\nWeitere Blöcke werden geladen.", "ok");
+          setLongStatus(isLongAudioBufferEnabled()
+            ? `Erster Audio-Block erfolgreich erzeugt.\nBuffer lädt bis zu ${LONG_AUDIO_BUFFER_AHEAD_COUNT} weitere Blöcke.`
+            : "Erster Audio-Block erfolgreich erzeugt.\nWeitere Blöcke werden geladen.", "ok");
         }
 
         void startLongChunkGenerationQueue(longAudioSession, 1);
@@ -7217,7 +7384,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7245,6 +7412,18 @@ Analysiere die Eingabe und liefere nur das JSON.
     longHighlightCurrentTextCheckbox.addEventListener("change", () => {
       refreshLongAudioPlaybackUI(true);
       saveState();
+    });
+
+    longBufferedGenerationCheckbox.addEventListener("change", () => {
+      renderLongAudioSegments();
+      saveState();
+      if (!longAudioSession || longAudioSession.stopped) return;
+      const nextIndex = Math.min(longAudioSession.chunks.length - 1, (Number(longAudioSession.currentIndex) || 0) + 1);
+      if (longBufferedGenerationCheckbox.checked) {
+        ensureLongAudioBufferAhead(longAudioSession, nextIndex);
+      } else {
+        void startLongChunkGenerationQueue(longAudioSession, nextIndex);
+      }
     });
 
     repeatFlaggedQuestionsCheckbox.addEventListener("change", () => {
