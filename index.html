@@ -1126,7 +1126,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
-    <div class="session-version">Lernbot 8.4</div>
+    <div class="session-version">Lernbot 8.5</div>
   </aside>
 
   <div class="app">
@@ -1353,8 +1353,12 @@
                   <input id="longChunkSize" type="number" min="50" max="2000" step="1" value="515" />
                 </div>
                 <div class="group">
-                  <label for="longQuestionsRangeMax">Audio-Fragen: max. Sätze vor/nach aktueller Stelle</label>
-                  <input id="longQuestionsRangeMax" type="number" min="0" step="1" value="8" />
+                  <label for="longQuestionsBeforeMax">Audio-Fragen: max. Sätze vorher</label>
+                  <input id="longQuestionsBeforeMax" type="number" min="0" step="1" value="8" />
+                </div>
+                <div class="group">
+                  <label for="longQuestionsAfterMax">Audio-Fragen: max. Sätze danach</label>
+                  <input id="longQuestionsAfterMax" type="number" min="0" step="1" value="8" />
                 </div>
               </div>
 
@@ -2086,7 +2090,8 @@ Vorgaben:
     const longAutoPlayCheckbox = document.getElementById("longAutoPlay");
     const longAutoDownloadCheckbox = document.getElementById("longAutoDownload");
     const longHighlightCurrentTextCheckbox = document.getElementById("longHighlightCurrentText");
-    const longQuestionsRangeMaxInput = document.getElementById("longQuestionsRangeMax");
+    const longQuestionsBeforeMaxInput = document.getElementById("longQuestionsBeforeMax");
+    const longQuestionsAfterMaxInput = document.getElementById("longQuestionsAfterMax");
     const longAudioTextInput = document.getElementById("longAudioText");
     const longGenerateBtn = document.getElementById("longGenerateBtn");
     const longPauseBtn = document.getElementById("longPauseBtn");
@@ -3313,7 +3318,8 @@ Vorgaben:
         text: textInput.value,
         longAudioText: longAudioTextInput.value,
         longChunkSize: longChunkSizeInput.value,
-        longQuestionsRangeMax: longQuestionsRangeMaxInput.value,
+        longQuestionsBeforeMax: longQuestionsBeforeMaxInput.value,
+        longQuestionsAfterMax: longQuestionsAfterMaxInput.value,
         longEnableEditorial: longEnableEditorialCheckbox.checked,
         longGenerateQuestionsEnabled: longGenerateQuestionsEnabledCheckbox.checked,
         longAutoPlay: longAutoPlayCheckbox.checked,
@@ -3405,7 +3411,8 @@ Vorgaben:
         textInput.value = data.text || "";
         longAudioTextInput.value = data.longAudioText || "";
         longChunkSizeInput.value = data.longChunkSize || "515";
-        longQuestionsRangeMaxInput.value = data.longQuestionsRangeMax ?? "8";
+        longQuestionsBeforeMaxInput.value = data.longQuestionsBeforeMax ?? data.longQuestionsRangeMax ?? "8";
+        longQuestionsAfterMaxInput.value = data.longQuestionsAfterMax ?? data.longQuestionsRangeMax ?? "8";
         kreuzenInput.value = data.kreuzenInput || "";
         longAudioShowFullPreview = data.longAudioShowFullPreview === true;
         longAudioTextBlocksExpanded = data.longAudioTextBlocksExpanded === true;
@@ -4215,17 +4222,21 @@ Zusatzregel zur Nutzereingabe:
       return true;
     }
 
-    function getLongQuestionsRangeMax() {
-      const value = Number(longQuestionsRangeMaxInput.value);
+    function getLongQuestionsRangeMax(input) {
+      const value = Number(input.value);
       if (!Number.isFinite(value) || value < 0) return 8;
       return Math.floor(value);
     }
 
     function applyLongQuestionsRangeMax() {
-      const max = getLongQuestionsRangeMax();
-      [longQuestionsBeforeRange, longQuestionsAfterRange].forEach(input => {
-        input.max = String(max);
-        if (Number(input.value) > max) input.value = String(max);
+      const ranges = [
+        { range: longQuestionsBeforeRange, input: longQuestionsBeforeMaxInput },
+        { range: longQuestionsAfterRange, input: longQuestionsAfterMaxInput }
+      ];
+      ranges.forEach(({ range, input }) => {
+        const max = getLongQuestionsRangeMax(input);
+        range.max = String(max);
+        if (Number(range.value) > max) range.value = String(max);
       });
       updateLongQuestionsPreview();
     }
@@ -7206,7 +7217,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsRangeMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7382,8 +7393,10 @@ Analysiere die Eingabe und liefere nur das JSON.
     [longQuestionsBeforeRange, longQuestionsAfterRange].forEach(input => {
       input.addEventListener("input", updateLongQuestionsPreview);
     });
-    longQuestionsRangeMaxInput.addEventListener("input", applyLongQuestionsRangeMax);
-    longQuestionsRangeMaxInput.addEventListener("change", applyLongQuestionsRangeMax);
+    [longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput].forEach(input => {
+      input.addEventListener("input", applyLongQuestionsRangeMax);
+      input.addEventListener("change", applyLongQuestionsRangeMax);
+    });
 
     [longSeekHoursInput, longSeekMinutesInput, longSeekSecondsInput].forEach(input => {
       input.addEventListener("keydown", (e) => {
