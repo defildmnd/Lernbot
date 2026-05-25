@@ -1126,7 +1126,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
-    <div class="session-version">Lernbot 8.3</div>
+    <div class="session-version">Lernbot 8.4</div>
   </aside>
 
   <div class="app">
@@ -1621,6 +1621,7 @@
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
                 <label><input type="checkbox" id="revealQuestionInfoOnEvaluate" /> Beim Bewerten Erwartungshorizont/Zusatzinfo öffnen</label>
+                <label><input type="checkbox" id="autoRetryApiErrors" checked /> API-Fehler automatisch erneut versuchen</label>
                 <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
                 <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
@@ -2002,6 +2003,7 @@ Vorgaben:
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
     const revealQuestionInfoOnEvaluateCheckbox = document.getElementById("revealQuestionInfoOnEvaluate");
+    const autoRetryApiErrorsCheckbox = document.getElementById("autoRetryApiErrors");
     const hideKreuzenBlockAnkiButtonCheckbox = document.getElementById("hideKreuzenBlockAnkiButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
     const autoFlagLowScoreCheckbox = document.getElementById("autoFlagLowScore");
@@ -2363,6 +2365,22 @@ Vorgaben:
 
     function delay(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function isRetryableApiError(error, status = 0) {
+      if (status === 429 || status >= 500) return true;
+      const message = String(error?.message || error || "").toLowerCase();
+      return (
+        message.includes("all connection attempts failed") ||
+        message.includes("failed to fetch") ||
+        message.includes("networkerror") ||
+        message.includes("network error") ||
+        message.includes("timeout") ||
+        message.includes("temporarily unavailable") ||
+        message.includes("bad gateway") ||
+        message.includes("service unavailable") ||
+        message.includes("gateway timeout")
+      );
     }
 
     function createAbortHandle() {
@@ -3312,6 +3330,7 @@ Vorgaben:
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
         revealQuestionInfoOnEvaluate: revealQuestionInfoOnEvaluateCheckbox.checked,
+        autoRetryApiErrors: autoRetryApiErrorsCheckbox.checked,
         hideKreuzenBlockAnkiButton: hideKreuzenBlockAnkiButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
         autoFlagLowScore: autoFlagLowScoreCheckbox.checked,
@@ -3404,6 +3423,7 @@ Vorgaben:
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
         revealQuestionInfoOnEvaluateCheckbox.checked = data.revealQuestionInfoOnEvaluate === true;
+        autoRetryApiErrorsCheckbox.checked = data.autoRetryApiErrors !== false;
         hideKreuzenBlockAnkiButtonCheckbox.checked = data.hideKreuzenBlockAnkiButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
         autoFlagLowScoreCheckbox.checked = data.autoFlagLowScore === true;
@@ -4874,6 +4894,7 @@ Zusatzregel zur Nutzereingabe:
       const model = selectChatModelForTask(task);
       const apiKey = getActiveChatApiKey(model);
       const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const maxAttempts = autoRetryApiErrorsCheckbox.checked ? 2 : 1;
 
       if (!apiKey) {
         throw new Error(`Kein API-Key für ${model} gesetzt. Aktive Quelle: ${getResolvedChatKeyLabel(model)}.`);
@@ -4881,38 +4902,55 @@ Zusatzregel zur Nutzereingabe:
 
       beginLoading("Antwort wird geladen");
       try {
-        const abortHandle = createAbortHandle();
-        const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-          method: "POST",
-          signal: abortHandle.signal,
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: withSpellingTolerancePrompt(systemPrompt) },
-              { role: "user", content: userPrompt }
-            ],
-            temperature: 0.3
-          })
-        });
-        abortHandle.cleanup();
-
-        if (!response.ok) {
-          let errorMessage = `HTTP ${response.status}`;
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          let abortHandle = null;
           try {
-            const err = await response.json();
-            errorMessage = JSON.stringify(err, null, 2);
-          } catch {
-            errorMessage = await response.text();
-          }
-          throw new Error(errorMessage);
-        }
+            abortHandle = createAbortHandle();
+            const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+              method: "POST",
+              signal: abortHandle.signal,
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+              },
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: "system", content: withSpellingTolerancePrompt(systemPrompt) },
+                  { role: "user", content: userPrompt }
+                ],
+                temperature: 0.3
+              })
+            });
+            abortHandle.cleanup();
+            abortHandle = null;
 
-        const data = await response.json();
-        return data?.choices?.[0]?.message?.content ?? "";
+            if (!response.ok) {
+              let errorMessage = `HTTP ${response.status}`;
+              try {
+                const err = await response.json();
+                errorMessage = JSON.stringify(err, null, 2);
+              } catch {
+                errorMessage = await response.text();
+              }
+              const error = new Error(errorMessage);
+              error.status = response.status;
+              throw error;
+            }
+
+            const data = await response.json();
+            return data?.choices?.[0]?.message?.content ?? "";
+          } catch (error) {
+            if (abortHandle) abortHandle.cleanup();
+            if (error?.name === "AbortError") throw error;
+            const retryable = isRetryableApiError(error, error?.status);
+            if (attempt >= maxAttempts || !retryable) throw error;
+            const waitMs = 650 + (attempt * 350);
+            loadingMessage = `Verbindung wackelt, zweiter Versuch in ${Math.round(waitMs / 100) / 10}s ...`;
+            globalLoadingText.textContent = loadingMessage;
+            await delay(waitMs);
+          }
+        }
       } finally {
         endLoading();
       }
@@ -7168,7 +7206,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsRangeMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsRangeMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
