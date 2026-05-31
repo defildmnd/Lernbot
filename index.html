@@ -149,11 +149,12 @@
     .note{ font-size:11px; color:var(--muted); line-height:1.6; }
     .question-list, .error-block-list{ display:grid; gap:12px; margin-top:8px; }
     .question-card, .error-block{ border:1px solid var(--line); background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(15,23,42,.05); }
-    .question-separator{ border:1px solid var(--line); background:var(--card-2); border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 14px rgba(15,23,42,.04); }
-    .question-separator::before{ content:""; width:5px; align-self:stretch; min-height:32px; border-radius:999px; background:var(--mode-t); flex:0 0 auto; }
-    .question-separator input{ border:0; background:transparent; padding:5px 0; font-weight:900; color:var(--text); min-height:34px; flex:1 1 auto; }
+    .question-separator{ border:1px solid var(--line); background:var(--card-2); border-radius:12px; padding:10px 12px; display:grid; grid-template-columns:5px minmax(0, 1fr) auto; align-items:center; gap:10px; box-shadow:0 4px 14px rgba(15,23,42,.04); max-width:100%; overflow:hidden; }
+    .question-separator::before{ content:""; width:5px; align-self:stretch; min-height:36px; border-radius:999px; background:var(--mode-t); }
+    .question-separator input{ width:100%; min-width:0; border:0; background:transparent; padding:5px 0; font-weight:900; color:var(--text); min-height:34px; line-height:1.35; }
+    .question-separator input::placeholder{ color:var(--muted); opacity:1; }
     .question-separator input:focus{ outline:0; box-shadow:none; }
-    .question-separator button{ min-width:auto; padding:8px 10px; font-size:12px; border-radius:10px; flex:0 0 auto; }
+    .question-separator button{ width:auto !important; min-width:74px; max-width:96px; padding:8px 10px; font-size:12px; border-radius:10px; justify-self:end; white-space:nowrap; }
     .question-card.integration{ border-color:var(--integration); }
     .question-card.integration .question-head{ background:var(--integration-soft); }
     [data-theme="dark"] .question-card, [data-theme="dark"] .error-block{ box-shadow:0 6px 20px rgba(0,0,0,.2); }
@@ -5331,6 +5332,8 @@ Zusatzregel zur Nutzereingabe:
       const separatorFormat = withSeparators ? `
 - Gliedere die Fragen thematisch mit kurzen Überschriften, wenn mehrere klar erkennbare Themen vorkommen.
 - Setze eine Überschrift direkt vor die zugehörigen Fragen. Keine Überschrift ohne mindestens eine folgende Frage.
+- Wenn alle Fragen zu einem Thema gehören, setze genau eine passende Überschrift vor die erste Frage.
+- Benenne Überschriften konkret nach dem Thema, z.B. "Brückenmerkmale", "Diagnostik" oder "Therapieprinzipien"; keine leeren oder generischen Titel.
 Gib ausschließlich valides JSON zurück in exakt diesem Format:
 {
   "items": [
@@ -6799,6 +6802,8 @@ Analysiere die Eingabe und liefere nur das JSON.
             <input
               type="text"
               value="${escapeHtml(q.title)}"
+              placeholder="Themenüberschrift"
+              title="Themenüberschrift bearbeiten"
               aria-label="Trenner-Überschrift"
               data-separator-title-id="${q.id}"
             />
