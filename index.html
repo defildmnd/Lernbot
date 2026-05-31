@@ -1814,6 +1814,7 @@
       </div>
       <div class="modal-actions">
         <button id="longQuestionsGenerateBtn" class="blue" type="button">Fragen daraus generieren</button>
+        <button id="longQuestionsGenerateFullBtn" class="ghost" type="button">Fragen aus Gesamttext generieren</button>
         <button id="longQuestionsCancelBtn" class="secondary" type="button">Verwerfen</button>
       </div>
     </div>
@@ -2125,6 +2126,7 @@ Vorgaben:
     const longQuestionsCloseBtn = document.getElementById("longQuestionsCloseBtn");
     const longQuestionsCancelBtn = document.getElementById("longQuestionsCancelBtn");
     const longQuestionsGenerateBtn = document.getElementById("longQuestionsGenerateBtn");
+    const longQuestionsGenerateFullBtn = document.getElementById("longQuestionsGenerateFullBtn");
     const longQuestionsBeforeRange = document.getElementById("longQuestionsBeforeRange");
     const longQuestionsAfterRange = document.getElementById("longQuestionsAfterRange");
     const longQuestionsBeforeValue = document.getElementById("longQuestionsBeforeValue");
@@ -4153,6 +4155,39 @@ Zusatzregel zur Nutzereingabe:
       return splitTextIntoSentences(chunkText);
     }
 
+    function getLongAudioSentenceMap() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks)) return [];
+      return longAudioSession.chunks.flatMap((chunk, chunkIndex) =>
+        getLongAudioChunkSentences(chunk).map((sentence, sentenceIndex) => ({
+          chunkIndex,
+          sentenceIndex,
+          sentence
+        }))
+      );
+    }
+
+    function getLongAudioFlatSentenceIndex(chunkIndex, sentenceIndex) {
+      const map = getLongAudioSentenceMap();
+      const exactIndex = map.findIndex(item => item.chunkIndex === chunkIndex && item.sentenceIndex === sentenceIndex);
+      if (exactIndex >= 0) return exactIndex;
+      const chunkStartIndex = map.findIndex(item => item.chunkIndex === chunkIndex);
+      if (chunkStartIndex >= 0) return chunkStartIndex;
+      return map.length ? 0 : -1;
+    }
+
+    function getLongAudioFullQuestionText() {
+      if (longAudioSession && Array.isArray(longAudioSession.chunks) && longAudioSession.chunks.length) {
+        const chunkText = longAudioSession.chunks
+          .map(chunk => getLongAudioChunkText(chunk))
+          .filter(Boolean)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (chunkText) return chunkText;
+      }
+      return String(longAudioTextInput.value || "").replace(/\s+/g, " ").trim();
+    }
+
     function renderTextWithCurrentHighlight(text, chunk, idx) {
       const rawText = String(text || "");
       if (!longHighlightCurrentTextCheckbox.checked || !longAudioSession || idx !== longAudioSession.currentIndex || chunk.status !== "ready") {
@@ -4182,14 +4217,18 @@ Zusatzregel zur Nutzereingabe:
       const activeIndex = duration
         ? clamp(Math.floor(((longAudioPlayer.currentTime || 0) / duration) * sentences.length), 0, sentences.length - 1)
         : 0;
-      const start = clamp(activeIndex - beforeCount, 0, sentences.length - 1);
-      const end = clamp(activeIndex + afterCount, start, sentences.length - 1);
+      const sentenceMap = getLongAudioSentenceMap();
+      const flatActiveIndex = getLongAudioFlatSentenceIndex(longAudioSession.currentIndex, activeIndex);
+      if (!sentenceMap.length || flatActiveIndex < 0) return null;
+      const start = clamp(flatActiveIndex - Math.max(0, Number(beforeCount) || 0), 0, sentenceMap.length - 1);
+      const end = clamp(flatActiveIndex + Math.max(0, Number(afterCount) || 0), start, sentenceMap.length - 1);
       return {
         chunkIndex: longAudioSession.currentIndex,
         activeIndex,
+        flatActiveIndex,
         start,
         end,
-        text: sentences.slice(start, end + 1).join(" ")
+        text: sentenceMap.slice(start, end + 1).map(item => item.sentence).join(" ")
       };
     }
 
@@ -4361,9 +4400,8 @@ Zusatzregel zur Nutzereingabe:
       longQuestionsBackdrop.classList.add("hidden");
     }
 
-    function generateQuestionsFromLongAudioSelection() {
-      updateLongQuestionsPreview();
-      const selectedText = longQuestionsPreview.value.trim();
+    function generateQuestionsFromLongAudioText(selectedText, sourceLabel = "Audio-Ausschnitt") {
+      selectedText = String(selectedText || "").trim();
       if (!selectedText) {
         setLongStatus("Kein Satzbereich ausgewählt.", "error");
         return;
@@ -4374,10 +4412,19 @@ Zusatzregel zur Nutzereingabe:
       updateStats();
       applyModeUI();
       saveState();
-      setStatus("Audio-Ausschnitt übernommen. Fragen werden generiert ...", "info");
+      setStatus(`${sourceLabel} übernommen. Fragen werden generiert ...`, "info");
       if (!generateQuestionsBtn.disabled) {
-        void generateQuestions();
+        void generateQuestions({ text: selectedText, sourceLabel });
       }
+    }
+
+    function generateQuestionsFromLongAudioSelection() {
+      updateLongQuestionsPreview();
+      generateQuestionsFromLongAudioText(longQuestionsPreview.value, "Audio-Ausschnitt");
+    }
+
+    function generateQuestionsFromLongAudioFullText() {
+      generateQuestionsFromLongAudioText(getLongAudioFullQuestionText(), "Long-Audio-Gesamttext");
     }
 
     async function seekLongAudioBy(secondsDelta) {
@@ -7459,29 +7506,65 @@ Analysiere die Eingabe und liefere nur das JSON.
     longGenerateBtn.addEventListener("click", generateLongAudio);
 
     pauseBtn.addEventListener("click", () => {
+      let didPause = false;
       if (!audioPlayer.paused) {
         audioPlayer.pause();
+        didPause = true;
         setStatus("Wiedergabe pausiert.", "info");
       }
+      if (longAudioSession && !longAudioPlayer.paused) {
+        longAudioPlayer.pause();
+        pauseLongSegmentAudios();
+        longAudioSession.manualStop = false;
+        saveLongAudioPlaybackProgress(true);
+        didPause = true;
+        setLongStatus("Wiedergabe pausiert.", "info");
+      }
+      if (didPause && appState.mode !== "L") saveState();
     });
 
     resumeBtn.addEventListener("click", async () => {
+      let didResume = false;
       if (audioPlayer.src) {
         try {
           await audioPlayer.play();
+          didResume = true;
           if (!suppressResumeStatus) setStatus("Wiedergabe fortgesetzt.", "ok");
         } catch {
           if (!suppressResumeStatus) setStatus("Wiedergabe konnte nicht gestartet werden.", "error");
         }
       }
+      if (longAudioSession && longAudioSession.chunks?.length) {
+        longAudioSession.manualStop = false;
+        const currentChunk = longAudioSession.chunks[longAudioSession.currentIndex];
+        if (currentChunk?.status === "ready" && longAudioPlayer.src) {
+          try {
+            await longAudioPlayer.play();
+            didResume = true;
+            setLongStatus(`Wiedergabe fortgesetzt.\nBlock ${longAudioSession.currentIndex + 1}/${longAudioSession.chunks.length}`, "ok");
+          } catch {}
+        } else if (currentChunk?.status === "ready") {
+          await playLongChunkSequentially(longAudioSession.currentIndex, { autoPlay: true, resetTime: false });
+          didResume = true;
+        }
+      }
+      if (didResume && appState.mode !== "L") saveState();
     });
 
     stopBtn.addEventListener("click", () => {
+      let didStop = false;
       if (audioPlayer.src) {
         audioPlayer.pause();
         audioPlayer.currentTime = 0;
+        didStop = true;
         setStatus("Wiedergabe gestoppt.", "info");
       }
+      if (longAudioSession && longAudioSession.chunks?.length) {
+        closeLongStopConfirm();
+        stopLongAudioConfirmed();
+        didStop = true;
+      }
+      if (didStop && appState.mode !== "L") saveState();
     });
 
     longPauseBtn.addEventListener("click", () => {
@@ -7566,6 +7649,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     longQuestionsCloseBtn.addEventListener("click", closeLongQuestionsModal);
     longQuestionsCancelBtn.addEventListener("click", closeLongQuestionsModal);
     longQuestionsGenerateBtn.addEventListener("click", generateQuestionsFromLongAudioSelection);
+    longQuestionsGenerateFullBtn.addEventListener("click", generateQuestionsFromLongAudioFullText);
     longQuestionsBackdrop.addEventListener("click", (e) => {
       if (e.target === longQuestionsBackdrop) closeLongQuestionsModal();
     });
