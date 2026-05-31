@@ -149,6 +149,11 @@
     .note{ font-size:11px; color:var(--muted); line-height:1.6; }
     .question-list, .error-block-list{ display:grid; gap:12px; margin-top:8px; }
     .question-card, .error-block{ border:1px solid var(--line); background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 6px 20px rgba(15,23,42,.05); }
+    .question-separator{ border:1px solid var(--line); background:var(--card-2); border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 14px rgba(15,23,42,.04); }
+    .question-separator::before{ content:""; width:5px; align-self:stretch; min-height:32px; border-radius:999px; background:var(--mode-t); flex:0 0 auto; }
+    .question-separator input{ border:0; background:transparent; padding:5px 0; font-weight:900; color:var(--text); min-height:34px; flex:1 1 auto; }
+    .question-separator input:focus{ outline:0; box-shadow:none; }
+    .question-separator button{ min-width:auto; padding:8px 10px; font-size:12px; border-radius:10px; flex:0 0 auto; }
     .question-card.integration{ border-color:var(--integration); }
     .question-card.integration .question-head{ background:var(--integration-soft); }
     [data-theme="dark"] .question-card, [data-theme="dark"] .error-block{ box-shadow:0 6px 20px rgba(0,0,0,.2); }
@@ -1269,6 +1274,7 @@
                 <h2>Fragen & Antworten</h2>
               </div>
               <div class="toolbar-right">
+                <button id="addQuestionSeparatorBtn" class="ghost hidden" type="button">Trenner hinzufügen</button>
                 <button id="exportBtn" class="secondary" type="button">Export</button>
                 <button id="clearQuestionsBtn" class="ghost" type="button">Nur Fragen löschen</button>
               </div>
@@ -1624,6 +1630,7 @@
                 <label><input type="checkbox" id="generateExpectedAnswers" /> Antworthorizont eingeben (Erwartungshorizont generieren)</label>
                 <label><input type="checkbox" id="generateExplanations" /> Zusatzinfos generieren</label>
                 <label><input type="checkbox" id="generateIntegrationQuestions" /> Integrationsfragen generieren</label>
+                <label><input type="checkbox" id="questionSeparatorsEnabled" /> Thematische Trenner bei Fragen</label>
                 <label><input type="checkbox" id="hideQuestionAudioButton" /> Audio-Button bei Fragen ausblenden</label>
                 <label><input type="checkbox" id="revealQuestionInfoOnEvaluate" /> Beim Bewerten Erwartungshorizont/Zusatzinfo öffnen</label>
                 <label><input type="checkbox" id="autoRetryApiErrors" checked /> API-Fehler automatisch erneut versuchen</label>
@@ -2007,6 +2014,7 @@ Vorgaben:
     const generateExpectedAnswersCheckbox = document.getElementById("generateExpectedAnswers");
     const generateExplanationsCheckbox = document.getElementById("generateExplanations");
     const generateIntegrationQuestionsCheckbox = document.getElementById("generateIntegrationQuestions");
+    const questionSeparatorsEnabledCheckbox = document.getElementById("questionSeparatorsEnabled");
     const hideQuestionAudioButtonCheckbox = document.getElementById("hideQuestionAudioButton");
     const revealQuestionInfoOnEvaluateCheckbox = document.getElementById("revealQuestionInfoOnEvaluate");
     const autoRetryApiErrorsCheckbox = document.getElementById("autoRetryApiErrors");
@@ -2048,6 +2056,7 @@ Vorgaben:
 
     const exportBtn = document.getElementById("exportBtn");
     const clearQuestionsBtn = document.getElementById("clearQuestionsBtn");
+    const addQuestionSeparatorBtn = document.getElementById("addQuestionSeparatorBtn");
 
     const statusEl = document.getElementById("status");
     const audioPlayer = document.getElementById("audioPlayer");
@@ -2533,8 +2542,26 @@ Vorgaben:
       return Math.max(min, Math.min(max, value));
     }
 
+    function isQuestionSeparator(item) {
+      return item?.itemType === "separator";
+    }
+
+    function isQuestionRecord(item) {
+      return !!item && !isQuestionSeparator(item) && String(item.question || "").trim();
+    }
+
     function normalizeQuestionItem(item, idx = 0) {
       const safeItem = item || {};
+      if (safeItem.itemType === "separator" || safeItem.type === "separator" || safeItem.kind === "separator") {
+        const title = String(safeItem.title ?? safeItem.heading ?? safeItem.label ?? "").trim();
+        if (!title) return null;
+        return {
+          id: String(safeItem.id || uid()),
+          itemType: "separator",
+          title
+        };
+      }
+
       const questionText = String(safeItem.question ?? "").trim();
       if (!questionText) return null;
 
@@ -2577,6 +2604,18 @@ Vorgaben:
         flagged: options.flagged === true,
         questionType: options.questionType === "integration" ? "integration" : "standard"
       }, idx);
+    }
+
+    function makeQuestionSeparator(title = "Neues Thema") {
+      return normalizeQuestionItem({
+        id: uid(),
+        itemType: "separator",
+        title
+      });
+    }
+
+    function areQuestionSeparatorsEnabled() {
+      return questionSeparatorsEnabledCheckbox.checked === true;
     }
 
     function normalizeChatModel(model) {
@@ -2797,6 +2836,7 @@ Vorgaben:
       const modeTitle = nextMode === "T" ? "TTS/Fragen-Modus" : (nextMode === "K" ? "Kreuzen-Modus" : "Lang-Audio-Modus");
       modeToggleBtn.title = `Wechsel zu ${modeTitle}`;
       syncRepeatFlaggedButton();
+      syncQuestionSeparatorButton();
       longAudioQuestionsBtn.classList.toggle("hidden", !longGenerateQuestionsEnabledCheckbox.checked);
     }
 
@@ -3340,6 +3380,7 @@ Vorgaben:
         generateExpectedAnswers: generateExpectedAnswersCheckbox.checked,
         generateExplanations: generateExplanationsCheckbox.checked,
         generateIntegrationQuestions: generateIntegrationQuestionsCheckbox.checked,
+        questionSeparatorsEnabled: questionSeparatorsEnabledCheckbox.checked,
         hideQuestionAudioButton: hideQuestionAudioButtonCheckbox.checked,
         revealQuestionInfoOnEvaluate: revealQuestionInfoOnEvaluateCheckbox.checked,
         autoRetryApiErrors: autoRetryApiErrorsCheckbox.checked,
@@ -3435,6 +3476,7 @@ Vorgaben:
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
         generateExplanationsCheckbox.checked = data.generateExplanations === true;
         generateIntegrationQuestionsCheckbox.checked = data.generateIntegrationQuestions === true;
+        questionSeparatorsEnabledCheckbox.checked = data.questionSeparatorsEnabled === true;
         hideQuestionAudioButtonCheckbox.checked = data.hideQuestionAudioButton === true;
         revealQuestionInfoOnEvaluateCheckbox.checked = data.revealQuestionInfoOnEvaluate === true;
         autoRetryApiErrorsCheckbox.checked = data.autoRetryApiErrors !== false;
@@ -3563,7 +3605,7 @@ Vorgaben:
     }
 
     function exportQuestionsToAnki() {
-      const questions = appState.questions.filter(q => String(q.question || "").trim());
+      const questions = appState.questions.filter(isQuestionRecord);
       if (!questions.length) {
         setStatus("Es gibt keine sichtbaren Fragen für Anki.", "error");
         return;
@@ -5285,7 +5327,27 @@ Zusatzregel zur Nutzereingabe:
       }
     }
 
-    async function generateBaseQuestionsOnly(originalText, count) {
+    async function generateBaseQuestionsOnly(originalText, count, withSeparators = false) {
+      const separatorFormat = withSeparators ? `
+- Gliedere die Fragen thematisch mit kurzen Überschriften, wenn mehrere klar erkennbare Themen vorkommen.
+- Setze eine Überschrift direkt vor die zugehörigen Fragen. Keine Überschrift ohne mindestens eine folgende Frage.
+Gib ausschließlich valides JSON zurück in exakt diesem Format:
+{
+  "items": [
+    { "type": "separator", "title": "Kurze Themenüberschrift" },
+    { "type": "question", "question": "Frage 1" }
+  ]
+}
+      `.trim() : `
+Gib ausschließlich valides JSON zurück in exakt diesem Format:
+{
+  "questions": [
+    "Frage 1",
+    "Frage 2"
+  ]
+}
+      `.trim();
+
       const systemPrompt = `
 Du bist ein extrem zeiteffizienter medizinischer Prüfungs-Coach.
 Erzeuge aus medizinischem Text kurze, präzise Active-Recall-Fragen.
@@ -5297,13 +5359,7 @@ Regeln:
 - Wenn Anzahl vorgegeben ist, halte dich daran.
 - Wenn keine Anzahl vorgegeben ist, entscheide sinnvoll selbst.
 - Wenn der Text lang ist, fokussiere die wichtigsten Kernpunkte.
-Gib ausschließlich valides JSON zurück in exakt diesem Format:
-{
-  "questions": [
-    "Frage 1",
-    "Frage 2"
-  ]
-}
+${separatorFormat}
 Keine zusätzlichen Sätze.
       `.trim();
 
@@ -5313,11 +5369,24 @@ Originaltext:
 
 Gewünschte Anzahl Fragen: ${count ? count : "nicht definiert, entscheide selbst"}
 
-Erzeuge nur die Fragen als JSON.
+${withSeparators ? "Erzeuge Fragen und thematische Trenner als JSON." : "Erzeuge nur die Fragen als JSON."}
       `.trim();
 
       const raw = await fetchJsonChat({ systemPrompt, userPrompt, task: "questions" });
       const parsed = tryParseJSON(raw);
+      if (withSeparators && parsed && Array.isArray(parsed.items)) {
+        return parsed.items
+          .map(item => {
+            if (typeof item === "string") return { type: "question", question: item.trim() };
+            const type = String(item?.type || item?.itemType || "").trim().toLowerCase();
+            if (type === "separator" || type === "heading") {
+              return { type: "separator", title: String(item?.title ?? item?.heading ?? item?.label ?? "").trim() };
+            }
+            return { type: "question", question: String(item?.question ?? item?.frage ?? "").trim() };
+          })
+          .filter(item => item.type === "separator" ? item.title : item.question);
+      }
+
       if (!parsed || !Array.isArray(parsed.questions)) {
         throw new Error("Die Fragen konnten nicht als JSON gelesen werden.");
       }
@@ -5533,6 +5602,7 @@ Erzeuge daraus Integrationsfragen.
       const triggerButton = options.triggerButton || generateQuestionsBtn;
       const buttonsToDisable = Array.from(new Set([generateQuestionsBtn, triggerButton].filter(Boolean)));
       const chatModel = getAutoChatModelForTask("questions");
+      const withQuestionSeparators = areQuestionSeparatorsEnabled();
 
       if (!getActiveChatApiKey(chatModel)) {
         setStatus(`Bitte den API-Key für ${chatModel} setzen.`, "error");
@@ -5560,10 +5630,22 @@ Erzeuge daraus Integrationsfragen.
       setStatus(`Schritt ${step}/${totalSteps}: Fragen werden aus ${sourceLabel} generiert ...\nChat-Modell: ${chatModel}\nKey-Quelle: ${getResolvedChatKeyLabel(chatModel)}`, "info");
 
       try {
-        const rawQuestions = await generateBaseQuestionsOnly(text, count);
-        let newQuestions = rawQuestions
-          .map((q, idx) => makeQuestionRecord(q, idx, { open: idx === 0 }))
+        const rawItems = await generateBaseQuestionsOnly(text, count, withQuestionSeparators);
+        let generatedQuestionIndex = 0;
+        let generatedItems = rawItems
+          .map((item) => {
+            if (typeof item === "string") {
+              const record = makeQuestionRecord(item, generatedQuestionIndex, { open: generatedQuestionIndex === 0 });
+              generatedQuestionIndex += 1;
+              return record;
+            }
+            if (item?.type === "separator") return makeQuestionSeparator(item.title);
+            const record = makeQuestionRecord(item?.question, generatedQuestionIndex, { open: generatedQuestionIndex === 0 });
+            generatedQuestionIndex += 1;
+            return record;
+          })
           .filter(Boolean);
+        let newQuestions = generatedItems.filter(isQuestionRecord);
 
         if (!newQuestions.length) {
           throw new Error("Es konnten keine Fragen aus dem Text erzeugt werden.");
@@ -5573,6 +5655,8 @@ Erzeuge daraus Integrationsfragen.
           step += 1;
           setStatus(`Schritt ${step}/${totalSteps}: Erwartungshorizonte werden generiert ...`, "info");
           newQuestions = await generateExpectedAnswersForQuestions(newQuestions, text);
+          const enrichedQueue = [...newQuestions];
+          generatedItems = generatedItems.map(item => isQuestionRecord(item) ? (enrichedQueue.shift() || item) : item);
         }
 
         if (withExplanations) {
@@ -5582,6 +5666,8 @@ Erzeuge daraus Integrationsfragen.
             newQuestions = await generateExpectedAnswersForQuestions(newQuestions, text);
           }
           newQuestions = await generateExplanationsForQuestions(newQuestions, text);
+          const enrichedQueue = [...newQuestions];
+          generatedItems = generatedItems.map(item => isQuestionRecord(item) ? (enrichedQueue.shift() || item) : item);
         }
 
         let integrationQuestions = [];
@@ -5597,18 +5683,17 @@ Erzeuge daraus Integrationsfragen.
         const persistentQuestions = replaceExisting
           ? []
           : appState.questions
-            .filter(q => String(q.expectedAnswer || "").trim())
             .map((item, idx) => normalizeQuestionItem(item, idx))
             .filter(Boolean);
 
-        appState.questions = [...persistentQuestions, ...newQuestions, ...integrationQuestions]
+        appState.questions = [...persistentQuestions, ...generatedItems, ...integrationQuestions]
           .map((item, idx) => normalizeQuestionItem(item, idx))
           .filter(Boolean);
 
         saveState();
         renderQuestions();
 
-        const expectedCount = appState.questions.filter(q => q.expectedAnswer).length;
+        const expectedCount = appState.questions.filter(q => isQuestionRecord(q) && q.expectedAnswer).length;
         setStatus(
           `Fragen erfolgreich aus ${sourceLabel} generiert: ${newQuestions.length}\nIntegrationsfragen: ${integrationQuestions.length}\nErwartungshorizonte: ${expectedCount}\nChat-Modell: ${chatModel}`,
           "ok"
@@ -5769,7 +5854,8 @@ Erzeuge daraus Integrationsfragen.
     }
 
     async function prepareOralExamAudioQueue() {
-      if (!oralExamModeCheckbox.checked || oralExamAudioQueueRunning || !appState.questions.length) return;
+      const questionItems = appState.questions.filter(isQuestionRecord);
+      if (!oralExamModeCheckbox.checked || oralExamAudioQueueRunning || !questionItems.length) return;
       if (!apiKeyTtsInput.value.trim()) {
         setStatus("Oral Examination: Bitte den API-Key für das TTS-Modell setzen.", "error");
         return;
@@ -5777,11 +5863,11 @@ Erzeuge daraus Integrationsfragen.
 
       oralExamAudioQueueRunning = true;
       try {
-        const questionIds = appState.questions.map(q => q.id);
+        const questionIds = questionItems.map(q => q.id);
         resetOralExamQuestionAudio(questionIds);
-        for (let i = 0; i < appState.questions.length; i += 1) {
+        for (let i = 0; i < questionItems.length; i += 1) {
           if (!oralExamModeCheckbox.checked) break;
-          await prepareOralExamQuestionAudio(appState.questions[i], i + 1, appState.questions.length);
+          await prepareOralExamQuestionAudio(questionItems[i], i + 1, questionItems.length);
         }
       } finally {
         oralExamAudioQueueRunning = false;
@@ -6529,6 +6615,20 @@ Analysiere die Eingabe und liefere nur das JSON.
       return map[level] || map.L1;
     }
 
+    function pruneQuestionSeparatorsWithoutQuestions(items) {
+      const normalized = Array.isArray(items)
+        ? items.map((item, idx) => normalizeQuestionItem(item, idx)).filter(Boolean)
+        : [];
+      return normalized.filter((item, idx) => {
+        if (!isQuestionSeparator(item)) return true;
+        for (let i = idx + 1; i < normalized.length; i += 1) {
+          if (isQuestionSeparator(normalized[i])) return false;
+          if (isQuestionRecord(normalized[i])) return true;
+        }
+        return false;
+      });
+    }
+
     function deleteQuestion(questionId) {
       if (recordingQuestionId === questionId || transcribingQuestionId === questionId) {
         discardQuestionRecording();
@@ -6536,11 +6636,36 @@ Analysiere die Eingabe und liefere nur das JSON.
       if (oralExamActiveQuestionId === questionId) {
         stopOralExamPlayback();
       }
-      resetOralExamQuestionAudio(appState.questions.filter(q => q.id !== questionId).map(q => q.id));
-      appState.questions = appState.questions.filter(q => q.id !== questionId);
+      resetOralExamQuestionAudio(appState.questions.filter(q => q.id !== questionId && isQuestionRecord(q)).map(q => q.id));
+      appState.questions = pruneQuestionSeparatorsWithoutQuestions(appState.questions.filter(q => q.id !== questionId));
       saveState();
       renderQuestions();
       setStatus("Frage gelöscht.", "ok");
+    }
+
+    function deleteQuestionSeparator(separatorId) {
+      appState.questions = appState.questions.filter(item => item.id !== separatorId);
+      saveState();
+      renderQuestions();
+      setStatus("Trenner gelöscht.", "ok");
+    }
+
+    function updateQuestionSeparatorTitle(separatorId, value) {
+      const separator = appState.questions.find(item => item.id === separatorId && isQuestionSeparator(item));
+      if (!separator) return;
+      separator.title = String(value || "").trim() || "Unbenanntes Thema";
+      saveState();
+    }
+
+    function addQuestionSeparator() {
+      if (!areQuestionSeparatorsEnabled()) {
+        setStatus("Thematische Trenner sind in den erweiterten Einstellungen deaktiviert.", "info");
+        return;
+      }
+      appState.questions.push(makeQuestionSeparator());
+      saveState();
+      renderQuestions();
+      setStatus("Trenner hinzugefügt.", "ok");
     }
 
     async function toggleQuestion(questionId) {
@@ -6614,12 +6739,12 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function repeatFlaggedQuestions() {
-      const flaggedQuestions = appState.questions.filter(q => q.flagged === true);
+      const flaggedQuestions = appState.questions.filter(q => isQuestionRecord(q) && q.flagged === true);
       if (!flaggedQuestions.length) {
         setStatus("Keine markierten Fragen vorhanden.", "info");
         return;
       }
-      const removedCount = appState.questions.length - flaggedQuestions.length;
+      const removedCount = appState.questions.filter(isQuestionRecord).length - flaggedQuestions.length;
 
       flaggedQuestions.forEach(question => {
         question.answer = "";
@@ -6627,7 +6752,9 @@ Analysiere die Eingabe und liefere nur das JSON.
         question.open = false;
         question.expectedOpen = false;
       });
-      appState.questions = flaggedQuestions;
+      appState.questions = pruneQuestionSeparatorsWithoutQuestions(
+        appState.questions.filter(item => isQuestionSeparator(item) || (isQuestionRecord(item) && item.flagged === true))
+      );
       resetOralExamQuestionAudio(flaggedQuestions.map(q => q.id));
       if (oralExamModeCheckbox.checked) void prepareOralExamAudioQueue();
 
@@ -6640,10 +6767,18 @@ Analysiere die Eingabe und liefere nur das JSON.
       repeatFlaggedBtn.classList.toggle("hidden", !(repeatFlaggedQuestionsCheckbox.checked && appState.mode === "T"));
     }
 
+    function syncQuestionSeparatorButton() {
+      addQuestionSeparatorBtn.classList.toggle("hidden", !(areQuestionSeparatorsEnabled() && appState.mode === "T"));
+    }
+
     function renderQuestions() {
       questionsContainer.innerHTML = "";
 
-      if (!appState.questions.length) {
+      const visibleItems = areQuestionSeparatorsEnabled()
+        ? appState.questions
+        : appState.questions.filter(isQuestionRecord);
+
+      if (!visibleItems.length) {
         emptyQuestions.classList.remove("hidden");
         emptyQuestions.textContent = "Noch keine Fragen vorhanden.";
         return;
@@ -6656,7 +6791,23 @@ Analysiere die Eingabe und liefere nur das JSON.
       let regularCounter = 0;
       let integrationCounter = 0;
 
-      appState.questions.forEach((q, idx) => {
+      visibleItems.forEach((q, idx) => {
+        if (isQuestionSeparator(q)) {
+          const separator = document.createElement("div");
+          separator.className = "question-separator";
+          separator.innerHTML = `
+            <input
+              type="text"
+              value="${escapeHtml(q.title)}"
+              aria-label="Trenner-Überschrift"
+              data-separator-title-id="${q.id}"
+            />
+            <button class="danger" type="button" data-delete-separator-id="${q.id}">Löschen</button>
+          `;
+          questionsContainer.appendChild(separator);
+          return;
+        }
+
         const result = q.result || null;
         const isIntegration = q.questionType === "integration";
         const hasExpectedAnswer = !!String(q.expectedAnswer || "").trim();
@@ -6788,6 +6939,15 @@ Analysiere die Eingabe und liefere nur das JSON.
 
       questionsContainer.querySelectorAll("[data-delete-id]").forEach(btn => {
         btn.addEventListener("click", () => deleteQuestion(btn.dataset.deleteId));
+      });
+
+      questionsContainer.querySelectorAll("[data-delete-separator-id]").forEach(btn => {
+        btn.addEventListener("click", () => deleteQuestionSeparator(btn.dataset.deleteSeparatorId));
+      });
+
+      questionsContainer.querySelectorAll("[data-separator-title-id]").forEach(input => {
+        input.addEventListener("change", (e) => updateQuestionSeparatorTitle(input.dataset.separatorTitleId, e.target.value));
+        input.addEventListener("blur", (e) => updateQuestionSeparatorTitle(input.dataset.separatorTitleId, e.target.value));
       });
 
       questionsContainer.querySelectorAll("[data-flag-id]").forEach(btn => {
@@ -6978,7 +7138,8 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function exportQuestions() {
-      if (!appState.questions.length) {
+      const questions = appState.questions.filter(isQuestionRecord);
+      if (!questions.length) {
         setStatus("Es gibt keine Fragen zum Exportieren.", "error");
         return;
       }
@@ -6995,7 +7156,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       lines.push("Fragen:");
       lines.push("");
 
-      appState.questions.forEach((q, i) => {
+      questions.forEach((q, i) => {
         const typeLabel = q.questionType === "integration" ? "Integrationsfrage" : "Frage";
         lines.push(`${typeLabel} ${i + 1}: ${q.question}`);
         if (q.expectedAnswer) {
@@ -7431,7 +7592,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7478,6 +7639,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveState();
     });
 
+    questionSeparatorsEnabledCheckbox.addEventListener("change", () => {
+      syncQuestionSeparatorButton();
+      renderQuestions();
+      saveState();
+    });
+
     oralExamModeCheckbox.addEventListener("change", () => {
       if (oralExamModeCheckbox.checked) {
         void prepareOralExamAudioQueue();
@@ -7501,6 +7668,7 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     speakBtn.addEventListener("click", generateSpeech);
     generateQuestionsBtn.addEventListener("click", generateQuestions);
+    addQuestionSeparatorBtn.addEventListener("click", addQuestionSeparator);
     analyzeKreuzenBtn.addEventListener("click", analyzeKreuzenInput);
     repeatFlaggedBtn.addEventListener("click", repeatFlaggedQuestions);
     longGenerateBtn.addEventListener("click", generateLongAudio);
