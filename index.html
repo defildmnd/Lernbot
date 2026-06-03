@@ -1267,6 +1267,7 @@
               <button id="copyBtn" class="ghost" type="button">Anki generieren</button>
               <label class="file-btn" for="fileInput">.txt laden</label>
               <button id="repeatFlaggedBtn" class="secondary hidden" type="button">Flaggen wiederholen</button>
+              <button id="resetRepeatHiddenBtn" class="ghost hidden" type="button">Alle wieder einblenden</button>
               <input id="fileInput" type="file" accept=".txt,text/plain" class="hidden" />
             </div>
 
@@ -1646,6 +1647,7 @@
                 <label><input type="checkbox" id="autoRetryApiErrors" checked /> API-Fehler automatisch erneut versuchen</label>
                 <label><input type="checkbox" id="hideKreuzenBlockAnkiButton" /> Anki-Button an Fehlerblöcken ausblenden</label>
                 <label><input type="checkbox" id="repeatFlaggedQuestions" /> Flaggen wiederholen</label>
+                <label><input type="checkbox" id="repeatFlaggedHideOnly" /> Flaggen wiederholen: nur ausblenden</label>
                 <label><input type="checkbox" id="autoFlagLowScore" /> Unter 60% automatisch flaggen</label>
                 <label><input type="checkbox" id="autoUnflagHighScore" /> Über 80% automatisch entflaggen</label>
                 <label><input type="checkbox" id="oralExamMode" /> Oral examination mode</label>
@@ -2046,6 +2048,7 @@ Vorgaben:
     const autoRetryApiErrorsCheckbox = document.getElementById("autoRetryApiErrors");
     const hideKreuzenBlockAnkiButtonCheckbox = document.getElementById("hideKreuzenBlockAnkiButton");
     const repeatFlaggedQuestionsCheckbox = document.getElementById("repeatFlaggedQuestions");
+    const repeatFlaggedHideOnlyCheckbox = document.getElementById("repeatFlaggedHideOnly");
     const autoFlagLowScoreCheckbox = document.getElementById("autoFlagLowScore");
     const autoUnflagHighScoreCheckbox = document.getElementById("autoUnflagHighScore");
     const oralExamModeCheckbox = document.getElementById("oralExamMode");
@@ -2078,6 +2081,7 @@ Vorgaben:
     const clearAllBtn = document.getElementById("clearAllBtn");
     const copyBtn = document.getElementById("copyBtn");
     const repeatFlaggedBtn = document.getElementById("repeatFlaggedBtn");
+    const resetRepeatHiddenBtn = document.getElementById("resetRepeatHiddenBtn");
     const fileInput = document.getElementById("fileInput");
 
     const exportBtn = document.getElementById("exportBtn");
@@ -2582,6 +2586,18 @@ Vorgaben:
       return !!item && !isQuestionSeparator(item) && String(item.question || "").trim();
     }
 
+    function isRepeatHidden(item) {
+      return item?.repeatHidden === true;
+    }
+
+    function isRepeatHiddenActive(item) {
+      return repeatFlaggedHideOnlyCheckbox.checked === true && isRepeatHidden(item);
+    }
+
+    function isVisibleQuestionRecord(item) {
+      return isQuestionRecord(item) && !isRepeatHiddenActive(item);
+    }
+
     function normalizeQuestionItem(item, idx = 0) {
       const safeItem = item || {};
       if (safeItem.itemType === "separator" || safeItem.type === "separator" || safeItem.kind === "separator") {
@@ -2590,7 +2606,8 @@ Vorgaben:
         return {
           id: String(safeItem.id || uid()),
           itemType: "separator",
-          title
+          title,
+          repeatHidden: safeItem.repeatHidden === true
         };
       }
 
@@ -2618,7 +2635,8 @@ Vorgaben:
         evaluationGuide,
         explanation,
         expectedOpen: safeItem.expectedOpen === true,
-        questionType: safeItem.questionType === "integration" ? "integration" : "standard"
+        questionType: safeItem.questionType === "integration" ? "integration" : "standard",
+        repeatHidden: safeItem.repeatHidden === true
       };
     }
 
@@ -3418,6 +3436,7 @@ Vorgaben:
         autoRetryApiErrors: autoRetryApiErrorsCheckbox.checked,
         hideKreuzenBlockAnkiButton: hideKreuzenBlockAnkiButtonCheckbox.checked,
         repeatFlaggedQuestions: repeatFlaggedQuestionsCheckbox.checked,
+        repeatFlaggedHideOnly: repeatFlaggedHideOnlyCheckbox.checked,
         autoFlagLowScore: autoFlagLowScoreCheckbox.checked,
         autoUnflagHighScore: autoUnflagHighScoreCheckbox.checked,
         oralExamMode: oralExamModeCheckbox.checked,
@@ -3514,6 +3533,7 @@ Vorgaben:
         autoRetryApiErrorsCheckbox.checked = data.autoRetryApiErrors !== false;
         hideKreuzenBlockAnkiButtonCheckbox.checked = data.hideKreuzenBlockAnkiButton === true;
         repeatFlaggedQuestionsCheckbox.checked = data.repeatFlaggedQuestions === true;
+        repeatFlaggedHideOnlyCheckbox.checked = data.repeatFlaggedHideOnly === true;
         autoFlagLowScoreCheckbox.checked = data.autoFlagLowScore === true;
         autoUnflagHighScoreCheckbox.checked = data.autoUnflagHighScore === true;
         oralExamModeCheckbox.checked = data.oralExamMode === true;
@@ -3637,7 +3657,7 @@ Vorgaben:
     }
 
     function exportQuestionsToAnki() {
-      const questions = appState.questions.filter(isQuestionRecord);
+      const questions = appState.questions.filter(isVisibleQuestionRecord);
       if (!questions.length) {
         setStatus("Es gibt keine sichtbaren Fragen für Anki.", "error");
         return;
@@ -5888,7 +5908,7 @@ Erzeuge daraus Integrationsfragen.
     }
 
     async function prepareOralExamAudioQueue() {
-      const questionItems = appState.questions.filter(isQuestionRecord);
+      const questionItems = appState.questions.filter(isVisibleQuestionRecord);
       if (!oralExamModeCheckbox.checked || oralExamAudioQueueRunning || !questionItems.length) return;
       if (!apiKeyTtsInput.value.trim()) {
         setStatus("Oral Examination: Bitte den API-Key für das TTS-Modell setzen.", "error");
@@ -6815,6 +6835,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function repeatFlaggedQuestions() {
+      const hideOnly = repeatFlaggedHideOnlyCheckbox.checked === true;
       const flaggedQuestions = appState.questions.filter(q => isQuestionRecord(q) && q.flagged === true);
       if (!flaggedQuestions.length) {
         setStatus("Keine markierten Fragen vorhanden.", "info");
@@ -6828,19 +6849,58 @@ Analysiere die Eingabe und liefere nur das JSON.
         question.open = false;
         question.expectedOpen = false;
       });
-      appState.questions = pruneQuestionSeparatorsWithoutQuestions(
-        appState.questions.filter(item => isQuestionSeparator(item) || (isQuestionRecord(item) && item.flagged === true))
-      );
+
+      if (hideOnly) {
+        const visibleItems = pruneQuestionSeparatorsWithoutQuestions(
+          appState.questions.filter(item => isQuestionSeparator(item) || (isQuestionRecord(item) && item.flagged === true))
+        );
+        const visibleIds = new Set(visibleItems.map(item => item.id));
+        appState.questions.forEach(item => {
+          item.repeatHidden = !visibleIds.has(item.id);
+        });
+      } else {
+        appState.questions = pruneQuestionSeparatorsWithoutQuestions(
+          appState.questions.filter(item => isQuestionSeparator(item) || (isQuestionRecord(item) && item.flagged === true))
+        );
+      }
       resetOralExamQuestionAudio(flaggedQuestions.map(q => q.id));
       if (oralExamModeCheckbox.checked) void prepareOralExamAudioQueue();
 
       saveState();
       renderQuestions();
-      setStatus(`Flaggen wiederholt: ${flaggedQuestions.length} Frage(n) behalten, ${removedCount} ohne Flagge gelöscht. Erwartungshorizonte bleiben erhalten.`, "ok");
+      syncRepeatFlaggedButton();
+      setStatus(
+        hideOnly
+          ? `Flaggen wiederholt: ${flaggedQuestions.length} Frage(n) sichtbar, ${removedCount} ohne Flagge ausgeblendet.`
+          : `Flaggen wiederholt: ${flaggedQuestions.length} Frage(n) behalten, ${removedCount} ohne Flagge gelöscht. Erwartungshorizonte bleiben erhalten.`,
+        "ok"
+      );
     }
 
     function syncRepeatFlaggedButton() {
       repeatFlaggedBtn.classList.toggle("hidden", !(repeatFlaggedQuestionsCheckbox.checked && appState.mode === "T"));
+      resetRepeatHiddenBtn.classList.toggle("hidden", !(repeatFlaggedHideOnlyCheckbox.checked && appState.mode === "T" && appState.questions.some(isRepeatHidden)));
+    }
+
+    function resetRepeatHiddenQuestions() {
+      let changed = false;
+      appState.questions.forEach(item => {
+        if (item.repeatHidden) {
+          item.repeatHidden = false;
+          changed = true;
+        }
+      });
+      if (!changed) {
+        setStatus("Es gibt keine ausgeblendeten Fragen.", "info");
+        syncRepeatFlaggedButton();
+        return;
+      }
+      resetOralExamQuestionAudio(appState.questions.filter(isVisibleQuestionRecord).map(q => q.id));
+      if (oralExamModeCheckbox.checked) void prepareOralExamAudioQueue();
+      saveState();
+      renderQuestions();
+      syncRepeatFlaggedButton();
+      setStatus("Alle ausgeblendeten Fragen wurden wieder eingeblendet.", "ok");
     }
 
     function syncQuestionSeparatorButton() {
@@ -6851,8 +6911,8 @@ Analysiere die Eingabe und liefere nur das JSON.
       questionsContainer.innerHTML = "";
 
       const visibleItems = areQuestionSeparatorsEnabled()
-        ? appState.questions
-        : appState.questions.filter(isQuestionRecord);
+        ? appState.questions.filter(item => !isRepeatHiddenActive(item))
+        : appState.questions.filter(isVisibleQuestionRecord);
 
       if (!visibleItems.length) {
         emptyQuestions.classList.remove("hidden");
@@ -7216,7 +7276,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     }
 
     function exportQuestions() {
-      const questions = appState.questions.filter(isQuestionRecord);
+      const questions = appState.questions.filter(isVisibleQuestionRecord);
       if (!questions.length) {
         setStatus("Es gibt keine Fragen zum Exportieren.", "error");
         return;
@@ -7681,7 +7741,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7728,6 +7788,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       saveState();
     });
 
+    repeatFlaggedHideOnlyCheckbox.addEventListener("change", () => {
+      syncRepeatFlaggedButton();
+      renderQuestions();
+      saveState();
+    });
+
     questionSeparatorsEnabledCheckbox.addEventListener("change", () => {
       syncQuestionSeparatorButton();
       renderQuestions();
@@ -7760,6 +7826,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     addQuestionSeparatorBtn.addEventListener("click", addQuestionSeparator);
     analyzeKreuzenBtn.addEventListener("click", analyzeKreuzenInput);
     repeatFlaggedBtn.addEventListener("click", repeatFlaggedQuestions);
+    resetRepeatHiddenBtn.addEventListener("click", resetRepeatHiddenQuestions);
     longGenerateBtn.addEventListener("click", generateLongAudio);
 
     pauseBtn.addEventListener("click", () => {
