@@ -1141,7 +1141,7 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
-    <div class="session-version">Lernbot 8.8</div>
+    <div class="session-version">Lernbot 8.9</div>
   </aside>
 
   <div class="app">
@@ -1666,6 +1666,8 @@
                   </select>
                 </div>
                 <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
+                <label><input type="checkbox" id="pomodoroSoundsEnabled" /> Pomodoro Sounds</label>
+                <label><input type="checkbox" id="actionSoundsEnabled" /> Aktionssounds</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
                 <label><input type="checkbox" id="forceDesktopMode" /> Desktop-Modus auch mobil aktivieren</label>
@@ -2059,6 +2061,8 @@ Vorgaben:
     const autoModelSwitchCheckbox = document.getElementById("autoModelSwitch");
     const secondOpinionSensitivityInput = document.getElementById("secondOpinionSensitivity");
     const audioFeedbackCheckbox = document.getElementById("audioFeedback");
+    const pomodoroSoundsEnabledCheckbox = document.getElementById("pomodoroSoundsEnabled");
+    const actionSoundsEnabledCheckbox = document.getElementById("actionSoundsEnabled");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const ignoreSpellingErrorsCheckbox = document.getElementById("ignoreSpellingErrors");
     const forceDesktopModeCheckbox = document.getElementById("forceDesktopMode");
@@ -2238,6 +2242,8 @@ Vorgaben:
     let feedbackAudioUrl = null;
     let feedbackAudioPlayer = null;
     let feedbackPlaybackAttemptId = 0;
+    let uiAudioContext = null;
+    let lastActionSoundAt = 0;
     let suppressResumeStatus = false;
     let longAudioSession = null;
     let longAudioNextChunkTimer = null;
@@ -2250,19 +2256,94 @@ Vorgaben:
     let landingCanvasFrame = null;
     let landingSceneItems = [];
 
+    function getUiAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!uiAudioContext) uiAudioContext = new AudioContextClass();
+      if (uiAudioContext.state === "suspended") {
+        void uiAudioContext.resume().catch(() => {});
+      }
+      return uiAudioContext;
+    }
+
+    function playToneSequence(notes) {
+      const ctx = getUiAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + (note.delay || 0);
+        const duration = note.duration || 0.12;
+        osc.type = note.type || "sine";
+        osc.frequency.setValueAtTime(note.frequency || 440, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(note.gain || 0.045, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration + 0.03);
+      });
+    }
+
+    function playActionSound(statusType) {
+      if (!actionSoundsEnabledCheckbox.checked || !["ok", "error"].includes(statusType)) return;
+      const now = Date.now();
+      if (now - lastActionSoundAt < 180) return;
+      lastActionSoundAt = now;
+      if (statusType === "ok") {
+        playToneSequence([
+          { frequency: 660, duration: 0.07, gain: 0.035 },
+          { frequency: 880, delay: 0.08, duration: 0.09, gain: 0.04 }
+        ]);
+      } else {
+        playToneSequence([
+          { frequency: 220, duration: 0.11, gain: 0.045, type: "triangle" },
+          { frequency: 165, delay: 0.12, duration: 0.14, gain: 0.04, type: "triangle" }
+        ]);
+      }
+    }
+
+    function playPomodoroSound(kind) {
+      if (!pomodoroSoundsEnabledCheckbox.checked) return;
+      const sequences = {
+        start: [
+          { frequency: 523.25, duration: 0.08, gain: 0.035 },
+          { frequency: 659.25, delay: 0.09, duration: 0.08, gain: 0.04 }
+        ],
+        break: [
+          { frequency: 784, duration: 0.09, gain: 0.04 },
+          { frequency: 659.25, delay: 0.1, duration: 0.12, gain: 0.035 }
+        ],
+        overtime: [
+          { frequency: 880, duration: 0.08, gain: 0.045, type: "square" },
+          { frequency: 880, delay: 0.14, duration: 0.08, gain: 0.04, type: "square" }
+        ],
+        reset: [
+          { frequency: 392, duration: 0.1, gain: 0.035 },
+          { frequency: 261.63, delay: 0.11, duration: 0.12, gain: 0.03 }
+        ]
+      };
+      playToneSequence(sequences[kind] || sequences.start);
+    }
+
     function setStatus(message, type = "info") {
       statusEl.textContent = message;
       statusEl.className = "status " + type;
+      playActionSound(type);
     }
 
     function setKreuzenStatus(message, type = "info") {
       kreuzenStatus.textContent = message;
       kreuzenStatus.className = "status " + type;
+      playActionSound(type);
     }
 
     function setLongStatus(message, type = "info") {
       longStatusEl.textContent = message;
       longStatusEl.className = "status " + type;
+      playActionSound(type);
     }
 
     function isDemoLoggedIn() {
@@ -3458,6 +3539,8 @@ Vorgaben:
         secondOpinionSensitivity: getSecondOpinionSensitivity(),
         enablePlausibilityCheck: getSecondOpinionSensitivity() !== "off",
         audioFeedback: audioFeedbackCheckbox.checked,
+        pomodoroSoundsEnabled: pomodoroSoundsEnabledCheckbox.checked,
+        actionSoundsEnabled: actionSoundsEnabledCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         ignoreSpellingErrors: ignoreSpellingErrorsCheckbox.checked,
         forceDesktopMode: forceDesktopModeCheckbox.checked,
@@ -3558,6 +3641,8 @@ Vorgaben:
           ? normalizeSecondOpinionSensitivity(data.secondOpinionSensitivity)
           : (data.enablePlausibilityCheck === false ? "off" : "medium");
         audioFeedbackCheckbox.checked = data.audioFeedback === true;
+        pomodoroSoundsEnabledCheckbox.checked = data.pomodoroSoundsEnabled === true;
+        actionSoundsEnabledCheckbox.checked = data.actionSoundsEnabled === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         ignoreSpellingErrorsCheckbox.checked = data.ignoreSpellingErrors === true;
         forceDesktopModeCheckbox.checked = data.forceDesktopMode === true;
@@ -5215,17 +5300,20 @@ Zusatzregel zur Nutzereingabe:
         if (pomodoroSeconds === 0) {
           pomodoroState = "overtime";
           pomodoroOvertimeStartedAt = now;
+          playPomodoroSound("overtime");
         }
       } else if (pomodoroState === "break") {
         pomodoroSeconds = Math.max(0, Math.ceil((pomodoroEndsAt - now) / 1000));
         if (pomodoroSeconds === 0) {
           pomodoroState = "overtime";
           pomodoroOvertimeStartedAt = now;
+          playPomodoroSound("overtime");
         }
       } else if (pomodoroState === "overtime") {
         pomodoroSeconds = Math.floor((now - pomodoroOvertimeStartedAt) / 1000);
         if (pomodoroSeconds >= getPomodoroOvertimeLimitSeconds()) {
           restartPomodoroCycle();
+          playPomodoroSound("start");
         }
       }
       renderPomodoro();
@@ -5240,6 +5328,7 @@ Zusatzregel zur Nutzereingabe:
       pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
+      playPomodoroSound("start");
     }
 
     function restartPomodoroCycle() {
@@ -5259,6 +5348,7 @@ Zusatzregel zur Nutzereingabe:
       pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
+      playPomodoroSound("break");
     }
 
     function handlePomodoroClick() {
@@ -5268,6 +5358,7 @@ Zusatzregel zur Nutzereingabe:
         startPomodoroBreak();
       } else {
         resetPomodoro();
+        playPomodoroSound("reset");
       }
     }
 
@@ -7803,7 +7894,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
