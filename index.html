@@ -353,6 +353,7 @@
     .segment-card.current-segment{ border-color:var(--accent-2); box-shadow:0 10px 28px rgba(37,99,235,.14); }
     .chunk-pill{ display:inline-flex; align-items:center; gap:4px; font-weight:800; font-size:11px; border-radius:999px; padding:6px 10px; background:var(--card-2); color:var(--text); border:1px solid var(--line); }
     .preview-text{ max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--card); white-space:pre-wrap; line-height:1.55; font-size:13px; }
+    .preview-text.expanded{ max-height:900px; }
     .audio-progress-panel{ display:grid; gap:8px; margin-top:10px; }
     .audio-progress-track{ width:100%; height:12px; border-radius:999px; overflow:hidden; background:var(--line); border:1px solid var(--line); cursor:pointer; }
     .audio-progress-fill{ width:0%; height:100%; background:linear-gradient(90deg, var(--accent-2), var(--mode-l)); transition:width .18s ease; }
@@ -1384,6 +1385,7 @@
                 <label><input type="checkbox" id="longAutoPlay" checked /> Blöcke automatisch abspielen</label>
                 <label><input type="checkbox" id="longAutoDownload" /> Blöcke automatisch herunterladen</label>
                 <label><input type="checkbox" id="longHighlightCurrentText" /> Aktuelle Stelle im Audio-Text hervorheben</label>
+                <label><input type="checkbox" id="longCopyCurrentSentenceEnabled" /> Aktuelle Stelle in Zwischenablage kopieren</label>
                 <label><input type="checkbox" id="longGenerateQuestionsEnabled" /> Aus Audio Fragen generieren</label>
                 <label><input type="checkbox" id="longBufferedGeneration" /> Long-Audio Buffer aktivieren (nur 2 Blöcke voraus)</label>
               </div>
@@ -1410,6 +1412,7 @@
               <button id="longStopBtn" class="danger" type="button">Stop</button>
               <button id="longClearBtn" class="danger" type="button">Clear</button>
               <button id="longAudioQuestionsBtn" class="blue hidden" type="button">Aus Audio Fragen generieren</button>
+              <button id="longCopyCurrentSentenceBtn" class="ghost hidden" type="button">Aktuelle Stelle in Zwischenablage kopieren</button>
               <button id="longCopyBtn" class="ghost" type="button">Text kopieren</button>
               <label class="file-btn" for="longFileInput">.txt laden</label>
               <input id="longFileInput" type="file" accept=".txt,text/plain" class="hidden" />
@@ -1441,6 +1444,7 @@
               <div class="btn-row" style="margin-top:8px;">
                 <button id="longTogglePreviewBtn" class="ghost" type="button">Volltext anzeigen</button>
                 <button id="longCopyEditedBtn" class="ghost hidden" type="button">Redaktionierten Text kopieren</button>
+                <button id="longExpandEditedViewBtn" class="ghost hidden" type="button">Ansicht redaktionierter Text erweitern</button>
               </div>
             </div>
             <div id="longSegmentsContainer" class="segment-list"></div>
@@ -2136,6 +2140,7 @@ Vorgaben:
     const longAutoPlayCheckbox = document.getElementById("longAutoPlay");
     const longAutoDownloadCheckbox = document.getElementById("longAutoDownload");
     const longHighlightCurrentTextCheckbox = document.getElementById("longHighlightCurrentText");
+    const longCopyCurrentSentenceEnabledCheckbox = document.getElementById("longCopyCurrentSentenceEnabled");
     const longBufferedGenerationCheckbox = document.getElementById("longBufferedGeneration");
     const longQuestionsBeforeMaxInput = document.getElementById("longQuestionsBeforeMax");
     const longQuestionsAfterMaxInput = document.getElementById("longQuestionsAfterMax");
@@ -2146,6 +2151,7 @@ Vorgaben:
     const longStopBtn = document.getElementById("longStopBtn");
     const longClearBtn = document.getElementById("longClearBtn");
     const longAudioQuestionsBtn = document.getElementById("longAudioQuestionsBtn");
+    const longCopyCurrentSentenceBtn = document.getElementById("longCopyCurrentSentenceBtn");
     const longCopyBtn = document.getElementById("longCopyBtn");
     const longRewind15Btn = document.getElementById("longRewind15Btn");
     const longForward15Btn = document.getElementById("longForward15Btn");
@@ -2183,6 +2189,7 @@ Vorgaben:
     const longPreviewContent = document.getElementById("longPreviewContent");
     const longTogglePreviewBtn = document.getElementById("longTogglePreviewBtn");
     const longCopyEditedBtn = document.getElementById("longCopyEditedBtn");
+    const longExpandEditedViewBtn = document.getElementById("longExpandEditedViewBtn");
     const longSegmentsContainer = document.getElementById("longSegmentsContainer");
     const longEmptySegments = document.getElementById("longEmptySegments");
     const longCharCount = document.getElementById("longCharCount");
@@ -2235,6 +2242,7 @@ Vorgaben:
     let longAudioSession = null;
     let longAudioNextChunkTimer = null;
     let longAudioShowFullPreview = false;
+    let longEditedPreviewExpanded = false;
     let longAudioTextBlocksExpanded = false;
     let longLastHighlightRender = 0;
     let longLastPlaybackSave = 0;
@@ -2888,6 +2896,7 @@ Vorgaben:
       syncRepeatFlaggedButton();
       syncQuestionSeparatorButton();
       longAudioQuestionsBtn.classList.toggle("hidden", !longGenerateQuestionsEnabledCheckbox.checked);
+      syncLongCopyCurrentSentenceButton();
     }
 
     function applyDesktopModeUI() {
@@ -3015,6 +3024,7 @@ Vorgaben:
         longAudioText: "",
         longAudioSession: null,
         longAudioShowFullPreview: false,
+        longEditedPreviewExpanded: false,
         longAudioTextBlocksExpanded: false,
         kreuzenInput: "",
         questions: [],
@@ -3363,6 +3373,7 @@ Vorgaben:
       if (!stored || !Array.isArray(stored.chunks) || !stored.chunks.length) {
         longAudioSession = null;
         longAudioShowFullPreview = false;
+        longEditedPreviewExpanded = false;
         longAudioTextBlocksExpanded = false;
         return;
       }
@@ -3420,8 +3431,10 @@ Vorgaben:
         longAutoPlay: longAutoPlayCheckbox.checked,
         longAutoDownload: longAutoDownloadCheckbox.checked,
         longHighlightCurrentText: longHighlightCurrentTextCheckbox.checked,
+        longCopyCurrentSentenceEnabled: longCopyCurrentSentenceEnabledCheckbox.checked,
         longBufferedGeneration: longBufferedGenerationCheckbox.checked,
         longAudioShowFullPreview,
+        longEditedPreviewExpanded,
         longAudioTextBlocksExpanded,
         longAudioSession: serializeLongAudioSession(),
         kreuzenInput: kreuzenInput.value,
@@ -3513,6 +3526,7 @@ Vorgaben:
         longQuestionsAfterMaxInput.value = data.longQuestionsAfterMax ?? data.longQuestionsRangeMax ?? "8";
         kreuzenInput.value = data.kreuzenInput || "";
         longAudioShowFullPreview = data.longAudioShowFullPreview === true;
+        longEditedPreviewExpanded = data.longEditedPreviewExpanded === true;
         longAudioTextBlocksExpanded = data.longAudioTextBlocksExpanded === true;
         restoreLongAudioSession(data.longAudioSession);
 
@@ -3523,6 +3537,7 @@ Vorgaben:
         longAutoPlayCheckbox.checked = data.longAutoPlay !== false;
         longAutoDownloadCheckbox.checked = data.longAutoDownload === true;
         longHighlightCurrentTextCheckbox.checked = data.longHighlightCurrentText === true;
+        longCopyCurrentSentenceEnabledCheckbox.checked = data.longCopyCurrentSentenceEnabled === true;
         longBufferedGenerationCheckbox.checked = data.longBufferedGeneration === true;
         generateExpectedAnswersCheckbox.checked = data.generateExpectedAnswers === true;
         generateExplanationsCheckbox.checked = data.generateExplanations === true;
@@ -3742,6 +3757,7 @@ Vorgaben:
 
       longAudioSession = null;
       longAudioShowFullPreview = false;
+      longEditedPreviewExpanded = false;
       longAudioTextBlocksExpanded = false;
 
       longAudioPlayer.pause();
@@ -4457,6 +4473,40 @@ Zusatzregel zur Nutzereingabe:
       return Math.floor(value);
     }
 
+    function syncLongCopyCurrentSentenceButton() {
+      const shouldShow = appState.mode === "L"
+        && longCopyCurrentSentenceEnabledCheckbox.checked
+        && longHighlightCurrentTextCheckbox.checked;
+      longCopyCurrentSentenceBtn.classList.toggle("hidden", !shouldShow);
+    }
+
+    function getMiddleWordsFromText(text, wordCount = 5) {
+      const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+      if (!words.length) return "";
+      const take = Math.min(Math.max(1, wordCount), words.length);
+      const start = Math.max(0, Math.floor((words.length - take) / 2));
+      return words.slice(start, start + take).join(" ");
+    }
+
+    async function copyCurrentLongAudioSentenceSnippet() {
+      if (!longHighlightCurrentTextCheckbox.checked || !longCopyCurrentSentenceEnabledCheckbox.checked) {
+        setLongStatus("Aktuelle-Stelle-Kopieren ist nicht aktiv.", "info");
+        return;
+      }
+      const selection = getCurrentLongAudioSentenceSelection(0, 0);
+      const snippet = getMiddleWordsFromText(selection?.text || "", 5);
+      if (!snippet) {
+        setLongStatus("Kein aktueller Satz verfügbar.", "error");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(snippet);
+        setLongStatus(`Aktuelle Stelle kopiert: ${snippet}`, "ok");
+      } catch {
+        setLongStatus("Kopieren fehlgeschlagen.", "error");
+      }
+    }
+
     function applyLongQuestionsRangeMax() {
       const ranges = [
         { range: longQuestionsBeforeRange, input: longQuestionsBeforeMaxInput },
@@ -4868,6 +4918,8 @@ Zusatzregel zur Nutzereingabe:
       if (!session || !Array.isArray(session.chunks) || !session.chunks.length) {
         longPreviewPanel.classList.add("hidden");
         longCopyEditedBtn.classList.add("hidden");
+        longExpandEditedViewBtn.classList.add("hidden");
+        longPreviewContent.classList.remove("expanded");
         return;
       }
 
@@ -4881,12 +4933,19 @@ Zusatzregel zur Nutzereingabe:
       if (!mergedText) {
         longPreviewPanel.classList.add("hidden");
         longCopyEditedBtn.classList.add("hidden");
+        longExpandEditedViewBtn.classList.add("hidden");
+        longPreviewContent.classList.remove("expanded");
         return;
       }
 
       longPreviewPanel.classList.remove("hidden");
       const hasEditedText = session.useEditorial && session.chunks.some(chunk => chunk.redactionApplied);
       longCopyEditedBtn.classList.toggle("hidden", !hasEditedText);
+      longExpandEditedViewBtn.classList.toggle("hidden", !hasEditedText);
+      longPreviewContent.classList.toggle("expanded", hasEditedText && longEditedPreviewExpanded);
+      longExpandEditedViewBtn.textContent = longEditedPreviewExpanded
+        ? "Ansicht redaktionierter Text verkleinern"
+        : "Ansicht redaktionierter Text erweitern";
       const previewLabel = longPreviewPanel.querySelector(".segment-label");
       if (previewLabel) {
         previewLabel.textContent = session.useEditorial ? "Gesamter redaktionierter Text" : "Gesamter Audio-Text";
@@ -4915,6 +4974,8 @@ Zusatzregel zur Nutzereingabe:
         longQueueMeta.classList.add("hidden");
         longPreviewPanel.classList.add("hidden");
         longCopyEditedBtn.classList.add("hidden");
+        longExpandEditedViewBtn.classList.add("hidden");
+        longPreviewContent.classList.remove("expanded");
         updateLongAudioProgress();
         return;
       }
@@ -5057,6 +5118,7 @@ Zusatzregel zur Nutzereingabe:
           chunks
         };
         longAudioShowFullPreview = false;
+        longEditedPreviewExpanded = false;
 
         setLongStatus(
           `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}\nBuffer: ${isLongAudioBufferEnabled() ? `an, ${LONG_AUDIO_BUFFER_AHEAD_COUNT} Blöcke voraus` : "aus"}`,
@@ -7741,7 +7803,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
@@ -7768,6 +7830,12 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     longHighlightCurrentTextCheckbox.addEventListener("change", () => {
       refreshLongAudioPlaybackUI(true);
+      syncLongCopyCurrentSentenceButton();
+      saveState();
+    });
+
+    longCopyCurrentSentenceEnabledCheckbox.addEventListener("change", () => {
+      syncLongCopyCurrentSentenceButton();
       saveState();
     });
 
@@ -7970,6 +8038,9 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     longAudioQuestionsBtn.addEventListener("click", openLongQuestionsModal);
+    longCopyCurrentSentenceBtn.addEventListener("click", () => {
+      void copyCurrentLongAudioSentenceSnippet();
+    });
     longQuestionsCloseBtn.addEventListener("click", closeLongQuestionsModal);
     longQuestionsCancelBtn.addEventListener("click", closeLongQuestionsModal);
     longQuestionsGenerateBtn.addEventListener("click", generateQuestionsFromLongAudioSelection);
@@ -8195,6 +8266,12 @@ Analysiere die Eingabe und liefere nur das JSON.
 
     longTogglePreviewBtn.addEventListener("click", () => {
       longAudioShowFullPreview = !longAudioShowFullPreview;
+      renderLongAudioSegments();
+      saveState();
+    });
+
+    longExpandEditedViewBtn.addEventListener("click", () => {
+      longEditedPreviewExpanded = !longEditedPreviewExpanded;
       renderLongAudioSegments();
       saveState();
     });
