@@ -366,6 +366,8 @@
     .kreuzen-notepad-modal{ width:min(540px, 100%); }
     .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
     .modal-close{ width:auto; min-width:42px; border-radius:12px; padding:10px 12px; }
+    .notepad-head-actions{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+    .notepad-reset-btn{ width:42px; min-width:42px; height:42px; padding:0; font-size:18px; line-height:1; }
     .modal-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
     .kreuzen-notepad-grid{ display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:6px; margin-top:8px; }
     .kreuzen-notepad-cell{ width:100%; aspect-ratio:1 / 1; min-width:0; min-height:42px; padding:0; border-radius:8px; border:1px solid var(--line); background:var(--card-2); color:var(--text); font-size:22px; font-weight:900; display:flex; align-items:center; justify-content:center; line-height:1; }
@@ -1769,7 +1771,10 @@
         <div>
           <h2>Notizpad</h2>
         </div>
-        <button id="closeKreuzenNotepadBtn" class="ghost modal-close" type="button">✕</button>
+        <div class="notepad-head-actions">
+          <button id="resetKreuzenNotepadBtn" class="ghost modal-close notepad-reset-btn" type="button" title="Notizpad zurücksetzen" aria-label="Notizpad zurücksetzen">↻</button>
+          <button id="closeKreuzenNotepadBtn" class="ghost modal-close" type="button" title="Notizpad schließen" aria-label="Notizpad schließen">✕</button>
+        </div>
       </div>
       <div id="kreuzenNotepadGrid" class="kreuzen-notepad-grid" aria-label="Kreuzen-Notizraster"></div>
       <div class="group" style="margin-top:14px;">
@@ -2121,6 +2126,7 @@ Vorgaben:
     const errorBlocksContainer = document.getElementById("errorBlocksContainer");
     const emptyErrorBlocks = document.getElementById("emptyErrorBlocks");
     const kreuzenNotepadBackdrop = document.getElementById("kreuzenNotepadBackdrop");
+    const resetKreuzenNotepadBtn = document.getElementById("resetKreuzenNotepadBtn");
     const closeKreuzenNotepadBtn = document.getElementById("closeKreuzenNotepadBtn");
     const kreuzenNotepadGrid = document.getElementById("kreuzenNotepadGrid");
     const kreuzenNotepadText = document.getElementById("kreuzenNotepadText");
@@ -7790,6 +7796,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     openKreuzenNotepadBtn.addEventListener("click", openKreuzenNotepad);
+    resetKreuzenNotepadBtn.addEventListener("click", resetKreuzenNotepad);
     closeKreuzenNotepadBtn.addEventListener("click", closeKreuzenNotepad);
     kreuzenNotepadBackdrop.addEventListener("click", (e) => {
       if (e.target === kreuzenNotepadBackdrop) closeKreuzenNotepad();
