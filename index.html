@@ -323,6 +323,20 @@
     .metric-bubble:hover .metric-tooltip{ opacity:1; transform:translateX(-50%) translateY(0); }
     .session-edit-btn{ width:34px; height:34px; min-width:34px; border-radius:999px; padding:0; display:inline-flex; align-items:center; justify-content:center; background:var(--card); color:var(--text); border:1px solid var(--line); box-shadow:none; }
     .session-empty{ border:1px dashed var(--line); border-radius:18px; padding:18px; color:var(--muted); background:var(--card); text-align:center; font-size:13px; }
+    .session-stats-panel{ display:none; margin-top:14px; padding:12px; border:1px solid var(--line); border-radius:16px; background:color-mix(in srgb, var(--card) 78%, var(--session-soft)); box-shadow:0 8px 22px rgba(15,23,42,.05); }
+    .session-stats-panel.visible{ display:block; }
+    .session-stats-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+    .session-stats-title{ font-size:12px; font-weight:900; letter-spacing:.02em; text-transform:uppercase; color:var(--muted); }
+    .session-stats-date{ font-size:11px; color:var(--muted); font-weight:800; white-space:nowrap; }
+    .session-stats-grid{ display:grid; grid-template-columns:1fr auto; gap:6px 10px; font-size:12px; align-items:center; }
+    .session-stat-label{ color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .session-stat-value{ color:var(--text); font-weight:900; font-variant-numeric:tabular-nums; text-align:right; }
+    .session-goals{ margin-top:11px; padding-top:10px; border-top:1px solid var(--line); display:grid; gap:7px; }
+    .session-goal-row{ display:grid; grid-template-columns:minmax(0, 1fr) 58px; align-items:center; gap:8px; }
+    .session-goal-row label{ margin:0; color:var(--muted); font-size:11px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .session-goal-row input{ height:32px; border-radius:10px; padding:6px 8px; font-size:12px; text-align:right; background:var(--card); }
+    .session-goal-progress{ height:5px; border-radius:999px; overflow:hidden; background:var(--line); }
+    .session-goal-progress span{ display:block; height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg, var(--session-accent), var(--session-accent-2)); }
     .session-version{ flex:0 0 auto; margin-top:auto; padding-top:18px; text-align:center; color:color-mix(in srgb, var(--muted) 82%, var(--text)); font-size:11px; font-weight:800; letter-spacing:.02em; }
     .session-delete-confirm{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--card-2); }
     .session-delete-confirm span{ flex:1 1 160px; font-size:12px; color:var(--muted); font-weight:700; }
@@ -1143,6 +1157,14 @@
       <button class="session-add-btn" id="startSessionBtn" type="button" title="Lernsession starten" aria-label="Lernsession starten">+</button>
     </div>
     <div id="sessionList" class="session-list"></div>
+    <div id="sessionStatsPanel" class="session-stats-panel" aria-label="Tagesstatistik">
+      <div class="session-stats-head">
+        <div class="session-stats-title">Heute</div>
+        <div id="sessionStatsDate" class="session-stats-date"></div>
+      </div>
+      <div id="sessionStatsGrid" class="session-stats-grid"></div>
+      <div id="sessionGoals" class="session-goals"></div>
+    </div>
     <div class="session-version">Lernbot 8.9</div>
   </aside>
 
@@ -1670,6 +1692,7 @@
                 <label><input type="checkbox" id="audioFeedback" /> Audio Feedback</label>
                 <label><input type="checkbox" id="pomodoroSoundsEnabled" /> Pomodoro Sounds</label>
                 <label><input type="checkbox" id="actionSoundsEnabled" /> Aktionssounds</label>
+                <label><input type="checkbox" id="dailyStatsEnabled" /> Statistiken anzeigen</label>
                 <label><input type="checkbox" id="kreuzenEnterToSend" /> Kreuzen-Modus: Enter sendet direkt</label>
                 <label><input type="checkbox" id="ignoreSpellingErrors" /> Schlechte Rechtschreibung ignorieren</label>
                 <label><input type="checkbox" id="forceDesktopMode" /> Desktop-Modus auch mobil aktivieren</label>
@@ -1863,6 +1886,7 @@
         <textarea id="longQuestionsPreview" class="mini-textarea" readonly></textarea>
       </div>
       <div class="modal-actions">
+        <button id="longQuestionsRecapBtn" class="success" type="button">Recap wiederholen</button>
         <button id="longQuestionsGenerateBtn" class="blue" type="button">Fragen daraus generieren</button>
         <button id="longQuestionsGenerateFullBtn" class="ghost" type="button">Fragen aus Gesamttext generieren</button>
         <button id="longQuestionsCancelBtn" class="secondary" type="button">Verwerfen</button>
@@ -1930,6 +1954,7 @@
     const SESSION_STORAGE_KEY = "med_tts_learning_sessions_v1";
     const SESSION_DATA_PREFIX = "med_tts_learning_session_data_v1_";
     const PENDING_SESSION_EDIT_KEY = "med_tts_pending_session_edit_v1";
+    const DAILY_STATS_STORAGE_KEY = "med_tts_daily_stats_v1";
     const AUTH_STORAGE_KEY = "med_tts_demo_auth_v1";
     const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
     const DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini";
@@ -1975,6 +2000,10 @@ Vorgaben:
     const sessionBackdrop = document.getElementById("sessionBackdrop");
     const sessionDrawer = document.getElementById("sessionDrawer");
     const sessionList = document.getElementById("sessionList");
+    const sessionStatsPanel = document.getElementById("sessionStatsPanel");
+    const sessionStatsDate = document.getElementById("sessionStatsDate");
+    const sessionStatsGrid = document.getElementById("sessionStatsGrid");
+    const sessionGoals = document.getElementById("sessionGoals");
     const startSessionBtn = document.getElementById("startSessionBtn");
     const newSessionBackdrop = document.getElementById("newSessionBackdrop");
     const newSessionNameInput = document.getElementById("newSessionNameInput");
@@ -2072,6 +2101,7 @@ Vorgaben:
     const audioFeedbackCheckbox = document.getElementById("audioFeedback");
     const pomodoroSoundsEnabledCheckbox = document.getElementById("pomodoroSoundsEnabled");
     const actionSoundsEnabledCheckbox = document.getElementById("actionSoundsEnabled");
+    const dailyStatsEnabledCheckbox = document.getElementById("dailyStatsEnabled");
     const kreuzenEnterToSendCheckbox = document.getElementById("kreuzenEnterToSend");
     const ignoreSpellingErrorsCheckbox = document.getElementById("ignoreSpellingErrors");
     const forceDesktopModeCheckbox = document.getElementById("forceDesktopMode");
@@ -2190,6 +2220,7 @@ Vorgaben:
     const longQuestionsBackdrop = document.getElementById("longQuestionsBackdrop");
     const longQuestionsCloseBtn = document.getElementById("longQuestionsCloseBtn");
     const longQuestionsCancelBtn = document.getElementById("longQuestionsCancelBtn");
+    const longQuestionsRecapBtn = document.getElementById("longQuestionsRecapBtn");
     const longQuestionsGenerateBtn = document.getElementById("longQuestionsGenerateBtn");
     const longQuestionsGenerateFullBtn = document.getElementById("longQuestionsGenerateFullBtn");
     const longQuestionsBeforeRange = document.getElementById("longQuestionsBeforeRange");
@@ -2216,6 +2247,9 @@ Vorgaben:
     let kreuzenNotepadCells = Array(60).fill(0);
     let kreuzenNotepadDrawingActive = false;
     let kreuzenNotepadDrawingPoint = null;
+    let dailyStats = null;
+    let dailyStatsSaveTimer = null;
+    const dailyAudioTrackers = new WeakMap();
 
     let appState = {
       mode: "T",
@@ -2738,7 +2772,8 @@ Vorgaben:
         explanation,
         expectedOpen: safeItem.expectedOpen === true,
         questionType: safeItem.questionType === "integration" ? "integration" : "standard",
-        repeatHidden: safeItem.repeatHidden === true
+        repeatHidden: safeItem.repeatHidden === true,
+        statsAnsweredDate: String(safeItem.statsAnsweredDate || "")
       };
     }
 
@@ -3217,6 +3252,198 @@ Vorgaben:
       }
     }
 
+    function createBlankDailyStats(date = todayIsoDate()) {
+      return {
+        date,
+        pomodoros: 0,
+        breaks: 0,
+        questionsGenerated: 0,
+        questionsAnswered: 0,
+        listenedSeconds: 0,
+        generatedTextWords: 0,
+        imageOcclusionReveals: 0,
+        imagesGenerated: 0,
+        documentedQuestions: 0,
+        sessionsStarted: 0,
+        goals: {
+          pomodoros: "",
+          questionsAnswered: "",
+          sessionsStarted: ""
+        }
+      };
+    }
+
+    function normalizeDailyStats(value) {
+      const today = todayIsoDate();
+      if (!value || typeof value !== "object" || value.date !== today) {
+        const next = createBlankDailyStats(today);
+        if (value && typeof value === "object" && value.goals && typeof value.goals === "object") {
+          next.goals = {
+            ...next.goals,
+            pomodoros: value.goals.pomodoros ?? "",
+            questionsAnswered: value.goals.questionsAnswered ?? "",
+            sessionsStarted: value.goals.sessionsStarted ?? ""
+          };
+        }
+        return next;
+      }
+      const blank = createBlankDailyStats(today);
+      return {
+        ...blank,
+        ...value,
+        goals: {
+          ...blank.goals,
+          ...(value.goals || {})
+        }
+      };
+    }
+
+    function loadDailyStats() {
+      try {
+        dailyStats = normalizeDailyStats(JSON.parse(localStorage.getItem(DAILY_STATS_STORAGE_KEY) || "null"));
+      } catch {
+        dailyStats = createBlankDailyStats();
+      }
+      saveDailyStats();
+    }
+
+    function saveDailyStats({ deferred = false } = {}) {
+      if (!dailyStats) dailyStats = createBlankDailyStats();
+      if (deferred) {
+        clearTimeout(dailyStatsSaveTimer);
+        dailyStatsSaveTimer = setTimeout(() => saveDailyStats(), 600);
+        return;
+      }
+      clearTimeout(dailyStatsSaveTimer);
+      dailyStatsSaveTimer = null;
+      try {
+        localStorage.setItem(DAILY_STATS_STORAGE_KEY, JSON.stringify(dailyStats));
+      } catch {}
+    }
+
+    function ensureDailyStats() {
+      const normalized = normalizeDailyStats(dailyStats);
+      if (!dailyStats || normalized.date !== dailyStats.date) {
+        dailyStats = normalized;
+        saveDailyStats();
+      }
+      return dailyStats;
+    }
+
+    function incrementDailyStat(key, amount = 1, { deferred = false } = {}) {
+      const stats = ensureDailyStats();
+      const current = Number(stats[key]) || 0;
+      stats[key] = Math.max(0, current + amount);
+      saveDailyStats({ deferred });
+      renderDailyStatsPanel();
+    }
+
+    function formatDailyStatValue(key, value) {
+      if (key === "listenedSeconds") {
+        const minutes = Number(value) / 60;
+        return minutes >= 10 ? `${Math.round(minutes)} min` : `${minutes.toFixed(1)} min`;
+      }
+      if (key === "generatedTextWords") return `${Math.round(Number(value) || 0)} W`;
+      return String(Math.round(Number(value) || 0));
+    }
+
+    function renderDailyStatsPanel() {
+      if (!sessionStatsPanel || !sessionStatsGrid || !sessionGoals) return;
+      const enabled = dailyStatsEnabledCheckbox.checked;
+      sessionStatsPanel.classList.toggle("visible", enabled);
+      if (!enabled) return;
+
+      const stats = ensureDailyStats();
+      sessionStatsDate.textContent = formatShortDate(stats.date);
+      const rows = [
+        ["Pomodoros", "pomodoros"],
+        ["Pausen", "breaks"],
+        ["Fragen generiert", "questionsGenerated"],
+        ["Fragen beantwortet", "questionsAnswered"],
+        ["Gehört", "listenedSeconds"],
+        ["Text generiert", "generatedTextWords"],
+        ["Occlusion", "imageOcclusionReveals"],
+        ["Bilder", "imagesGenerated"],
+        ["Dokumentiert", "documentedQuestions"]
+      ];
+      sessionStatsGrid.innerHTML = rows.map(([label, key]) => `
+        <div class="session-stat-label">${escapeHtml(label)}</div>
+        <div class="session-stat-value">${escapeHtml(formatDailyStatValue(key, stats[key]))}</div>
+      `).join("");
+
+      const goals = [
+        ["Pomodoros", "pomodoros", stats.pomodoros],
+        ["Antworten", "questionsAnswered", stats.questionsAnswered],
+        ["Sessions", "sessionsStarted", stats.sessionsStarted]
+      ];
+      sessionGoals.innerHTML = goals.map(([label, key, current]) => {
+        const rawGoal = String(stats.goals?.[key] ?? "");
+        const goal = Math.max(0, Number(rawGoal) || 0);
+        const percent = goal ? clamp((Number(current) || 0) / goal * 100, 0, 100) : 0;
+        return `
+          <div class="session-goal-row">
+            <label for="dailyGoal-${key}">${escapeHtml(label)}</label>
+            <input id="dailyGoal-${key}" data-daily-goal="${key}" type="number" min="0" max="999" step="1" value="${escapeHtml(rawGoal)}" placeholder="Ziel" />
+          </div>
+          <div class="session-goal-progress" aria-hidden="true"><span style="width:${percent}%"></span></div>
+        `;
+      }).join("");
+
+      sessionGoals.querySelectorAll("[data-daily-goal]").forEach(input => {
+        input.addEventListener("change", () => updateDailyGoal(input.dataset.dailyGoal, input.value));
+        input.addEventListener("blur", () => updateDailyGoal(input.dataset.dailyGoal, input.value));
+      });
+    }
+
+    function updateDailyGoal(key, value) {
+      const stats = ensureDailyStats();
+      if (!stats.goals || typeof stats.goals !== "object") stats.goals = {};
+      const numeric = Number(value);
+      stats.goals[key] = Number.isFinite(numeric) && numeric > 0 ? String(Math.round(numeric)) : "";
+      saveDailyStats();
+      renderDailyStatsPanel();
+    }
+
+    function trackDailyAudioListening(audioEl) {
+      if (!audioEl || dailyAudioTrackers.has(audioEl)) return;
+      const tracker = { lastTime: 0, bufferedSeconds: 0 };
+      dailyAudioTrackers.set(audioEl, tracker);
+
+      audioEl.addEventListener("play", () => {
+        tracker.lastTime = Number(audioEl.currentTime) || 0;
+      });
+      audioEl.addEventListener("seeking", () => {
+        tracker.lastTime = Number(audioEl.currentTime) || 0;
+      });
+      audioEl.addEventListener("timeupdate", () => {
+        if (audioEl.paused || audioEl.seeking) {
+          tracker.lastTime = Number(audioEl.currentTime) || 0;
+          return;
+        }
+        const current = Number(audioEl.currentTime) || 0;
+        const delta = current - tracker.lastTime;
+        tracker.lastTime = current;
+        if (delta <= 0 || delta > 8) return;
+        tracker.bufferedSeconds += delta;
+        if (tracker.bufferedSeconds >= 5) {
+          incrementDailyStat("listenedSeconds", tracker.bufferedSeconds, { deferred: true });
+          tracker.bufferedSeconds = 0;
+        }
+      });
+      audioEl.addEventListener("pause", () => {
+        if (tracker.bufferedSeconds > 0) {
+          incrementDailyStat("listenedSeconds", tracker.bufferedSeconds, { deferred: true });
+          tracker.bufferedSeconds = 0;
+        }
+      });
+      audioEl.addEventListener("ended", () => {
+        if (tracker.bufferedSeconds > 0) {
+          incrementDailyStat("listenedSeconds", tracker.bufferedSeconds, { deferred: true });
+          tracker.bufferedSeconds = 0;
+        }
+      });
+    }
+
     function openNewSessionModal() {
       const nextNumber = learningSessions.length + 1;
       newSessionNameInput.value = `Lernsession ${nextNumber}`;
@@ -3240,6 +3467,7 @@ Vorgaben:
         empty.className = "session-empty";
         empty.textContent = "Keine Sessions.";
         sessionList.appendChild(empty);
+        renderDailyStatsPanel();
         return;
       }
 
@@ -3288,6 +3516,7 @@ Vorgaben:
           openSessionEditModal(btn.dataset.editSession);
         });
       });
+      renderDailyStatsPanel();
     }
 
     async function selectLearningSession(sessionId) {
@@ -3324,6 +3553,7 @@ Vorgaben:
         snapshot: buildBlankSessionSnapshot()
       };
       learningSessions.unshift(session);
+      incrementDailyStat("sessionsStarted", 1);
       activeLearningSessionId = session.id;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session.snapshot));
       await learningSessionRepository.saveSnapshot(session.id, session.snapshot);
@@ -3429,6 +3659,7 @@ Vorgaben:
         currentTime: Number.isFinite(longAudioPlayer.currentTime) ? longAudioPlayer.currentTime : (Number(longAudioSession.currentTime) || 0),
         currentSentenceIndex: Number.isFinite(longAudioSession.currentSentenceIndex) ? longAudioSession.currentSentenceIndex : 0,
         currentSentenceText: String(longAudioSession.currentSentenceText || ""),
+        recapLastFlatSentenceIndex: Number.isFinite(longAudioSession.recapLastFlatSentenceIndex) ? longAudioSession.recapLastFlatSentenceIndex : -1,
         fullText: longAudioTextInput.value,
         useEditorial: longAudioSession.useEditorial === true,
         chunks: longAudioSession.chunks.map((chunk, idx) => ({
@@ -3480,6 +3711,7 @@ Vorgaben:
         currentTime: Number.isFinite(Number(stored.currentTime)) ? Number(stored.currentTime) : 0,
         currentSentenceIndex: Number.isFinite(Number(stored.currentSentenceIndex)) ? Number(stored.currentSentenceIndex) : 0,
         currentSentenceText: String(stored.currentSentenceText || ""),
+        recapLastFlatSentenceIndex: Number.isFinite(Number(stored.recapLastFlatSentenceIndex)) ? Number(stored.recapLastFlatSentenceIndex) : -1,
         fullText: String(stored.fullText || ""),
         useEditorial: stored.useEditorial === true,
         chunks: stored.chunks.map((chunk, idx) => ({
@@ -3554,6 +3786,7 @@ Vorgaben:
         audioFeedback: audioFeedbackCheckbox.checked,
         pomodoroSoundsEnabled: pomodoroSoundsEnabledCheckbox.checked,
         actionSoundsEnabled: actionSoundsEnabledCheckbox.checked,
+        dailyStatsEnabled: dailyStatsEnabledCheckbox.checked,
         kreuzenEnterToSend: kreuzenEnterToSendCheckbox.checked,
         ignoreSpellingErrors: ignoreSpellingErrorsCheckbox.checked,
         forceDesktopMode: forceDesktopModeCheckbox.checked,
@@ -3591,6 +3824,7 @@ Vorgaben:
           updateApiBadge();
           updateLongStats();
           renderLongAudioSegments();
+          renderDailyStatsPanel();
           applyDesktopModeUI();
           applyModeUI();
           return;
@@ -3656,6 +3890,7 @@ Vorgaben:
         audioFeedbackCheckbox.checked = data.audioFeedback === true;
         pomodoroSoundsEnabledCheckbox.checked = data.pomodoroSoundsEnabled === true;
         actionSoundsEnabledCheckbox.checked = data.actionSoundsEnabled === true;
+        dailyStatsEnabledCheckbox.checked = data.dailyStatsEnabled === true;
         kreuzenEnterToSendCheckbox.checked = data.kreuzenEnterToSend === true;
         ignoreSpellingErrorsCheckbox.checked = data.ignoreSpellingErrors === true;
         forceDesktopModeCheckbox.checked = data.forceDesktopMode === true;
@@ -3693,6 +3928,7 @@ Vorgaben:
         renderQuestions();
         renderErrorBlocks();
         renderLongAudioSegments();
+        renderDailyStatsPanel();
         updateApiBadge();
         syncRepeatFlaggedButton();
         applyDesktopModeUI();
@@ -4627,6 +4863,7 @@ Zusatzregel zur Nutzereingabe:
       const selection = getCurrentLongAudioSentenceSelection(before, after);
       longQuestionsPreview.value = selection?.text || "";
       longQuestionsGenerateBtn.disabled = !selection?.text;
+      longQuestionsRecapBtn.disabled = !getLongAudioRecapSelection()?.text;
     }
 
     function openLongQuestionsModal() {
@@ -4658,6 +4895,40 @@ Zusatzregel zur Nutzereingabe:
       if (!generateQuestionsBtn.disabled) {
         void generateQuestions({ text: selectedText, sourceLabel });
       }
+    }
+
+    function getLongAudioRecapSelection() {
+      if (!longAudioSession || !Array.isArray(longAudioSession.chunks) || !longAudioSession.chunks.length) return null;
+      const current = getCurrentLongAudioSentenceSelection(0, 0);
+      if (!current) return null;
+      const sentenceMap = getLongAudioSentenceMap();
+      if (!sentenceMap.length) return null;
+      const lastRecapIndex = Number.isFinite(Number(longAudioSession.recapLastFlatSentenceIndex))
+        ? Math.floor(Number(longAudioSession.recapLastFlatSentenceIndex))
+        : -1;
+      const start = clamp(lastRecapIndex + 1, 0, sentenceMap.length - 1);
+      const end = clamp(current.flatActiveIndex, 0, sentenceMap.length - 1);
+      if (end < start) return null;
+      const text = sentenceMap.slice(start, end + 1).map(item => item.sentence).join(" ").trim();
+      return text ? { start, end, text } : null;
+    }
+
+    function generateQuestionsFromLongAudioRecap() {
+      saveLongAudioPlaybackProgress(true);
+      const recap = getLongAudioRecapSelection();
+      if (!recap?.text) {
+        setLongStatus("Kein neuer gesprochener Satzbereich für Recap verfügbar.", "info");
+        longQuestionsRecapBtn.disabled = true;
+        return;
+      }
+      longQuestionsBeforeRange.value = "0";
+      longQuestionsAfterRange.value = "0";
+      longQuestionsBeforeValue.textContent = "0";
+      longQuestionsAfterValue.textContent = "0";
+      longQuestionsPreview.value = recap.text;
+      longAudioSession.recapLastFlatSentenceIndex = recap.end;
+      saveState();
+      generateQuestionsFromLongAudioText(recap.text, "Long-Audio-Recap");
     }
 
     function generateQuestionsFromLongAudioSelection() {
@@ -5163,6 +5434,7 @@ Zusatzregel zur Nutzereingabe:
       });
 
       longSegmentsContainer.querySelectorAll("audio[data-long-segment-audio]").forEach(el => {
+        trackDailyAudioListening(el);
         el.addEventListener("play", () => {
           const idx = Number(el.dataset.longSegmentIndex);
           pauseLongSegmentAudios(idx);
@@ -5212,6 +5484,7 @@ Zusatzregel zur Nutzereingabe:
           stopped: false,
           manualStop: false,
           currentIndex: 0,
+          recapLastFlatSentenceIndex: -1,
           useEditorial,
           chunks
         };
@@ -5227,6 +5500,7 @@ Zusatzregel zur Nutzereingabe:
 
         await generateLongChunkForSession(longAudioSession, 0);
         if (!longAudioSession || longAudioSession.stopped) return;
+        incrementDailyStat("generatedTextWords", countWordsFromText(text));
 
         updateLongMainAudioForChunk(longAudioSession, 0);
 
@@ -5313,6 +5587,7 @@ Zusatzregel zur Nutzereingabe:
         if (pomodoroSeconds === 0) {
           pomodoroState = "overtime";
           pomodoroOvertimeStartedAt = now;
+          incrementDailyStat("pomodoros", 1);
           playPomodoroSound("overtime");
         }
       } else if (pomodoroState === "break") {
@@ -5361,6 +5636,7 @@ Zusatzregel zur Nutzereingabe:
       pomodoroOvertimeStartedAt = 0;
       renderPomodoro();
       pomodoroInterval = setInterval(tickPomodoro, 1000);
+      incrementDailyStat("breaks", 1);
       playPomodoroSound("break");
     }
 
@@ -5536,6 +5812,7 @@ Zusatzregel zur Nutzereingabe:
           triggerDownload(currentAudioUrl, fileName);
         }
 
+        incrementDailyStat("generatedTextWords", countWordsFromText(text));
         setStatus(`Audio erfolgreich erzeugt.\nTTS-Modell: ${model}`, "ok");
       } catch (err) {
         console.error(err);
@@ -5910,6 +6187,7 @@ Erzeuge daraus Integrationsfragen.
           .map((item, idx) => normalizeQuestionItem(item, idx))
           .filter(Boolean);
 
+        incrementDailyStat("questionsGenerated", newQuestions.length + integrationQuestions.length);
         saveState();
         renderQuestions();
 
@@ -6705,6 +6983,11 @@ Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsl
           falsch_fehlt: falschFehlt.slice(0, 4),
           feedback: String(parsed.feedback ?? parsed.feedback_satz ?? plausibilityNote ?? "").trim()
         };
+        const statsDate = todayIsoDate();
+        if (question.statsAnsweredDate !== statsDate) {
+          question.statsAnsweredDate = statsDate;
+          incrementDailyStat("questionsAnswered", 1);
+        }
         if (autoFlagLowScoreCheckbox.checked && question.result.score < 60) {
           question.flagged = true;
         }
@@ -6803,6 +7086,7 @@ Analysiere die Eingabe und liefere nur das JSON.
         };
 
         appState.errorBlocks.unshift(newBlock);
+        incrementDailyStat("documentedQuestions", 1);
         kreuzenInput.value = "";
         saveState();
         renderErrorBlocks();
@@ -7504,6 +7788,7 @@ Analysiere die Eingabe und liefere nur das JSON.
           createdAt: new Date().toISOString(),
           open: true
         });
+        incrementDailyStat("documentedQuestions", 1);
         setKreuzenStatus("Fehlerblock manuell hinzugefügt.", "ok");
       }
 
@@ -7984,10 +8269,11 @@ Analysiere die Eingabe und liefere nur das JSON.
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
+    dailyStatsEnabledCheckbox.addEventListener("change", renderDailyStatsPanel);
 
     [pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput].forEach(input => {
       input.addEventListener("change", () => {
@@ -8224,6 +8510,7 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
     longQuestionsCloseBtn.addEventListener("click", closeLongQuestionsModal);
     longQuestionsCancelBtn.addEventListener("click", closeLongQuestionsModal);
+    longQuestionsRecapBtn.addEventListener("click", generateQuestionsFromLongAudioRecap);
     longQuestionsGenerateBtn.addEventListener("click", generateQuestionsFromLongAudioSelection);
     longQuestionsGenerateFullBtn.addEventListener("click", generateQuestionsFromLongAudioFullText);
     longQuestionsBackdrop.addEventListener("click", (e) => {
@@ -8489,6 +8776,9 @@ Analysiere die Eingabe und liefere nur das JSON.
     });
 
     mountGlobalSettingsPanels();
+    loadDailyStats();
+    trackDailyAudioListening(audioPlayer);
+    trackDailyAudioListening(longAudioPlayer);
     loadState();
     applyAuthUI();
     updateStats();
