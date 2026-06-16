@@ -1264,13 +1264,23 @@
         </div>
 
         <div class="group">
-          <label for="startupApiKeyBackupChat">Backup API Key · jlu/gemma-4-26b-it</label>
-          <input id="startupApiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
+          <label for="startupBackupChatModel">Backup Chat-Modell</label>
+          <select id="startupBackupChatModel">
+            <option value="jlu/gpt-oss-20b">jlu/gpt-oss-20b</option>
+            <option value="jlu/gemma-4-26b-it">jlu/gemma-4-26b-it</option>
+          </select>
         </div>
 
         <div class="group">
           <label for="startupApiKeyBackupTranscribe">Backup API Key · jlu/whisper-1</label>
           <input id="startupApiKeyBackupTranscribe" type="password" placeholder="Key für jlu/whisper-1" />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="group">
+          <label for="startupApiKeyBackupChat">Backup API Key · Chatmodell</label>
+          <input id="startupApiKeyBackupChat" type="password" placeholder="Key für jlu/gpt-oss-20b oder jlu/gemma-4-26b-it" />
         </div>
       </div>
 
@@ -1281,7 +1291,7 @@
       </div>
 
       <div class="note" style="margin-top:10px;">
-        API-Keys und Inhalte bleiben lokal gespeichert. TTS, Fragenmodus und Kreuzen-Modus können parallel im selben Interface genutzt werden. Wenn Backup-Modelle aktiviert sind, nutzt die App jlu/tts-1-hd, jlu/gemma-4-26b-it und jlu/whisper-1 über die Backup Base URL.
+        API-Keys und Inhalte bleiben lokal gespeichert. TTS, Fragenmodus und Kreuzen-Modus können parallel im selben Interface genutzt werden. Wenn Backup-Modelle aktiviert sind, nutzt die App jlu/tts-1-hd, das ausgewählte JLU-Chatmodell und jlu/whisper-1 über die Backup Base URL.
       </div>
     </div>
 
@@ -1621,7 +1631,7 @@
               <div class="grid-2">
                 <div class="group">
                   <label><input type="checkbox" id="useBackupModels" /> Backup-Modelle verwenden</label>
-                  <small>Aktiviert jlu/tts-1-hd, jlu/gemma-4-26b-it und jlu/whisper-1 für alle API-Aufrufe.</small>
+                  <small>Aktiviert jlu/tts-1-hd, das ausgewählte JLU-Chatmodell und jlu/whisper-1 für alle API-Aufrufe.</small>
                 </div>
 
                 <div class="group">
@@ -1637,13 +1647,23 @@
                 </div>
 
                 <div class="group">
-                  <label for="apiKeyBackupChat">Backup API Key · jlu/gemma-4-26b-it</label>
-                  <input id="apiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
+                  <label for="backupChatModel">Backup Chat-Modell</label>
+                  <select id="backupChatModel">
+                    <option value="jlu/gpt-oss-20b">jlu/gpt-oss-20b</option>
+                    <option value="jlu/gemma-4-26b-it">jlu/gemma-4-26b-it</option>
+                  </select>
                 </div>
 
                 <div class="group">
                   <label for="apiKeyBackupTranscribe">Backup API Key · jlu/whisper-1</label>
                   <input id="apiKeyBackupTranscribe" type="password" placeholder="Key für jlu/whisper-1" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label for="apiKeyBackupChat">Backup API Key · Chatmodell</label>
+                  <input id="apiKeyBackupChat" type="password" placeholder="Key für jlu/gpt-oss-20b oder jlu/gemma-4-26b-it" />
                 </div>
               </div>
 
@@ -2021,7 +2041,8 @@
     const TRANSCRIBE_MODEL = "openai/gpt-4o-transcribe";
     const BACKUP_BASE_URL = "https://api.hrz.uni-giessen.de";
     const BACKUP_TTS_MODEL = "jlu/tts-1-hd";
-    const BACKUP_CHAT_MODEL = "jlu/gemma-4-26b-it";
+    const DEFAULT_BACKUP_CHAT_MODEL = "jlu/gpt-oss-20b";
+    const BACKUP_CHAT_MODELS = ["jlu/gpt-oss-20b", "jlu/gemma-4-26b-it"];
     const BACKUP_TRANSCRIBE_MODEL = "jlu/whisper-1";
     const LONG_AUDIO_EDITOR_SYSTEM_PROMPT = `Du bist ein praeziser Redaktionsassistent. Deine Aufgabe ist es, einen eingegebenen Text inhaltlich exakt wiederzugeben und sprachlich in gut lesbaren Fliesstext zu ueberfuehren.
 
@@ -2121,6 +2142,7 @@ Vorgaben:
     const startupUseBackupModels = document.getElementById("startupUseBackupModels");
     const startupBackupBaseUrl = document.getElementById("startupBackupBaseUrl");
     const startupApiKeyBackupTts = document.getElementById("startupApiKeyBackupTts");
+    const startupBackupChatModel = document.getElementById("startupBackupChatModel");
     const startupApiKeyBackupChat = document.getElementById("startupApiKeyBackupChat");
     const startupApiKeyBackupTranscribe = document.getElementById("startupApiKeyBackupTranscribe");
     const startupChatModel = document.getElementById("startupChatModel");
@@ -2140,6 +2162,7 @@ Vorgaben:
     const useBackupModelsCheckbox = document.getElementById("useBackupModels");
     const backupBaseUrlInput = document.getElementById("backupBaseUrl");
     const apiKeyBackupTtsInput = document.getElementById("apiKeyBackupTts");
+    const backupChatModelInput = document.getElementById("backupChatModel");
     const apiKeyBackupChatInput = document.getElementById("apiKeyBackupChat");
     const apiKeyBackupTranscribeInput = document.getElementById("apiKeyBackupTranscribe");
     const chatModelInput = document.getElementById("chatModel");
@@ -2914,6 +2937,16 @@ Vorgaben:
       return apiKeyTtsInput.value.trim();
     }
 
+    function normalizeBackupChatModel(model) {
+      const value = String(model || "").trim();
+      if (BACKUP_CHAT_MODELS.includes(value)) return value;
+      return DEFAULT_BACKUP_CHAT_MODEL;
+    }
+
+    function getCurrentBackupChatModel() {
+      return normalizeBackupChatModel(backupChatModelInput.value);
+    }
+
     function normalizeSecondOpinionSensitivity(value) {
       const normalized = String(value || "").trim();
       if (["off", "medium", "high"].includes(normalized)) return normalized;
@@ -2953,13 +2986,13 @@ Vorgaben:
     }
 
     function getEffectiveChatModelForTask(task) {
-      return isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : getAutoChatModelForTask(task);
+      return isBackupModelsEnabled() ? getCurrentBackupChatModel() : getAutoChatModelForTask(task);
     }
 
     function selectChatModelForTask(task) {
       if (isBackupModelsEnabled()) {
         updateApiBadge();
-        return BACKUP_CHAT_MODEL;
+        return getCurrentBackupChatModel();
       }
       const model = getAutoChatModelForTask(task);
       if (autoModelSwitchCheckbox.checked && chatModelInput.value !== model) {
@@ -3054,7 +3087,7 @@ Vorgaben:
       const activeChatKey = !!getActiveChatApiKey();
       const activeTranscribeKey = !!getActiveTranscribeApiKey();
       const activeTtsKey = !!getActiveTtsApiKey();
-      const selectedModel = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : getCurrentChatModel();
+      const selectedModel = isBackupModelsEnabled() ? getCurrentBackupChatModel() : getCurrentChatModel();
       const selectedTtsModel = getActiveTtsModel();
       const selectedTranscribeModel = getActiveTranscribeModel();
 
@@ -3105,6 +3138,7 @@ Vorgaben:
       useBackupModelsCheckbox.checked = startupUseBackupModels.checked;
       backupBaseUrlInput.value = startupBackupBaseUrl.value || BACKUP_BASE_URL;
       apiKeyBackupTtsInput.value = startupApiKeyBackupTts.value;
+      backupChatModelInput.value = normalizeBackupChatModel(startupBackupChatModel.value);
       apiKeyBackupChatInput.value = startupApiKeyBackupChat.value;
       apiKeyBackupTranscribeInput.value = startupApiKeyBackupTranscribe.value;
       chatModelInput.value = normalizeChatModel(startupChatModel.value || DEFAULT_CHAT_MODEL);
@@ -3124,6 +3158,7 @@ Vorgaben:
       startupUseBackupModels.checked = useBackupModelsCheckbox.checked;
       startupBackupBaseUrl.value = backupBaseUrlInput.value || BACKUP_BASE_URL;
       startupApiKeyBackupTts.value = apiKeyBackupTtsInput.value;
+      startupBackupChatModel.value = getCurrentBackupChatModel();
       startupApiKeyBackupChat.value = apiKeyBackupChatInput.value;
       startupApiKeyBackupTranscribe.value = apiKeyBackupTranscribeInput.value;
       startupChatModel.value = getCurrentChatModel();
@@ -3869,6 +3904,7 @@ Vorgaben:
         useBackupModels: useBackupModelsCheckbox.checked,
         backupBaseUrl: backupBaseUrlInput.value,
         apiKeyBackupTts: apiKeyBackupTtsInput.value,
+        backupChatModel: getCurrentBackupChatModel(),
         apiKeyBackupChat: apiKeyBackupChatInput.value,
         apiKeyBackupTranscribe: apiKeyBackupTranscribeInput.value,
         apiKeyEditorial: apiKeyEditorialInput.value,
@@ -3976,6 +4012,7 @@ Vorgaben:
         useBackupModelsCheckbox.checked = data.useBackupModels === true;
         backupBaseUrlInput.value = data.backupBaseUrl || BACKUP_BASE_URL;
         apiKeyBackupTtsInput.value = data.apiKeyBackupTts || "";
+        backupChatModelInput.value = normalizeBackupChatModel(data.backupChatModel);
         apiKeyBackupChatInput.value = data.apiKeyBackupChat || "";
         apiKeyBackupTranscribeInput.value = data.apiKeyBackupTranscribe || "";
         apiKeyEditorialInput.value = data.apiKeyEditorial || "";
@@ -6827,7 +6864,7 @@ Prüfe diese Zusatzinformationen auf Plausibilität.
     }
 
     async function auditExtremeEvaluation({ question, originalText, referenceLabel, referenceText, expectedAnswer, evaluationGuide, answer, initialScore, richtig, falschFehlt }) {
-      const model = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : GPT54_MINI_MODEL;
+      const model = isBackupModelsEnabled() ? getCurrentBackupChatModel() : GPT54_MINI_MODEL;
       if (!getActiveChatApiKey(model)) return null;
 
       const systemPrompt = `
@@ -7047,7 +7084,7 @@ Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsl
 
         if (shouldCheckAdditionalInfo || shouldAuditExtremeScore) {
           const additionalInfoModel = getEffectiveChatModelForTask("plausibilityCheck");
-          const auditModel = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : GPT54_MINI_MODEL;
+          const auditModel = isBackupModelsEnabled() ? getCurrentBackupChatModel() : GPT54_MINI_MODEL;
           if (shouldCheckAdditionalInfo && shouldAuditExtremeScore) {
             const modelLabel = additionalInfoModel === auditModel ? auditModel : `${additionalInfoModel} + ${auditModel}`;
             setStatus(`Zweitmeinungen werden parallel geprüft ...\nModelle: ${modelLabel}`, "info");
@@ -8412,12 +8449,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
     });
 
-    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupUseBackupModels, startupBackupBaseUrl, startupApiKeyBackupTts, startupApiKeyBackupChat, startupApiKeyBackupTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
+    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupUseBackupModels, startupBackupBaseUrl, startupApiKeyBackupTts, startupBackupChatModel, startupApiKeyBackupChat, startupApiKeyBackupTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
       el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, useBackupModelsCheckbox, backupBaseUrlInput, apiKeyBackupTtsInput, apiKeyBackupChatInput, apiKeyBackupTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, useBackupModelsCheckbox, backupBaseUrlInput, apiKeyBackupTtsInput, backupChatModelInput, apiKeyBackupChatInput, apiKeyBackupTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
