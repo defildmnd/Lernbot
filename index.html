@@ -1279,8 +1279,13 @@
 
       <div class="grid-2">
         <div class="group">
-          <label for="startupApiKeyBackupChat">Backup API Key · Chatmodell</label>
-          <input id="startupApiKeyBackupChat" type="password" placeholder="Key für jlu/gpt-oss-20b oder jlu/gemma-4-26b-it" />
+          <label for="startupApiKeyBackupGptOss">Backup API Key · jlu/gpt-oss-20b</label>
+          <input id="startupApiKeyBackupGptOss" type="password" placeholder="Key für jlu/gpt-oss-20b" />
+        </div>
+
+        <div class="group">
+          <label for="startupApiKeyBackupChat">Backup API Key · jlu/gemma-4-26b-it</label>
+          <input id="startupApiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
         </div>
       </div>
 
@@ -1662,8 +1667,12 @@
 
               <div class="grid-2">
                 <div class="group">
-                  <label for="apiKeyBackupChat">Backup API Key · Chatmodell</label>
-                  <input id="apiKeyBackupChat" type="password" placeholder="Key für jlu/gpt-oss-20b oder jlu/gemma-4-26b-it" />
+                  <label for="apiKeyBackupGptOss">Backup API Key · jlu/gpt-oss-20b</label>
+                  <input id="apiKeyBackupGptOss" type="password" placeholder="Key für jlu/gpt-oss-20b" />
+                </div>
+
+                <div class="group">
+                  <input id="apiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
                 </div>
               </div>
 
@@ -2143,6 +2152,7 @@ Vorgaben:
     const startupBackupBaseUrl = document.getElementById("startupBackupBaseUrl");
     const startupApiKeyBackupTts = document.getElementById("startupApiKeyBackupTts");
     const startupBackupChatModel = document.getElementById("startupBackupChatModel");
+    const startupApiKeyBackupGptOss = document.getElementById("startupApiKeyBackupGptOss");
     const startupApiKeyBackupChat = document.getElementById("startupApiKeyBackupChat");
     const startupApiKeyBackupTranscribe = document.getElementById("startupApiKeyBackupTranscribe");
     const startupChatModel = document.getElementById("startupChatModel");
@@ -2163,6 +2173,7 @@ Vorgaben:
     const backupBaseUrlInput = document.getElementById("backupBaseUrl");
     const apiKeyBackupTtsInput = document.getElementById("apiKeyBackupTts");
     const backupChatModelInput = document.getElementById("backupChatModel");
+    const apiKeyBackupGptOssInput = document.getElementById("apiKeyBackupGptOss");
     const apiKeyBackupChatInput = document.getElementById("apiKeyBackupChat");
     const apiKeyBackupTranscribeInput = document.getElementById("apiKeyBackupTranscribe");
     const chatModelInput = document.getElementById("chatModel");
@@ -3006,7 +3017,11 @@ Vorgaben:
     }
 
     function getActiveChatApiKey(model = getCurrentChatModel()) {
-      if (isBackupModelsEnabled()) return apiKeyBackupChatInput.value.trim();
+      if (isBackupModelsEnabled()) {
+        const backupModel = normalizeBackupChatModel(model);
+        if (backupModel === DEFAULT_BACKUP_CHAT_MODEL) return apiKeyBackupGptOssInput.value.trim();
+        return apiKeyBackupChatInput.value.trim();
+      }
       const currentModel = normalizeChatModel(model);
       const standardKey = apiKeyChatInput.value.trim();
       const gpt54Key = apiKeyGpt54Input.value.trim();
@@ -3021,7 +3036,10 @@ Vorgaben:
     }
 
     function getResolvedChatKeyLabel(model = getCurrentChatModel()) {
-      if (isBackupModelsEnabled()) return "Backup-Chat-Key";
+      if (isBackupModelsEnabled()) {
+        const backupModel = normalizeBackupChatModel(model);
+        return backupModel === DEFAULT_BACKUP_CHAT_MODEL ? "Backup-GPT-OSS-Key" : "Backup-Gemma-Key";
+      }
       const currentModel = normalizeChatModel(model);
       if (currentModel === GPT54_MODEL && apiKeyGpt54Input.value.trim()) {
         return "GPT-5.4-Override-Key";
@@ -3082,6 +3100,7 @@ Vorgaben:
       const hasGpt54Mini = !!apiKeyGpt54MiniInput.value.trim();
       const hasTranscribe = !!apiKeyTranscribeInput.value.trim();
       const hasBackupTts = !!apiKeyBackupTtsInput.value.trim();
+      const hasBackupGptOss = !!apiKeyBackupGptOssInput.value.trim();
       const hasBackupChat = !!apiKeyBackupChatInput.value.trim();
       const hasBackupTranscribe = !!apiKeyBackupTranscribeInput.value.trim();
       const activeChatKey = !!getActiveChatApiKey();
@@ -3094,9 +3113,9 @@ Vorgaben:
       if (activeTtsKey && activeChatKey && activeTranscribeKey) {
         apiStateBadge.textContent = `Bereit · ${selectedTtsModel} + ${selectedModel} + ${selectedTranscribeModel}`;
       } else {
-        const count = [hasTts, hasStandardChat, hasGpt54, hasGpt54Mini, hasTranscribe, hasBackupTts, hasBackupChat, hasBackupTranscribe].filter(Boolean).length;
+        const count = [hasTts, hasStandardChat, hasGpt54, hasGpt54Mini, hasTranscribe, hasBackupTts, hasBackupGptOss, hasBackupChat, hasBackupTranscribe].filter(Boolean).length;
         const modeLabel = isBackupModelsEnabled() ? "Backup" : "Primär";
-        apiStateBadge.textContent = `Gesetzte Keys: ${count}/8 · ${modeLabel}: ${selectedModel}`;
+        apiStateBadge.textContent = `Gesetzte Keys: ${count}/9 · ${modeLabel}: ${selectedModel}`;
       }
     }
 
@@ -3139,6 +3158,7 @@ Vorgaben:
       backupBaseUrlInput.value = startupBackupBaseUrl.value || BACKUP_BASE_URL;
       apiKeyBackupTtsInput.value = startupApiKeyBackupTts.value;
       backupChatModelInput.value = normalizeBackupChatModel(startupBackupChatModel.value);
+      apiKeyBackupGptOssInput.value = startupApiKeyBackupGptOss.value;
       apiKeyBackupChatInput.value = startupApiKeyBackupChat.value;
       apiKeyBackupTranscribeInput.value = startupApiKeyBackupTranscribe.value;
       chatModelInput.value = normalizeChatModel(startupChatModel.value || DEFAULT_CHAT_MODEL);
@@ -3159,6 +3179,7 @@ Vorgaben:
       startupBackupBaseUrl.value = backupBaseUrlInput.value || BACKUP_BASE_URL;
       startupApiKeyBackupTts.value = apiKeyBackupTtsInput.value;
       startupBackupChatModel.value = getCurrentBackupChatModel();
+      startupApiKeyBackupGptOss.value = apiKeyBackupGptOssInput.value;
       startupApiKeyBackupChat.value = apiKeyBackupChatInput.value;
       startupApiKeyBackupTranscribe.value = apiKeyBackupTranscribeInput.value;
       startupChatModel.value = getCurrentChatModel();
@@ -3905,6 +3926,7 @@ Vorgaben:
         backupBaseUrl: backupBaseUrlInput.value,
         apiKeyBackupTts: apiKeyBackupTtsInput.value,
         backupChatModel: getCurrentBackupChatModel(),
+        apiKeyBackupGptOss: apiKeyBackupGptOssInput.value,
         apiKeyBackupChat: apiKeyBackupChatInput.value,
         apiKeyBackupTranscribe: apiKeyBackupTranscribeInput.value,
         apiKeyEditorial: apiKeyEditorialInput.value,
@@ -4013,6 +4035,7 @@ Vorgaben:
         backupBaseUrlInput.value = data.backupBaseUrl || BACKUP_BASE_URL;
         apiKeyBackupTtsInput.value = data.apiKeyBackupTts || "";
         backupChatModelInput.value = normalizeBackupChatModel(data.backupChatModel);
+        apiKeyBackupGptOssInput.value = data.apiKeyBackupGptOss || (normalizeBackupChatModel(data.backupChatModel) === DEFAULT_BACKUP_CHAT_MODEL ? (data.apiKeyBackupChat || "") : "");
         apiKeyBackupChatInput.value = data.apiKeyBackupChat || "";
         apiKeyBackupTranscribeInput.value = data.apiKeyBackupTranscribe || "";
         apiKeyEditorialInput.value = data.apiKeyEditorial || "";
@@ -8404,6 +8427,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       startupApiKeyGpt54Mini.value = "";
       startupApiKeyTranscribe.value = "";
       startupApiKeyBackupTts.value = "";
+      startupApiKeyBackupGptOss.value = "";
       startupApiKeyBackupChat.value = "";
       startupApiKeyBackupTranscribe.value = "";
       apiKeyTtsInput.value = "";
@@ -8412,6 +8436,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       apiKeyGpt54MiniInput.value = "";
       apiKeyTranscribeInput.value = "";
       apiKeyBackupTtsInput.value = "";
+      apiKeyBackupGptOssInput.value = "";
       apiKeyBackupChatInput.value = "";
       apiKeyBackupTranscribeInput.value = "";
       apiKeyEditorialInput.value = "";
@@ -8449,12 +8474,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
     });
 
-    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupUseBackupModels, startupBackupBaseUrl, startupApiKeyBackupTts, startupBackupChatModel, startupApiKeyBackupChat, startupApiKeyBackupTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
+    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupUseBackupModels, startupBackupBaseUrl, startupApiKeyBackupTts, startupBackupChatModel, startupApiKeyBackupGptOss, startupApiKeyBackupChat, startupApiKeyBackupTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
       el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, useBackupModelsCheckbox, backupBaseUrlInput, apiKeyBackupTtsInput, backupChatModelInput, apiKeyBackupChatInput, apiKeyBackupTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, useBackupModelsCheckbox, backupBaseUrlInput, apiKeyBackupTtsInput, backupChatModelInput, apiKeyBackupGptOssInput, apiKeyBackupChatInput, apiKeyBackupTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });
