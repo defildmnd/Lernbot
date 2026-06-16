@@ -1245,6 +1245,35 @@
         </div>
       </div>
 
+      <div class="grid-2">
+        <div class="group">
+          <label><input type="checkbox" id="startupUseBackupModels" /> Backup-Modelle verwenden</label>
+          <small>Schaltet TTS, Chat und Transkription auf die JLU-Backup-Modelle um.</small>
+        </div>
+
+        <div class="group">
+          <label for="startupBackupBaseUrl">Backup Base URL</label>
+          <input id="startupBackupBaseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="group">
+          <label for="startupApiKeyBackupTts">Backup API Key · jlu/tts-1-hd</label>
+          <input id="startupApiKeyBackupTts" type="password" placeholder="Key für jlu/tts-1-hd" />
+        </div>
+
+        <div class="group">
+          <label for="startupApiKeyBackupChat">Backup API Key · jlu/gemma-4-26b-it</label>
+          <input id="startupApiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
+        </div>
+
+        <div class="group">
+          <label for="startupApiKeyBackupTranscribe">Backup API Key · jlu/whisper-1</label>
+          <input id="startupApiKeyBackupTranscribe" type="password" placeholder="Key für jlu/whisper-1" />
+        </div>
+      </div>
+
       <div class="btn-row">
         <button id="saveStartupBtn" class="success" type="button">Lokal speichern</button>
         <button id="hideStartupBtn" class="secondary" type="button">Startfeld einklappen</button>
@@ -1252,7 +1281,7 @@
       </div>
 
       <div class="note" style="margin-top:10px;">
-        API-Keys und Inhalte bleiben lokal gespeichert. TTS, Fragenmodus und Kreuzen-Modus können parallel im selben Interface genutzt werden. Wenn openai/gpt-5.4 ausgewählt ist, wird zuerst der GPT-5.4-Override-Key verwendet; falls leer, automatisch der Standard-Chat-Key.
+        API-Keys und Inhalte bleiben lokal gespeichert. TTS, Fragenmodus und Kreuzen-Modus können parallel im selben Interface genutzt werden. Wenn Backup-Modelle aktiviert sind, nutzt die App jlu/tts-1-hd, jlu/gemma-4-26b-it und jlu/whisper-1 über die Backup Base URL.
       </div>
     </div>
 
@@ -1586,6 +1615,35 @@
                 <div class="group">
                   <label for="apiKeyTranscribe">API Key · openai/gpt-4o-transcribe (optional Override)</label>
                   <input id="apiKeyTranscribe" type="password" placeholder="Optional eigener Key nur für openai/gpt-4o-transcribe" />
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="group">
+                  <label><input type="checkbox" id="useBackupModels" /> Backup-Modelle verwenden</label>
+                  <small>Aktiviert jlu/tts-1-hd, jlu/gemma-4-26b-it und jlu/whisper-1 für alle API-Aufrufe.</small>
+                </div>
+
+                <div class="group">
+                  <label for="backupBaseUrl">Backup Base URL</label>
+                  <input id="backupBaseUrl" type="text" value="https://api.hrz.uni-giessen.de" />
+                </div>
+              </div>
+
+              <div class="grid-3">
+                <div class="group">
+                  <label for="apiKeyBackupTts">Backup API Key · jlu/tts-1-hd</label>
+                  <input id="apiKeyBackupTts" type="password" placeholder="Key für jlu/tts-1-hd" />
+                </div>
+
+                <div class="group">
+                  <label for="apiKeyBackupChat">Backup API Key · jlu/gemma-4-26b-it</label>
+                  <input id="apiKeyBackupChat" type="password" placeholder="Key für jlu/gemma-4-26b-it" />
+                </div>
+
+                <div class="group">
+                  <label for="apiKeyBackupTranscribe">Backup API Key · jlu/whisper-1</label>
+                  <input id="apiKeyBackupTranscribe" type="password" placeholder="Key für jlu/whisper-1" />
                 </div>
               </div>
 
@@ -1961,6 +2019,10 @@
     const GPT54_MODEL = "openai/gpt-5.4";
     const GPT54_MINI_MODEL = "openai/gpt-5.4-mini";
     const TRANSCRIBE_MODEL = "openai/gpt-4o-transcribe";
+    const BACKUP_BASE_URL = "https://api.hrz.uni-giessen.de";
+    const BACKUP_TTS_MODEL = "jlu/tts-1-hd";
+    const BACKUP_CHAT_MODEL = "jlu/gemma-4-26b-it";
+    const BACKUP_TRANSCRIBE_MODEL = "jlu/whisper-1";
     const LONG_AUDIO_EDITOR_SYSTEM_PROMPT = `Du bist ein praeziser Redaktionsassistent. Deine Aufgabe ist es, einen eingegebenen Text inhaltlich exakt wiederzugeben und sprachlich in gut lesbaren Fliesstext zu ueberfuehren.
 
 Vorgaben:
@@ -2056,6 +2118,11 @@ Vorgaben:
     const startupApiKeyGpt54 = document.getElementById("startupApiKeyGpt54");
     const startupApiKeyGpt54Mini = document.getElementById("startupApiKeyGpt54Mini");
     const startupApiKeyTranscribe = document.getElementById("startupApiKeyTranscribe");
+    const startupUseBackupModels = document.getElementById("startupUseBackupModels");
+    const startupBackupBaseUrl = document.getElementById("startupBackupBaseUrl");
+    const startupApiKeyBackupTts = document.getElementById("startupApiKeyBackupTts");
+    const startupApiKeyBackupChat = document.getElementById("startupApiKeyBackupChat");
+    const startupApiKeyBackupTranscribe = document.getElementById("startupApiKeyBackupTranscribe");
     const startupChatModel = document.getElementById("startupChatModel");
     const startupVoice = document.getElementById("startupVoice");
     const startupQuestionCount = document.getElementById("startupQuestionCount");
@@ -2070,6 +2137,11 @@ Vorgaben:
     const apiKeyGpt54Input = document.getElementById("apiKeyGpt54");
     const apiKeyGpt54MiniInput = document.getElementById("apiKeyGpt54Mini");
     const apiKeyTranscribeInput = document.getElementById("apiKeyTranscribe");
+    const useBackupModelsCheckbox = document.getElementById("useBackupModels");
+    const backupBaseUrlInput = document.getElementById("backupBaseUrl");
+    const apiKeyBackupTtsInput = document.getElementById("apiKeyBackupTts");
+    const apiKeyBackupChatInput = document.getElementById("apiKeyBackupChat");
+    const apiKeyBackupTranscribeInput = document.getElementById("apiKeyBackupTranscribe");
     const chatModelInput = document.getElementById("chatModel");
     const voiceInput = document.getElementById("voice");
     const formatInput = document.getElementById("format");
@@ -2815,6 +2887,33 @@ Vorgaben:
       return normalizeChatModel(chatModelInput.value);
     }
 
+    function isBackupModelsEnabled() {
+      return useBackupModelsCheckbox.checked === true;
+    }
+
+    function cleanBaseUrl(value) {
+      return String(value || "").trim().replace(/\/+$/, "");
+    }
+
+    function getActiveBaseUrl() {
+      const primaryUrl = cleanBaseUrl(baseUrlInput.value);
+      if (!isBackupModelsEnabled()) return primaryUrl;
+      return cleanBaseUrl(backupBaseUrlInput.value) || BACKUP_BASE_URL;
+    }
+
+    function getActiveTtsModel() {
+      return isBackupModelsEnabled() ? BACKUP_TTS_MODEL : TTS_MODEL;
+    }
+
+    function getActiveTranscribeModel() {
+      return isBackupModelsEnabled() ? BACKUP_TRANSCRIBE_MODEL : TRANSCRIBE_MODEL;
+    }
+
+    function getActiveTtsApiKey() {
+      if (isBackupModelsEnabled()) return apiKeyBackupTtsInput.value.trim();
+      return apiKeyTtsInput.value.trim();
+    }
+
     function normalizeSecondOpinionSensitivity(value) {
       const normalized = String(value || "").trim();
       if (["off", "medium", "high"].includes(normalized)) return normalized;
@@ -2853,7 +2952,15 @@ Vorgaben:
       return normalizeChatModel(map[task] || getCurrentChatModel());
     }
 
+    function getEffectiveChatModelForTask(task) {
+      return isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : getAutoChatModelForTask(task);
+    }
+
     function selectChatModelForTask(task) {
+      if (isBackupModelsEnabled()) {
+        updateApiBadge();
+        return BACKUP_CHAT_MODEL;
+      }
       const model = getAutoChatModelForTask(task);
       if (autoModelSwitchCheckbox.checked && chatModelInput.value !== model) {
         chatModelInput.value = model;
@@ -2866,6 +2973,7 @@ Vorgaben:
     }
 
     function getActiveChatApiKey(model = getCurrentChatModel()) {
+      if (isBackupModelsEnabled()) return apiKeyBackupChatInput.value.trim();
       const currentModel = normalizeChatModel(model);
       const standardKey = apiKeyChatInput.value.trim();
       const gpt54Key = apiKeyGpt54Input.value.trim();
@@ -2880,6 +2988,7 @@ Vorgaben:
     }
 
     function getResolvedChatKeyLabel(model = getCurrentChatModel()) {
+      if (isBackupModelsEnabled()) return "Backup-Chat-Key";
       const currentModel = normalizeChatModel(model);
       if (currentModel === GPT54_MODEL && apiKeyGpt54Input.value.trim()) {
         return "GPT-5.4-Override-Key";
@@ -2891,23 +3000,25 @@ Vorgaben:
     }
 
     function getActiveTranscribeApiKey() {
+      if (isBackupModelsEnabled()) return apiKeyBackupTranscribeInput.value.trim();
       const transcribeKey = apiKeyTranscribeInput.value.trim();
       return transcribeKey || getActiveChatApiKey();
     }
 
     function getResolvedTranscribeKeyLabel() {
+      if (isBackupModelsEnabled()) return "Backup-Transcribe-Key";
       if (apiKeyTranscribeInput.value.trim()) return "Transcribe-Override-Key";
       return getResolvedChatKeyLabel();
     }
 
     function getLongAudioEditorialApiKey() {
       const editorialKey = apiKeyEditorialInput.value.trim();
-      const editorialModel = getAutoChatModelForTask("longEditorial");
+      const editorialModel = getEffectiveChatModelForTask("longEditorial");
       return getActiveChatApiKey(editorialModel) || editorialKey;
     }
 
     function getResolvedLongAudioEditorialKeyLabel() {
-      const editorialModel = getAutoChatModelForTask("longEditorial");
+      const editorialModel = getEffectiveChatModelForTask("longEditorial");
       if (getActiveChatApiKey(editorialModel)) return getResolvedChatKeyLabel(editorialModel);
       if (apiKeyEditorialInput.value.trim()) return "Redaktions-Override-Key";
       return "kein Key";
@@ -2937,15 +3048,22 @@ Vorgaben:
       const hasGpt54 = !!apiKeyGpt54Input.value.trim();
       const hasGpt54Mini = !!apiKeyGpt54MiniInput.value.trim();
       const hasTranscribe = !!apiKeyTranscribeInput.value.trim();
+      const hasBackupTts = !!apiKeyBackupTtsInput.value.trim();
+      const hasBackupChat = !!apiKeyBackupChatInput.value.trim();
+      const hasBackupTranscribe = !!apiKeyBackupTranscribeInput.value.trim();
       const activeChatKey = !!getActiveChatApiKey();
       const activeTranscribeKey = !!getActiveTranscribeApiKey();
-      const selectedModel = getCurrentChatModel();
+      const activeTtsKey = !!getActiveTtsApiKey();
+      const selectedModel = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : getCurrentChatModel();
+      const selectedTtsModel = getActiveTtsModel();
+      const selectedTranscribeModel = getActiveTranscribeModel();
 
-      if (hasTts && activeChatKey && activeTranscribeKey) {
-        apiStateBadge.textContent = `Bereit · TTS + ${selectedModel} + ${TRANSCRIBE_MODEL}`;
+      if (activeTtsKey && activeChatKey && activeTranscribeKey) {
+        apiStateBadge.textContent = `Bereit · ${selectedTtsModel} + ${selectedModel} + ${selectedTranscribeModel}`;
       } else {
-        const count = [hasTts, hasStandardChat, hasGpt54, hasGpt54Mini, hasTranscribe].filter(Boolean).length;
-        apiStateBadge.textContent = `Gesetzte Keys: ${count}/5 · Modell: ${selectedModel}`;
+        const count = [hasTts, hasStandardChat, hasGpt54, hasGpt54Mini, hasTranscribe, hasBackupTts, hasBackupChat, hasBackupTranscribe].filter(Boolean).length;
+        const modeLabel = isBackupModelsEnabled() ? "Backup" : "Primär";
+        apiStateBadge.textContent = `Gesetzte Keys: ${count}/8 · ${modeLabel}: ${selectedModel}`;
       }
     }
 
@@ -2984,6 +3102,11 @@ Vorgaben:
       apiKeyGpt54Input.value = startupApiKeyGpt54.value;
       apiKeyGpt54MiniInput.value = startupApiKeyGpt54Mini.value;
       apiKeyTranscribeInput.value = startupApiKeyTranscribe.value;
+      useBackupModelsCheckbox.checked = startupUseBackupModels.checked;
+      backupBaseUrlInput.value = startupBackupBaseUrl.value || BACKUP_BASE_URL;
+      apiKeyBackupTtsInput.value = startupApiKeyBackupTts.value;
+      apiKeyBackupChatInput.value = startupApiKeyBackupChat.value;
+      apiKeyBackupTranscribeInput.value = startupApiKeyBackupTranscribe.value;
       chatModelInput.value = normalizeChatModel(startupChatModel.value || DEFAULT_CHAT_MODEL);
       voiceInput.value = startupVoice.value;
       questionCountInput.value = startupQuestionCount.value;
@@ -2998,6 +3121,11 @@ Vorgaben:
       startupApiKeyGpt54.value = apiKeyGpt54Input.value;
       startupApiKeyGpt54Mini.value = apiKeyGpt54MiniInput.value;
       startupApiKeyTranscribe.value = apiKeyTranscribeInput.value;
+      startupUseBackupModels.checked = useBackupModelsCheckbox.checked;
+      startupBackupBaseUrl.value = backupBaseUrlInput.value || BACKUP_BASE_URL;
+      startupApiKeyBackupTts.value = apiKeyBackupTtsInput.value;
+      startupApiKeyBackupChat.value = apiKeyBackupChatInput.value;
+      startupApiKeyBackupTranscribe.value = apiKeyBackupTranscribeInput.value;
       startupChatModel.value = getCurrentChatModel();
       startupVoice.value = voiceInput.value;
       startupQuestionCount.value = questionCountInput.value;
@@ -3738,6 +3866,11 @@ Vorgaben:
         apiKeyGpt54: apiKeyGpt54Input.value,
         apiKeyGpt54Mini: apiKeyGpt54MiniInput.value,
         apiKeyTranscribe: apiKeyTranscribeInput.value,
+        useBackupModels: useBackupModelsCheckbox.checked,
+        backupBaseUrl: backupBaseUrlInput.value,
+        apiKeyBackupTts: apiKeyBackupTtsInput.value,
+        apiKeyBackupChat: apiKeyBackupChatInput.value,
+        apiKeyBackupTranscribe: apiKeyBackupTranscribeInput.value,
         apiKeyEditorial: apiKeyEditorialInput.value,
         chatModel: getCurrentChatModel(),
         voice: voiceInput.value,
@@ -3840,6 +3973,11 @@ Vorgaben:
         apiKeyGpt54Input.value = data.apiKeyGpt54 || "";
         apiKeyGpt54MiniInput.value = data.apiKeyGpt54Mini || "";
         apiKeyTranscribeInput.value = data.apiKeyTranscribe || "";
+        useBackupModelsCheckbox.checked = data.useBackupModels === true;
+        backupBaseUrlInput.value = data.backupBaseUrl || BACKUP_BASE_URL;
+        apiKeyBackupTtsInput.value = data.apiKeyBackupTts || "";
+        apiKeyBackupChatInput.value = data.apiKeyBackupChat || "";
+        apiKeyBackupTranscribeInput.value = data.apiKeyBackupTranscribe || "";
         apiKeyEditorialInput.value = data.apiKeyEditorial || "";
         chatModelInput.value = normalizeChatModel(data.chatModel || DEFAULT_CHAT_MODEL);
         voiceInput.value = data.voice || "alloy";
@@ -4230,7 +4368,7 @@ Zusatzregel zur Nutzereingabe:
 
     async function requestLongAudioEditorialChunk({ chunkText, previousTail = "", chunkIndex = 0, totalChunks = 1 }) {
       const apiKey = getLongAudioEditorialApiKey();
-      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const baseUrl = getActiveBaseUrl();
       const model = selectChatModelForTask("longEditorial");
 
       if (!apiKey) {
@@ -4289,14 +4427,15 @@ Zusatzregel zur Nutzereingabe:
     }
 
     async function requestLongAudioTtsChunk(chunkText) {
-      const apiKey = apiKeyTtsInput.value.trim();
-      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const apiKey = getActiveTtsApiKey();
+      const baseUrl = getActiveBaseUrl();
+      const model = getActiveTtsModel();
       const voice = voiceInput.value;
       const format = formatInput.value;
       const speed = parseFloat(speedInput.value);
 
       if (!apiKey) {
-        throw new Error(`Kein API-Key für ${TTS_MODEL} gesetzt.`);
+        throw new Error(`Kein API-Key für ${model} gesetzt.`);
       }
       if (!baseUrl) {
         throw new Error("Base URL fehlt.");
@@ -4316,7 +4455,7 @@ Zusatzregel zur Nutzereingabe:
             "Authorization": `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: TTS_MODEL,
+            model,
             input: chunkText,
             voice,
             response_format: format,
@@ -4383,7 +4522,7 @@ Zusatzregel zur Nutzereingabe:
     async function speakFeedbackText(feedbackText) {
       const text = String(feedbackText || "").trim();
       if (!text || !audioFeedbackCheckbox.checked) return;
-      if (!apiKeyTtsInput.value.trim()) {
+      if (!getActiveTtsApiKey()) {
         setStatus("Bewertung abgeschlossen. Audio Feedback konnte nicht gesprochen werden: Bitte TTS-API-Key setzen.", "error");
         return;
       }
@@ -4449,7 +4588,7 @@ Zusatzregel zur Nutzereingabe:
     }
 
     function getLongChunkFileName(index) {
-      return `speech_${TTS_MODEL.replaceAll("/", "_")}_part_${String(index + 1).padStart(2, "0")}.${getLongChunkExt()}`;
+      return `speech_${getActiveTtsModel().replaceAll("/", "_")}_part_${String(index + 1).padStart(2, "0")}.${getLongChunkExt()}`;
     }
 
     function getLongChunkStatusLabel(status) {
@@ -5444,15 +5583,16 @@ Zusatzregel zur Nutzereingabe:
     }
 
     async function generateLongAudio() {
-      const apiKey = apiKeyTtsInput.value.trim();
+      const apiKey = getActiveTtsApiKey();
+      const ttsModel = getActiveTtsModel();
       const text = longAudioTextInput.value.trim();
       const speed = parseFloat(speedInput.value);
       const maxWords = getLongChunkLimit();
       const useEditorial = longEnableEditorialCheckbox.checked;
-      const editorialModel = getAutoChatModelForTask("longEditorial");
+      const editorialModel = getEffectiveChatModelForTask("longEditorial");
 
       if (!apiKey) {
-        setLongStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
+        setLongStatus(`Bitte den API-Key für ${ttsModel} setzen.`, "error");
         return;
       }
       if (!text) {
@@ -5492,7 +5632,7 @@ Zusatzregel zur Nutzereingabe:
         longEditedPreviewExpanded = false;
 
         setLongStatus(
-          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${TTS_MODEL}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}\nBuffer: ${isLongAudioBufferEnabled() ? `an, ${LONG_AUDIO_BUFFER_AHEAD_COUNT} Blöcke voraus` : "aus"}`,
+          `Lang-Audio wird erzeugt ...\nTTS-Modell: ${ttsModel}\nStimme: ${voiceInput.value}\nRedaktion: ${useEditorial ? `an (${editorialModel})` : "aus"}\nKey-Quelle Redaktion: ${useEditorial ? getResolvedLongAudioEditorialKeyLabel() : "-"}\nBlöcke: ${chunks.length}\nBuffer: ${isLongAudioBufferEnabled() ? `an, ${LONG_AUDIO_BUFFER_AHEAD_COUNT} Blöcke voraus` : "aus"}`,
           "info"
         );
         renderLongAudioSegments();
@@ -5654,7 +5794,7 @@ Zusatzregel zur Nutzereingabe:
     async function fetchJsonChat({systemPrompt, userPrompt, task = ""}) {
       const model = selectChatModelForTask(task);
       const apiKey = getActiveChatApiKey(model);
-      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const baseUrl = getActiveBaseUrl();
       const maxAttempts = autoRetryApiErrorsCheckbox.checked ? 2 : 1;
 
       if (!apiKey) {
@@ -5734,16 +5874,16 @@ Zusatzregel zur Nutzereingabe:
     }
 
     async function generateSpeech() {
-      const apiKey = apiKeyTtsInput.value.trim();
-      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
-      const model = TTS_MODEL;
+      const apiKey = getActiveTtsApiKey();
+      const baseUrl = getActiveBaseUrl();
+      const model = getActiveTtsModel();
       const text = textInput.value.trim();
       const voice = voiceInput.value;
       const format = formatInput.value;
       const speed = parseFloat(speedInput.value);
 
       if (!apiKey) {
-        setStatus("Bitte den API-Key für das TTS-Modell setzen.", "error");
+        setStatus(`Bitte den API-Key für ${model} setzen.`, "error");
         return;
       }
       if (!text) {
@@ -6098,7 +6238,7 @@ Erzeuge daraus Integrationsfragen.
       const sourceLabel = options.sourceLabel || "Text";
       const triggerButton = options.triggerButton || generateQuestionsBtn;
       const buttonsToDisable = Array.from(new Set([generateQuestionsBtn, triggerButton].filter(Boolean)));
-      const chatModel = getAutoChatModelForTask("questions");
+      const chatModel = getEffectiveChatModelForTask("questions");
       const withQuestionSeparators = areQuestionSeparatorsEnabled();
 
       if (!getActiveChatApiKey(chatModel)) {
@@ -6354,8 +6494,8 @@ Erzeuge daraus Integrationsfragen.
     async function prepareOralExamAudioQueue() {
       const questionItems = appState.questions.filter(isVisibleQuestionRecord);
       if (!oralExamModeCheckbox.checked || oralExamAudioQueueRunning || !questionItems.length) return;
-      if (!apiKeyTtsInput.value.trim()) {
-        setStatus("Oral Examination: Bitte den API-Key für das TTS-Modell setzen.", "error");
+      if (!getActiveTtsApiKey()) {
+        setStatus(`Oral Examination: Bitte den API-Key für ${getActiveTtsModel()} setzen.`, "error");
         return;
       }
 
@@ -6410,10 +6550,11 @@ Erzeuge daraus Integrationsfragen.
 
     async function transcribeRecordedAnswer(questionId, audioBlob) {
       const apiKey = getActiveTranscribeApiKey();
-      const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, "");
+      const baseUrl = getActiveBaseUrl();
+      const model = getActiveTranscribeModel();
 
       if (!apiKey) {
-        throw new Error(`Bitte den API-Key für ${TRANSCRIBE_MODEL} setzen.`);
+        throw new Error(`Bitte den API-Key für ${model} setzen.`);
       }
 
       transcribingQuestionId = questionId;
@@ -6422,7 +6563,7 @@ Erzeuge daraus Integrationsfragen.
       try {
         const formData = new FormData();
         const extension = audioBlob.type.includes("mp4") ? "m4a" : "webm";
-        formData.append("model", TRANSCRIBE_MODEL);
+        formData.append("model", model);
         formData.append("file", audioBlob, `answer_${Date.now()}.${extension}`);
         formData.append("prompt", "Transkribiere die medizinische Antwort präzise auf Deutsch.");
 
@@ -6462,7 +6603,7 @@ Erzeuge daraus Integrationsfragen.
         question.answer = question.answer?.trim() ? `${question.answer.trim()}\n${transcript}` : transcript;
         saveState();
         renderQuestions();
-        setStatus(`Transkription abgeschlossen.\nModell: ${TRANSCRIBE_MODEL}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "ok");
+        setStatus(`Transkription abgeschlossen.\nModell: ${model}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "ok");
         return transcript;
       } finally {
         transcribingQuestionId = null;
@@ -6476,7 +6617,8 @@ Erzeuge daraus Integrationsfragen.
         return;
       }
       if (!getActiveTranscribeApiKey()) {
-        setStatus(`Bitte API-Key für ${TRANSCRIBE_MODEL} setzen (oder Chat-Key als Fallback).`, "error");
+        const fallbackHint = isBackupModelsEnabled() ? "" : " (oder Chat-Key als Fallback)";
+        setStatus(`Bitte API-Key für ${getActiveTranscribeModel()} setzen${fallbackHint}.`, "error");
         return;
       }
       if (!window.isSecureContext) {
@@ -6530,7 +6672,7 @@ Erzeuge daraus Integrationsfragen.
           }
 
           try {
-            setStatus(`Audio wird transkribiert ...\nModell: ${TRANSCRIBE_MODEL}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "info");
+            setStatus(`Audio wird transkribiert ...\nModell: ${getActiveTranscribeModel()}\nKey-Quelle: ${getResolvedTranscribeKeyLabel()}`, "info");
             await transcribeRecordedAnswer(localQuestionId, blob);
             finishRecordingCompletion(true);
           } catch (err) {
@@ -6621,7 +6763,7 @@ Erzeuge daraus Integrationsfragen.
     }
 
     async function checkAdditionalAnswerPlausibility({ question, originalText, expectedAnswer, answer, extraClaims }) {
-      const model = getAutoChatModelForTask("plausibilityCheck");
+      const model = getEffectiveChatModelForTask("plausibilityCheck");
       if (!getActiveChatApiKey(model)) {
         throw new Error(`Kein API-Key für den Plausibilitätscheck mit ${model} gesetzt.`);
       }
@@ -6685,7 +6827,7 @@ Prüfe diese Zusatzinformationen auf Plausibilität.
     }
 
     async function auditExtremeEvaluation({ question, originalText, referenceLabel, referenceText, expectedAnswer, evaluationGuide, answer, initialScore, richtig, falschFehlt }) {
-      const model = GPT54_MINI_MODEL;
+      const model = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : GPT54_MINI_MODEL;
       if (!getActiveChatApiKey(model)) return null;
 
       const systemPrompt = `
@@ -6770,7 +6912,7 @@ Prüfe, ob die Erstbewertung bei einem extremen Score medizinisch robust ist.
 
       const question = appState.questions.find(q => q.id === questionId);
       const originalText = textInput.value.trim();
-      const chatModel = getAutoChatModelForTask("evaluation");
+      const chatModel = getEffectiveChatModelForTask("evaluation");
       const expectedAnswer = String(question?.expectedAnswer || "").trim();
       const evaluationGuide = String(question?.evaluationGuide || "").trim();
       const useExpectedAnswer = !!expectedAnswer;
@@ -6904,8 +7046,8 @@ Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsl
         );
 
         if (shouldCheckAdditionalInfo || shouldAuditExtremeScore) {
-          const additionalInfoModel = getAutoChatModelForTask("plausibilityCheck");
-          const auditModel = GPT54_MINI_MODEL;
+          const additionalInfoModel = getEffectiveChatModelForTask("plausibilityCheck");
+          const auditModel = isBackupModelsEnabled() ? BACKUP_CHAT_MODEL : GPT54_MINI_MODEL;
           if (shouldCheckAdditionalInfo && shouldAuditExtremeScore) {
             const modelLabel = additionalInfoModel === auditModel ? auditModel : `${additionalInfoModel} + ${auditModel}`;
             setStatus(`Zweitmeinungen werden parallel geprüft ...\nModelle: ${modelLabel}`, "info");
@@ -7015,7 +7157,7 @@ Bewerte die Antwort anhand des ${referenceLabel} und des versteckten Bewertungsl
 
     async function analyzeKreuzenInput() {
       const input = kreuzenInput.value.trim();
-      const chatModel = getAutoChatModelForTask("kreuzen");
+      const chatModel = getEffectiveChatModelForTask("kreuzen");
 
       if (!getActiveChatApiKey(chatModel)) {
         setKreuzenStatus(`Bitte den API-Key für ${chatModel} setzen.`, "error");
@@ -7808,7 +7950,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       lines.push("MED ACTIVE RECALL EXPORT");
       lines.push("========================");
       lines.push("");
-      lines.push(`Chat-Modell: ${getCurrentChatModel()}`);
+      lines.push(`Chat-Modell: ${getEffectiveChatModelForTask("questions")}`);
       lines.push("");
       lines.push("Originaltext:");
       lines.push(textInput.value.trim() || "—");
@@ -7864,7 +8006,7 @@ Analysiere die Eingabe und liefere nur das JSON.
       const lines = [];
       lines.push("KREUZEN FEHLERLISTE EXPORT");
       lines.push("==========================");
-      lines.push(`Chat-Modell: ${getCurrentChatModel()}`);
+      lines.push(`Chat-Modell: ${getEffectiveChatModelForTask("kreuzen")}`);
       lines.push("");
 
       appState.errorBlocks.forEach((block, i) => {
@@ -8224,11 +8366,17 @@ Analysiere die Eingabe und liefere nur das JSON.
       startupApiKeyGpt54.value = "";
       startupApiKeyGpt54Mini.value = "";
       startupApiKeyTranscribe.value = "";
+      startupApiKeyBackupTts.value = "";
+      startupApiKeyBackupChat.value = "";
+      startupApiKeyBackupTranscribe.value = "";
       apiKeyTtsInput.value = "";
       apiKeyChatInput.value = "";
       apiKeyGpt54Input.value = "";
       apiKeyGpt54MiniInput.value = "";
       apiKeyTranscribeInput.value = "";
+      apiKeyBackupTtsInput.value = "";
+      apiKeyBackupChatInput.value = "";
+      apiKeyBackupTranscribeInput.value = "";
       apiKeyEditorialInput.value = "";
       saveState();
       updateApiBadge();
@@ -8264,12 +8412,12 @@ Analysiere die Eingabe und liefere nur das JSON.
       }
     });
 
-    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
+    [startupBaseUrl, startupApiKeyTts, startupApiKeyChat, startupApiKeyGpt54, startupApiKeyGpt54Mini, startupApiKeyTranscribe, startupUseBackupModels, startupBackupBaseUrl, startupApiKeyBackupTts, startupApiKeyBackupChat, startupApiKeyBackupTranscribe, startupChatModel, startupVoice, startupQuestionCount].forEach(el => {
       el.addEventListener("input", () => { syncStartupToMain(); saveState(); });
       el.addEventListener("change", () => { syncStartupToMain(); saveState(); });
     });
 
-    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
+    [baseUrlInput, apiKeyTtsInput, apiKeyChatInput, apiKeyGpt54Input, apiKeyGpt54MiniInput, apiKeyTranscribeInput, useBackupModelsCheckbox, backupBaseUrlInput, apiKeyBackupTtsInput, apiKeyBackupChatInput, apiKeyBackupTranscribeInput, apiKeyEditorialInput, chatModelInput, voiceInput, formatInput, speedInput, pomodoroMinutesInput, pomodoroOvertimeMinutesInput, pomodoroBreakMinutesInput, questionCountInput, longChunkSizeInput, longQuestionsBeforeMaxInput, longQuestionsAfterMaxInput, saveSettingsCheckbox, autoPlayCheckbox, autoDownloadCheckbox, longEnableEditorialCheckbox, longGenerateQuestionsEnabledCheckbox, longAutoPlayCheckbox, longAutoDownloadCheckbox, longHighlightCurrentTextCheckbox, longCopyCurrentSentenceEnabledCheckbox, longBufferedGenerationCheckbox, generateExpectedAnswersCheckbox, generateExplanationsCheckbox, generateIntegrationQuestionsCheckbox, questionSeparatorsEnabledCheckbox, hideQuestionAudioButtonCheckbox, revealQuestionInfoOnEvaluateCheckbox, autoRetryApiErrorsCheckbox, hideKreuzenBlockAnkiButtonCheckbox, repeatFlaggedQuestionsCheckbox, repeatFlaggedHideOnlyCheckbox, autoFlagLowScoreCheckbox, autoUnflagHighScoreCheckbox, oralExamModeCheckbox, autoModelSwitchCheckbox, usePremiumModelsCheckbox, secondOpinionSensitivityInput, audioFeedbackCheckbox, pomodoroSoundsEnabledCheckbox, actionSoundsEnabledCheckbox, dailyStatsEnabledCheckbox, kreuzenEnterToSendCheckbox, ignoreSpellingErrorsCheckbox, forceDesktopModeCheckbox, permanentSaveEnabled].forEach(el => {
       el.addEventListener("input", () => { syncMainToStartup(); saveState(); });
       el.addEventListener("change", () => { syncMainToStartup(); saveState(); });
     });

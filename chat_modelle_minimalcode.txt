@@ -1,0 +1,289 @@
+Minimalcode aus Lernbot/index.html fuer die drei Sprachmodelle
+Stand: 2026-06-12
+
+Quelle im Projekt:
+/Users/sven_scheibner/Documents/GitHub/Lernbot/index.html
+
+Gefundene Modelle:
+- Text-to-Speech: openai/gpt-4o-mini-tts-2025-12-15
+- ChatGPT 5.4 Mini: openai/gpt-5.4-mini
+- Audio-to-Text / Transkription: openai/gpt-4o-transcribe
+
+Hinweis:
+Der bestehende Code verwendet einen frei einstellbaren baseUrl-Wert und ruft die OpenAI-kompatiblen Endpunkte direkt aus der HTML-Seite per fetch auf. Minimal brauchst du in der HTML-Seite:
+- ein API-Key-Feld oder eine Variable apiKey
+- baseUrl, z. B. "https://api.openai.com" oder die in der App eingestellte kompatible Base-URL
+- fuer TTS ein <audio>-Element
+- fuer Transkription ein File-Input oder eine MediaRecorder-Aufnahme als Blob
+
+
+============================================================
+1) Gemeinsame Modell-Konstanten
+============================================================
+
+<script>
+const baseUrl = "https://api.openai.com"; // oder deine kompatible Base-URL ohne /v1 am Ende
+const apiKey = "DEIN_API_KEY";
+
+const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
+const GPT54_MINI_MODEL = "openai/gpt-5.4-mini";
+const TRANSCRIBE_MODEL = "openai/gpt-4o-transcribe";
+</script>
+
+
+============================================================
+2) Text-to-Speech: openai/gpt-4o-mini-tts-2025-12-15
+============================================================
+
+Minimaler HTML-Teil:
+
+<textarea id="ttsText">Hallo, das ist ein Test.</textarea>
+<button onclick="generateSpeech()">Audio erzeugen</button>
+<audio id="audioPlayer" controls></audio>
+
+Minimaler JavaScript-Code:
+
+<script>
+async function generateSpeech() {
+  const text = document.getElementById("ttsText").value.trim();
+  const audioPlayer = document.getElementById("audioPlayer");
+
+  if (!text) throw new Error("Bitte Text eingeben.");
+
+  const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/v1/audio/speech`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: TTS_MODEL,
+      input: text,
+      voice: "alloy",
+      response_format: "mp3",
+      speed: 1
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  const blob = await response.blob();
+  const audioUrl = URL.createObjectURL(blob);
+  audioPlayer.src = audioUrl;
+  await audioPlayer.play().catch(() => {});
+}
+</script>
+
+Original-Code-Stellen:
+- Modell-Konstante: index.html Zeile ca. 1959
+- Request: index.html Zeile ca. 5766, fetch(`${baseUrl}/v1/audio/speech`, ...)
+
+
+============================================================
+3) ChatGPT 5.4 Mini: openai/gpt-5.4-mini
+============================================================
+
+Minimaler HTML-Teil:
+
+<textarea id="chatPrompt">Erklaere kurz den Frank-Starling-Mechanismus.</textarea>
+<button onclick="askGpt54Mini()">Fragen</button>
+<pre id="chatOutput"></pre>
+
+Minimaler JavaScript-Code:
+
+<script>
+async function askGpt54Mini() {
+  const userPrompt = document.getElementById("chatPrompt").value.trim();
+  const output = document.getElementById("chatOutput");
+
+  if (!userPrompt) throw new Error("Bitte Prompt eingeben.");
+
+  const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: GPT54_MINI_MODEL,
+      messages: [
+        { role: "system", content: "Du bist ein praeziser Lernassistent. Antworte klar und knapp auf Deutsch." },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.3
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  const data = await response.json();
+  output.textContent = data?.choices?.[0]?.message?.content ?? "";
+}
+</script>
+
+Original-Code-Stellen:
+- Modell-Konstante: index.html Zeile ca. 1962
+- Key-Auswahl fuer GPT-5.4-mini: index.html Zeile ca. 2868
+- Request: index.html Zeile ca. 5670, fetch(`${baseUrl}/v1/chat/completions`, ...)
+
+
+============================================================
+4) Audio-to-Text / Transkription: openai/gpt-4o-transcribe
+============================================================
+
+Minimaler HTML-Teil mit Datei-Upload:
+
+<input id="audioFile" type="file" accept="audio/*" />
+<button onclick="transcribeAudioFile()">Audio transkribieren</button>
+<pre id="transcriptOutput"></pre>
+
+Minimaler JavaScript-Code:
+
+<script>
+async function transcribeAudioFile() {
+  const fileInput = document.getElementById("audioFile");
+  const output = document.getElementById("transcriptOutput");
+  const file = fileInput.files?.[0];
+
+  if (!file) throw new Error("Bitte Audiodatei auswaehlen.");
+
+  const formData = new FormData();
+  formData.append("model", TRANSCRIBE_MODEL);
+  formData.append("file", file, file.name || "audio.webm");
+  formData.append("prompt", "Transkribiere die medizinische Antwort praezise auf Deutsch.");
+
+  const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/v1/audio/transcriptions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  const data = await response.json();
+  output.textContent = String(data?.text ?? "").trim();
+}
+</script>
+
+Original-Code-Stellen:
+- Modell-Konstante: index.html Zeile ca. 1963
+- Key-Auswahl fuer Transkription: index.html Zeile ca. 2894
+- Request: index.html Zeile ca. 6430, fetch(`${baseUrl}/v1/audio/transcriptions`, ...)
+
+
+============================================================
+5) Alles zusammen als lauffaehiges Mini-Beispiel
+============================================================
+
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Minimaler Sprachmodell-Test</title>
+</head>
+<body>
+  <label>API-Key</label>
+  <input id="apiKey" type="password" placeholder="API-Key" />
+
+  <label>Base URL</label>
+  <input id="baseUrl" value="https://api.openai.com" />
+
+  <h2>Text-to-Speech</h2>
+  <textarea id="ttsText">Hallo, das ist ein Test.</textarea>
+  <button onclick="generateSpeech()">Audio erzeugen</button>
+  <audio id="audioPlayer" controls></audio>
+
+  <h2>ChatGPT 5.4 Mini</h2>
+  <textarea id="chatPrompt">Erklaere kurz den Frank-Starling-Mechanismus.</textarea>
+  <button onclick="askGpt54Mini()">Fragen</button>
+  <pre id="chatOutput"></pre>
+
+  <h2>Audio-to-Text</h2>
+  <input id="audioFile" type="file" accept="audio/*" />
+  <button onclick="transcribeAudioFile()">Transkribieren</button>
+  <pre id="transcriptOutput"></pre>
+
+  <script>
+    const TTS_MODEL = "openai/gpt-4o-mini-tts-2025-12-15";
+    const GPT54_MINI_MODEL = "openai/gpt-5.4-mini";
+    const TRANSCRIBE_MODEL = "openai/gpt-4o-transcribe";
+
+    function getApiKey() {
+      return document.getElementById("apiKey").value.trim();
+    }
+
+    function getBaseUrl() {
+      return document.getElementById("baseUrl").value.trim().replace(/\/+$/, "");
+    }
+
+    async function generateSpeech() {
+      const response = await fetch(`${getBaseUrl()}/v1/audio/speech`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getApiKey()}`
+        },
+        body: JSON.stringify({
+          model: TTS_MODEL,
+          input: document.getElementById("ttsText").value.trim(),
+          voice: "alloy",
+          response_format: "mp3",
+          speed: 1
+        })
+      });
+      if (!response.ok) throw new Error(await response.text());
+      document.getElementById("audioPlayer").src = URL.createObjectURL(await response.blob());
+    }
+
+    async function askGpt54Mini() {
+      const response = await fetch(`${getBaseUrl()}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getApiKey()}`
+        },
+        body: JSON.stringify({
+          model: GPT54_MINI_MODEL,
+          messages: [
+            { role: "system", content: "Du bist ein praeziser Lernassistent. Antworte klar und knapp auf Deutsch." },
+            { role: "user", content: document.getElementById("chatPrompt").value.trim() }
+          ],
+          temperature: 0.3
+        })
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      document.getElementById("chatOutput").textContent = data?.choices?.[0]?.message?.content ?? "";
+    }
+
+    async function transcribeAudioFile() {
+      const file = document.getElementById("audioFile").files?.[0];
+      if (!file) throw new Error("Bitte Audiodatei auswaehlen.");
+
+      const formData = new FormData();
+      formData.append("model", TRANSCRIBE_MODEL);
+      formData.append("file", file, file.name || "audio.webm");
+      formData.append("prompt", "Transkribiere die medizinische Antwort praezise auf Deutsch.");
+
+      const response = await fetch(`${getBaseUrl()}/v1/audio/transcriptions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${getApiKey()}`
+        },
+        body: formData
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      document.getElementById("transcriptOutput").textContent = String(data?.text ?? "").trim();
+    }
+  </script>
+</body>
+</html>
